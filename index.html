@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Joker Table</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="phone-screen" aria-label="Joker card table">
+      <section class="table-wrap">
+        <div class="table">
+          <div class="felt-glow"></div>
+
+          <div class="player player-nika">
+            <div class="avatar">N</div>
+            <div class="badge">4</div>
+            <div class="name">Nika</div>
+          </div>
+
+          <div class="player player-maga">
+            <div class="avatar">M</div>
+            <div class="badge">4</div>
+            <div class="name">Maga</div>
+          </div>
+
+          <div class="player player-alex">
+            <div class="avatar">A</div>
+            <div class="badge">4</div>
+            <div class="name">Alex</div>
+          </div>
+
+          <div class="player player-you">
+            <div class="turn-pill">ТВОЙ ХОД</div>
+            <div class="avatar">G</div>
+            <div class="badge">5</div>
+            <div class="name">Ты</div>
+          </div>
+
+          <button class="smile" type="button" aria-label="Эмоции">😀</button>
+
+          <div class="hidden-cards left-stack">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="hidden-cards top-stack">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="hidden-cards right-stack">
+            <span></span><span></span><span></span><span></span>
+          </div>
+
+          <div class="drop-zone" aria-hidden="true"></div>
+
+          <div class="hand" aria-label="Player cards">
+            <article class="card joker red-joker" data-card="joker-red">
+              <strong>Joker</strong>
+              <span class="rank">*</span>
+              <small>JOKER</small>
+            </article>
+            <article class="card black">
+              <strong>A</strong>
+              <span class="suit">&spades;</span>
+            </article>
+            <article class="card red">
+              <strong>K</strong>
+              <span class="suit">&hearts;</span>
+            </article>
+            <article class="card red">
+              <strong>Q</strong>
+              <span class="suit">&diams;</span>
+            </article>
+            <article class="card black">
+              <strong>J</strong>
+              <span class="suit">&clubs;</span>
+            </article>
+          </div>
+
+          <button class="score" type="button">счет</button>
+        </div>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
