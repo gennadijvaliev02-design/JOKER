@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Joker Table</title>
-    <link rel="stylesheet" href="styles.css?v=16" />
+    <link rel="stylesheet" href="styles.css?v=21" />
   </head>
   <body>
     <main class="phone-screen" aria-label="Joker card table">
@@ -82,6 +82,7 @@
           </div>
 
           <button class="smile" type="button" aria-label="Эмоции">😀</button>
+          <button class="table-menu" id="table-menu" type="button" aria-label="Выйти в меню">☰</button>
 
           <div class="hidden-cards left-stack">
             <span></span><span></span><span></span><span></span>
@@ -101,6 +102,10 @@
             <div class="bid-title">Заказ</div>
             <div class="bid-options" id="bid-options"></div>
           </div>
+          <div class="game-dialog" id="game-dialog" hidden>
+            <div class="dialog-title" id="game-dialog-title">Партия завершена</div>
+            <div class="dialog-actions" id="game-dialog-actions"></div>
+          </div>
           <div class="hand" id="player-hand" aria-label="Карты игрока"></div>
 
           <button class="score" id="score-button" type="button" aria-label="Показать счёт">счет</button>
@@ -115,6 +120,6 @@
         </div>
       </section>
     </main>
-    <script src="script.js?v=22"></script>
+    <script src="script.js?v=29"></script>
   </body>
 </html>
