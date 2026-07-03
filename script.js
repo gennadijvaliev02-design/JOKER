@@ -79,6 +79,8 @@ const state = {
   autoPlay: false,
   devTarget: null,
   started: false,
+  timeoutIds: [],
+  audioContext: null,
 };
 
 const elements = {
@@ -99,6 +101,10 @@ const elements = {
   scoreSheet: document.querySelector("#score-sheet"),
   scoreClose: document.querySelector("#score-close"),
   scoreGrid: document.querySelector("#score-grid"),
+  tableMenu: document.querySelector("#table-menu"),
+  gameDialog: document.querySelector("#game-dialog"),
+  gameDialogTitle: document.querySelector("#game-dialog-title"),
+  gameDialogActions: document.querySelector("#game-dialog-actions"),
 };
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -154,6 +160,7 @@ function buildPlayers(playerName) {
 function startGame() {
   const playerName = elements.playerName.value.trim() || "Игрок";
 
+  initAudio();
   state.started = true;
   state.autoPlay = urlParams.get("autoplay") === "1";
   state.devTarget = getDevTargetFromUrl();
@@ -187,10 +194,10 @@ function startAceDeal() {
   showNotice(`Раздача на туза: первый туз у ${winner.name}. Порядок: ${orderText}.${jumpText}`);
   render();
 
-  window.setTimeout(() => {
+  scheduleGameTask(() => {
     startDeal();
     render();
-    window.setTimeout(hideNotice, getDelay(1400));
+    scheduleGameTask(hideNotice, getDelay(1400));
   }, getDelay(1700));
 }
 
@@ -234,6 +241,7 @@ function applyTableOrderFromAceWinner(aceWinnerId) {
 }
 
 function startDeal() {
+  playSound("deal");
   state.players.forEach((player) => {
     player.bid = null;
     player.tricks = 0;
@@ -267,6 +275,7 @@ function startDeal() {
   }
 
   state.trump = getTrumpForCurrentGame(state.deck);
+  playSound("trump");
   completeDealAfterTrump();
 }
 
@@ -302,6 +311,7 @@ function startTrumpSelection() {
 
   if (state.trumpChooserId === "human" && state.autoPlay) {
     state.trump = chooseBotTrump("human");
+    playSound("trump");
     completeDealAfterTrump();
     render();
     return;
@@ -314,15 +324,16 @@ function startTrumpSelection() {
   }
 
   state.busy = true;
-  showNotice(`${getPlayerById(state.trumpChooserId).name} выбирает козырь`);
+  showNotice(`${getPlayerById(state.trumpChooserId).name} думает над козырем...`);
   render();
 
-  window.setTimeout(() => {
+  scheduleGameTask(() => {
     state.trump = chooseBotTrump(state.trumpChooserId);
+    playSound("trump");
     state.busy = false;
     completeDealAfterTrump();
     render();
-  }, getDelay(700));
+  }, getBotDecisionDelay());
 }
 
 function sortHands(hands) {
@@ -455,15 +466,20 @@ function renderHud() {
 
   if (!state.trump) {
     elements.trumpLabel.textContent = "Козырь: ждём раздачу";
+    elements.trumpLabel.dataset.trumpKey = "";
     return;
   }
+
+  const trumpKey = getTrumpRenderKey(state.trump);
+  const shouldReveal = elements.trumpLabel.dataset.trumpKey !== trumpKey;
+  elements.trumpLabel.dataset.trumpKey = trumpKey;
 
   if (state.trump.type === "no-trump") {
-    elements.trumpLabel.textContent = "Без козыря";
+    elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
     return;
   }
 
-  elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump));
+  elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
 }
 
 function renderHand() {
@@ -511,6 +527,7 @@ function renderTrick() {
     ...state.currentTrick.map((play) => {
       const playedCard = document.createElement("div");
       playedCard.className = `played-card ${play.player.seat} ${play.jokerMode === "duck" ? "is-ducked" : ""}`;
+      playedCard.classList.toggle("is-entering", play.order === state.currentTrick.length - 1);
 
       const label = document.createElement("span");
       label.className = "played-label";
@@ -617,6 +634,9 @@ function playCard(playerId, cardId, options = {}) {
 
   if (card.type === "joker") {
     getPlayerById(playerId).jokersPlayed += 1;
+    playSound("joker");
+  } else {
+    playSound("card");
   }
 
   state.currentTrick.push({
@@ -743,19 +763,19 @@ function renderJokerModeSelection() {
   elements.bidPanel.hidden = false;
   elements.bidTitle.textContent = "Джокер";
 
-  const beatButton = document.createElement("button");
-  beatButton.type = "button";
-  beatButton.className = "bid-option";
-  beatButton.dataset.jokerMode = "beat";
-  beatButton.textContent = "Перебить";
-
   const duckButton = document.createElement("button");
   duckButton.type = "button";
-  duckButton.className = "bid-option";
+  duckButton.className = "bid-option joker-duck-option";
   duckButton.dataset.jokerMode = "duck";
   duckButton.textContent = "Подсунуть";
 
-  elements.bidOptions.replaceChildren(beatButton, duckButton);
+  const beatButton = document.createElement("button");
+  beatButton.type = "button";
+  beatButton.className = "bid-option joker-beat-option";
+  beatButton.dataset.jokerMode = "beat";
+  beatButton.textContent = "Перебить";
+
+  elements.bidOptions.replaceChildren(duckButton, beatButton);
 }
 
 function renderLeadJokerCommandSelection() {
@@ -764,22 +784,22 @@ function renderLeadJokerCommandSelection() {
 
   const highButton = document.createElement("button");
   highButton.type = "button";
-  highButton.className = "bid-option";
+  highButton.className = "bid-option joker-high-option";
   highButton.dataset.jokerLeadCommand = "high";
-  highButton.textContent = "Высшая";
+  highButton.textContent = "Высший";
 
   const takeButton = document.createElement("button");
   takeButton.type = "button";
-  takeButton.className = "bid-option";
+  takeButton.className = "bid-option joker-take-option";
   takeButton.dataset.jokerLeadCommand = "take";
-  takeButton.textContent = "Берёт";
+  takeButton.textContent = "Берет";
 
-  elements.bidOptions.replaceChildren(highButton, takeButton);
+  elements.bidOptions.replaceChildren(takeButton, highButton);
 }
 
 function renderLeadJokerSuitSelection() {
   elements.bidPanel.hidden = false;
-  elements.bidTitle.textContent = state.pendingJokerCommand === "take" ? "Берёт масть" : "Высшая масть";
+  elements.bidTitle.textContent = state.pendingJokerCommand === "take" ? "Берет масть" : "Высший";
 
   const suitButtons = FIXED_TRUMP_BY_GAME.map((suitId) => SUITS.find((suit) => suit.id === suitId)).map((suit) => {
     const button = document.createElement("button");
@@ -847,6 +867,7 @@ function handleBidClick(event) {
 
   if (trumpButton && state.phase === "trump-select" && state.trumpChooserId === "human") {
     state.trump = createTrumpFromChoice(trumpButton.dataset.trump);
+    playSound("trump");
     state.trumpChooserId = null;
     hideNotice();
     completeDealAfterTrump();
@@ -892,12 +913,13 @@ function processBiddingTurns() {
   }
 
   state.busy = true;
+  showNotice(`${getPlayerById(bidderId).name} думает над заказом...`);
   render();
 
-  window.setTimeout(() => {
+  scheduleGameTask(() => {
     submitBid(bidderId, chooseBotBid(bidderId));
     processBiddingTurns();
-  }, getDelay(420));
+  }, getBotDecisionDelay());
 }
 
 function getCurrentBidderId() {
@@ -1009,14 +1031,16 @@ function continueBotTurns() {
       return;
     }
 
+    hideNotice();
     render();
     return;
   }
 
   state.busy = true;
+  showNotice(`${getPlayerById(state.activePlayerId).name} думает...`);
   render();
 
-  window.setTimeout(() => {
+  scheduleGameTask(() => {
     const botId = state.activePlayerId;
     const chosenCard = chooseBotCard(botId);
 
@@ -1026,7 +1050,7 @@ function continueBotTurns() {
 
     state.busy = false;
     continueBotTurns();
-  }, getDelay(520));
+  }, getBotPlayDelay());
 }
 
 function chooseBotCard(playerId) {
@@ -1034,22 +1058,36 @@ function chooseBotCard(playerId) {
   const legalCards = hand.filter((card) => isLegalCard(playerId, card));
   const candidates = legalCards.length ? legalCards : hand;
   const wantsTrick = shouldPlayerTakeTrick(playerId);
+  const standardCards = candidates.filter((card) => card.type !== "joker");
+  const jokerCards = candidates.filter((card) => card.type === "joker");
 
   if (!state.currentTrick.length) {
-    return [...candidates].sort((firstCard, secondCard) => {
-      return wantsTrick ? compareBotCards(secondCard, firstCard) : compareBotCards(firstCard, secondCard);
-    })[0];
+    if (!wantsTrick) {
+      return [...standardCards, ...jokerCards].sort(compareBotLeadLowCards)[0];
+    }
+
+    if (shouldSpendJokerNow(playerId) && jokerCards.length && !hasStrongLeadCard(playerId, standardCards)) {
+      return [...jokerCards].sort(compareBotCards)[0];
+    }
+
+    return [...standardCards, ...jokerCards].sort(compareBotLeadHighCards)[0];
   }
 
   if (wantsTrick) {
-    const winningCards = candidates.filter((card) => wouldCardWinCurrentTrick(playerId, card));
+    const standardWinningCards = standardCards.filter((card) => wouldCardWinCurrentTrick(playerId, card));
 
-    if (winningCards.length) {
-      return [...winningCards].sort(compareBotCards)[0];
+    if (standardWinningCards.length) {
+      return [...standardWinningCards].sort(compareBotCards)[0];
+    }
+
+    const jokerWinningCards = jokerCards.filter((card) => wouldCardWinCurrentTrick(playerId, card));
+
+    if (jokerWinningCards.length && shouldSpendJokerNow(playerId)) {
+      return [...jokerWinningCards].sort(compareBotCards)[0];
     }
   }
 
-  return [...candidates].sort(compareBotCards)[0];
+  return [...standardCards, ...jokerCards].sort(compareBotCards)[0];
 }
 
 function shouldPlayerTakeTrick(playerId) {
@@ -1063,7 +1101,44 @@ function shouldPlayerTakeTrick(playerId) {
     return false;
   }
 
-  return player.tricks < player.bid;
+  if (player.tricks >= player.bid) {
+    return false;
+  }
+
+  return true;
+}
+
+function shouldSpendJokerNow(playerId) {
+  const player = getPlayerById(playerId);
+  const remainingCards = state.hands[playerId]?.length || 0;
+  const remainingTricksIncludingCurrent = Math.max(1, remainingCards);
+
+  if (player.bid === "pass") {
+    return false;
+  }
+
+  const target = isFourHundredPulka() ? 3 : player.bid;
+  const neededTricks = target - player.tricks;
+
+  if (neededTricks <= 0) {
+    return false;
+  }
+
+  return neededTricks >= remainingTricksIncludingCurrent || remainingCards <= 3;
+}
+
+function hasStrongLeadCard(playerId, cards) {
+  return cards.some((card) => {
+    if (card.type === "joker") {
+      return false;
+    }
+
+    if (card.rank === "A") {
+      return true;
+    }
+
+    return getTrumpSuit() && card.suit === getTrumpSuit() && RANK_POWER[card.rank] >= RANK_POWER.Q;
+  });
 }
 
 function wouldCardWinCurrentTrick(playerId, card) {
@@ -1113,9 +1188,7 @@ function chooseJokerMode(playerId, card) {
     return card?.type === "joker" ? "lead" : null;
   }
 
-  const player = getPlayerById(playerId);
-
-  if (player.bid !== "pass" && player.tricks < player.bid) {
+  if (shouldSpendJokerNow(playerId)) {
     return "beat";
   }
 
@@ -1123,8 +1196,7 @@ function chooseJokerMode(playerId, card) {
 }
 
 function chooseLeadJokerAction(playerId) {
-  const player = getPlayerById(playerId);
-  const needsTrick = player.bid === "pass" ? player.tricks === 0 : player.tricks < player.bid;
+  const needsTrick = shouldSpendJokerNow(playerId);
 
   return {
     jokerCommand: needsTrick ? "high" : "take",
@@ -1170,15 +1242,32 @@ function compareBotCards(firstCard, secondCard) {
   return RANK_POWER[firstCard.rank] - RANK_POWER[secondCard.rank];
 }
 
+function compareBotLeadLowCards(firstCard, secondCard) {
+  return compareBotCards(firstCard, secondCard);
+}
+
+function compareBotLeadHighCards(firstCard, secondCard) {
+  if (firstCard.type === "joker" && secondCard.type !== "joker") {
+    return 1;
+  }
+
+  if (firstCard.type !== "joker" && secondCard.type === "joker") {
+    return -1;
+  }
+
+  return compareBotCards(secondCard, firstCard);
+}
+
 function finishTrickSoon() {
   state.busy = true;
   render();
 
-  window.setTimeout(() => {
+  scheduleGameTask(() => {
     const winnerPlay = getTrickWinner();
     const winner = winnerPlay.player;
 
     winner.tricks += 1;
+    playSound("trick");
     state.leadPlayerId = winner.id;
     state.activePlayerId = winner.id;
     state.currentTrick = [];
@@ -1202,7 +1291,7 @@ function finishGameSoon() {
   render();
   showNotice(`Игра ${state.currentGame} завершена`);
 
-  window.setTimeout(() => {
+  scheduleGameTask(() => {
     const finishedGame = state.currentGame;
     writeCurrentGameScore();
 
@@ -1223,7 +1312,7 @@ function finishGameSoon() {
     showNotice(nextText);
     render();
 
-    window.setTimeout(hideNotice, getDelay(1200));
+    scheduleGameTask(hideNotice, getDelay(1200));
   }, getDelay(1300));
 }
 
@@ -1448,7 +1537,97 @@ function finishMatch() {
   state.currentTrick = [];
   state.winnerId = winner.id;
   showNotice(`Партия завершена. Победитель: ${winner.name}`);
+  showEndGameDialog(winner);
   render();
+}
+
+function scheduleGameTask(callback, delay) {
+  const timeoutId = window.setTimeout(() => {
+    state.timeoutIds = state.timeoutIds.filter((id) => id !== timeoutId);
+    callback();
+  }, delay);
+
+  state.timeoutIds.push(timeoutId);
+  return timeoutId;
+}
+
+function clearGameTasks() {
+  state.timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+  state.timeoutIds = [];
+}
+
+function resetGameState() {
+  clearGameTasks();
+  state.players = [];
+  state.deck = [];
+  state.hands = {};
+  state.currentTrick = [];
+  state.phase = "idle";
+  state.leadPlayerId = "human";
+  state.activePlayerId = "human";
+  state.pendingJokerCardId = null;
+  state.pendingJokerCommand = null;
+  state.trumpChooserId = null;
+  state.biddingOrder = [];
+  state.biddingIndex = 0;
+  state.busy = false;
+  state.trickNumber = 1;
+  state.scoreRows = [];
+  state.currentPulka = 1;
+  state.currentGame = 1;
+  state.trump = null;
+  state.winnerId = null;
+  state.autoPlay = false;
+  state.devTarget = null;
+  state.started = false;
+  elements.scoreSheet.hidden = true;
+  elements.gameDialog.hidden = true;
+  elements.gameDialogActions.replaceChildren();
+  hideNotice();
+  render();
+}
+
+function goToMainMenu() {
+  resetGameState();
+  elements.startScreen.classList.remove("is-hidden");
+}
+
+function restartMatch() {
+  resetGameState();
+  startGame();
+}
+
+function showExitDialog() {
+  if (!state.started || state.phase === "idle") {
+    return;
+  }
+
+  elements.gameDialogTitle.textContent = "Выйти из партии?";
+  elements.gameDialogActions.replaceChildren(
+    createDialogButton("Продолжить", "primary", () => {
+      elements.gameDialog.hidden = true;
+    }),
+    createDialogButton("В меню", "", goToMainMenu),
+  );
+  elements.gameDialog.hidden = false;
+}
+
+function showEndGameDialog(winner) {
+  elements.gameDialogTitle.textContent = `Победитель: ${winner.name}`;
+  elements.gameDialogActions.replaceChildren(
+    createDialogButton("Новая партия", "primary", restartMatch),
+    createDialogButton("Главное меню", "", goToMainMenu),
+  );
+  elements.gameDialog.hidden = false;
+}
+
+function createDialogButton(text, variant, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `dialog-action ${variant}`.trim();
+  button.textContent = text;
+  button.addEventListener("click", onClick);
+  return button;
 }
 
 function showNotice(text) {
@@ -1472,17 +1651,26 @@ function getTrickWinner() {
   const trumpSuit = state.trump?.type === "standard" ? state.trump.suit : null;
   const trumpPlays = trumpSuit ? activePlays.filter((play) => play.card.suit === trumpSuit) : [];
 
-  if (trumpPlays.length) {
-    return getHighestStandardPlay(trumpPlays);
-  }
-
   if (leadJokerPlay) {
     if (leadJokerPlay.jokerCommand === "take") {
       const suitPlays = activePlays.filter((play) => play.card.suit === leadJokerPlay.jokerSuit);
+
+      if (trumpPlays.length) {
+        return getHighestStandardPlay(trumpPlays);
+      }
+
       return suitPlays.length ? getHighestStandardPlay(suitPlays) : leadJokerPlay;
     }
 
+    if (trumpPlays.length) {
+      return getHighestStandardPlay(trumpPlays);
+    }
+
     return leadJokerPlay;
+  }
+
+  if (trumpPlays.length) {
+    return getHighestStandardPlay(trumpPlays);
   }
 
   const winningPool = activePlays.filter((play) => play.card.suit === getLeadSuit());
@@ -1598,13 +1786,23 @@ function hasCardsLeft() {
   return Object.values(state.hands).some((hand) => hand.length > 0);
 }
 
-function createTrumpCardElement(card) {
+function getTrumpRenderKey(card) {
+  return card.type === "no-trump" ? "no-trump" : `${card.suit}-${card.rank || "fixed"}`;
+}
+
+function createTrumpCardElement(card, shouldReveal = false) {
   const cardElement = document.createElement("span");
-  cardElement.className = `trump-card ${card.color}`;
-  cardElement.innerHTML = `
-    <span class="trump-rank">${card.fixed ? "К" : card.rank}</span>
-    <span class="trump-suit">${card.symbol}</span>
-  `;
+  cardElement.className = `trump-card ${card.color || ""} ${card.type === "no-trump" ? "no-trump-card" : ""} ${shouldReveal ? "is-revealed" : ""}`.trim();
+
+  if (card.type === "no-trump") {
+    cardElement.innerHTML = `
+      <span class="trump-joker-star">★</span>
+      <span class="trump-joker-label">JOKER</span>
+    `;
+    return cardElement;
+  }
+
+  cardElement.innerHTML = `<span class="trump-suit">${card.symbol}</span>`;
 
   return cardElement;
 }
@@ -1645,7 +1843,7 @@ function createScoreCell(content, className = "") {
 }
 
 function formatScoreCell(value) {
-  return value.replace("⊣", '<span class="barrel-mark">⊣</span>');
+  return value.replace("⊣", '<span class="barrel-mark" aria-label="штанга"></span>');
 }
 
 function createScoreEntryElement(entry) {
@@ -1697,12 +1895,103 @@ function getDelay(delay) {
   return state.autoPlay ? 0 : delay;
 }
 
+function initAudio() {
+  if (state.audioContext) {
+    resumeAudio();
+    return;
+  }
+
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContext) {
+    return;
+  }
+
+  state.audioContext = new AudioContext();
+  resumeAudio();
+}
+
+function resumeAudio() {
+  state.audioContext?.resume?.().catch(() => {});
+}
+
+function playSound(type) {
+  if (state.autoPlay) {
+    return;
+  }
+
+  initAudio();
+
+  const audioContext = state.audioContext;
+
+  if (!audioContext) {
+    return;
+  }
+
+  const now = audioContext.currentTime;
+  const gain = audioContext.createGain();
+  const oscillator = audioContext.createOscillator();
+  const noise = audioContext.createBufferSource();
+  const noiseGain = audioContext.createGain();
+  const profile = getSoundProfile(type);
+
+  oscillator.type = profile.wave;
+  oscillator.frequency.setValueAtTime(profile.frequency, now);
+  oscillator.frequency.exponentialRampToValueAtTime(profile.endFrequency, now + profile.duration);
+  gain.gain.setValueAtTime(profile.volume, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + profile.duration);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(now);
+  oscillator.stop(now + profile.duration);
+
+  const buffer = audioContext.createBuffer(1, audioContext.sampleRate * profile.duration, audioContext.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let index = 0; index < data.length; index += 1) {
+    data[index] = (Math.random() * 2 - 1) * (1 - index / data.length);
+  }
+
+  noise.buffer = buffer;
+  noiseGain.gain.setValueAtTime(profile.noiseVolume, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + profile.duration);
+  noise.connect(noiseGain);
+  noiseGain.connect(audioContext.destination);
+  noise.start(now);
+  noise.stop(now + profile.duration);
+}
+
+function getSoundProfile(type) {
+  const profiles = {
+    deal: { frequency: 520, endFrequency: 240, duration: 0.08, volume: 0.018, noiseVolume: 0.028, wave: "triangle" },
+    card: { frequency: 420, endFrequency: 160, duration: 0.07, volume: 0.016, noiseVolume: 0.024, wave: "triangle" },
+    trump: { frequency: 620, endFrequency: 310, duration: 0.16, volume: 0.025, noiseVolume: 0.018, wave: "sine" },
+    joker: { frequency: 760, endFrequency: 220, duration: 0.18, volume: 0.026, noiseVolume: 0.02, wave: "sawtooth" },
+    trick: { frequency: 300, endFrequency: 120, duration: 0.12, volume: 0.018, noiseVolume: 0.03, wave: "triangle" },
+  };
+
+  return profiles[type] || profiles.card;
+}
+
+function getBotPlayDelay() {
+  return state.autoPlay ? 0 : getRandomDelay(2200, 3500);
+}
+
+function getBotDecisionDelay() {
+  return state.autoPlay ? 0 : getRandomDelay(3000, 5000);
+}
+
+function getRandomDelay(min, max) {
+  return Math.round(min + Math.random() * (max - min));
+}
+
 elements.startGame.addEventListener("click", startGame);
 elements.rulesToggle.addEventListener("click", () => {
   elements.rulesCard.hidden = !elements.rulesCard.hidden;
 });
 elements.scoreButton.addEventListener("click", toggleScoreSheet);
 elements.scoreClose.addEventListener("click", toggleScoreSheet);
+elements.tableMenu.addEventListener("click", showExitDialog);
 elements.playerHand.addEventListener("click", handleHumanCardClick);
 elements.bidOptions.addEventListener("click", handleBidClick);
 
