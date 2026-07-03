@@ -1,1 +1,1718 @@
-const SUITS=[['spades','♠','black'],['clubs','♣','black'],['hearts','♥','red'],['diamonds','♦','red']],RANKS=['6','7','8','9','10','J','Q','K','A'],SW={spades:0,clubs:1,hearts:2,diamonds:3},RP={6:0,7:1,8:2,9:3,10:4,J:5,Q:6,K:7,A:8},BIDS=[[2,'pass',3,1],[3,2,'pass',2],[1,3,2,'pass'],[4,1,2,3]],BO=['pass',1,2,3,4,5,6,7,8,9],OK={1:100,2:150,3:200,4:250};const $=s=>document.querySelector(s),E={start:$('#start-screen'),name:$('#player-name'),startBtn:$('#start-game'),rulesBtn:$('#rules-toggle'),rules:$('#rules-card'),hand:$('#player-hand'),slot:$('#played-card-slot'),notice:$('#table-notice'),bid:$('#bid-panel'),bidOptions:$('#bid-options'),round:$('#round-label'),trump:$('#trump-label'),scoreBtn:$('#score-button'),sheet:$('#score-sheet'),close:$('#score-close'),grid:$('#score-grid')};let state={players:[],hands:{},trump:null,currentTrick:[],activePlayerId:null,busy:false,phase:'idle',trickNumber:1,currentPulka:1,currentGame:1,scoreRows:[]};function deck(){let c=[];for(const[id,sym,col]of SUITS)for(const r of RANKS){if(r==='6'&&(id==='spades'||id==='clubs'))continue;c.push({id:r+'-'+id,rank:r,suit:id,symbol:sym,color:col,type:'standard'})}c.push({id:'joker-red',rank:'Joker',suit:null,symbol:'★',color:'red',type:'joker'},{id:'joker-black',rank:'Joker',suit:null,symbol:'★',color:'black',type:'joker'});return c}function sh(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}function power(c){if(c.type==='joker')return c.color==='red'?1001:1000;return((state.trump?.type==='standard'&&c.suit===state.trump.suit)?500:0)+SW[c.suit]*20+RP[c.rank]}function cmp(a,b){return power(a)-power(b)}function players(n){return[{id:'human',seat:'bottom',name:n||'Игрок',bid:null,tricks:0,order:1},{id:'b1',seat:'left',name:'Клод',bid:null,tricks:0,order:2},{id:'b2',seat:'top',name:'GPT',bid:null,tricks:0,order:3},{id:'b3',seat:'right',name:'Qwen',bid:null,tricks:0,order:4}]}function rows(){let r=[];for(let p=1;p<=5;p++){for(let g=1;g<=4;g++)r.push({type:'game',game:g,cells:['','','',''],values:[0,0,0,0]});r.push({type:'total',game:'',cells:['','','','']})}return r}function botBids(){let b=BIDS[(state.currentGame-1)%BIDS.length];state.players.forEach((p,i)=>{p.tricks=0;p.bid=p.id==='human'?null:b[i]})}function card(c,opt={}){let e=document.createElement('button');e.type='button';e.className='card '+c.color+(c.type==='joker'?' joker-card':'');e.dataset.card=c.id;if(opt.playable!==undefined){e.disabled=!opt.playable;e.classList.toggle('is-disabled',!opt.playable)}e.innerHTML=c.type==='joker'?'<span class="joker-word">JOKER</span><span class="card-center">★<span class="mini-rank">JOKER</span></span><span class="joker-word bottom">JOKER</span>':`<span class="card-corner top"><span>${c.rank}</span><span>${c.symbol}</span></span><span class="card-center">${c.symbol}</span><span class="card-corner bottom"><span>${c.rank}</span><span>${c.symbol}</span></span>`;return e}function trumpCard(c){let e=document.createElement('span');e.className='trump-card '+c.color;e.innerHTML=`<span class="trump-rank">${c.rank}</span><span class="trump-suit">${c.symbol}</span>`;return e}function start(){let pn=E.name.value.trim()||'Игрок';state.players=players(pn);state.scoreRows=rows();deal();render();E.start.classList.add('is-hidden')}function deal(){botBids();let d=sh(deck()),ids=state.players.map(p=>p.id),h=Object.fromEntries(ids.map(id=>[id,[]]));for(let n=0;n<3;n++)for(const id of ids)h[id].push(d.pop());let tr=d[Math.floor(d.length/2)];for(let n=0;n<6;n++)for(const id of ids)h[id].push(d.pop());state.trump=tr.type==='joker'?{type:'no-trump'}:tr;for(const id of ids)h[id].sort(cmp);Object.assign(state,{hands:h,currentTrick:[],activePlayerId:null,busy:false,phase:'bidding',trickNumber:1});hideNotice()}function render(){renderPlayers();renderHud();renderHand();renderTrick();renderBid();renderScore()}function byId(id){return state.players.find(p=>p.id===id)}function broken(p){if(p.bid==null)return false;if(p.bid==='pass')return p.tricks>0;if(p.tricks>p.bid)return true;let rem=state.hands[p.id]?.length||0;return p.tricks+rem<p.bid}function renderPlayers(){for(const p of state.players){let pe=document.querySelector(`[data-seat="${p.seat}"]`)?.closest('.player'),n=document.querySelector(`[data-name="${p.seat}"]`),a=document.querySelector(`[data-seat="${p.seat}"]`),o=document.querySelector(`[data-order-badge="${p.seat}"]`),old=document.querySelector(`[data-order="${p.seat}"]`),b=document.querySelector(`[data-bid="${p.seat}"]`),t=document.querySelector(`[data-taken="${p.seat}"]`);if(n)n.textContent=p.seat==='bottom'?'Ты':p.name;if(a)a.textContent=p.name[0].toUpperCase();if(o)o.textContent=p.order;if(old)old.textContent=p.order;if(b){b.textContent=p.bid==null?'—':p.bid==='pass'?'П':p.bid;b.classList.toggle('is-pass',p.bid==='pass')}if(t){t.textContent=p.tricks;t.classList.toggle('is-danger',broken(p))}pe?.classList.toggle('is-active',p.id===state.activePlayerId&&!state.busy)}}function renderHud(){let p=byId(state.activePlayerId),txt=p?' · ход '+(p.seat==='bottom'?'твой':p.name):'',phase=state.phase==='bidding'?' · заказ':` · Взятка ${state.trickNumber}${txt}`;E.round.textContent=`Пулька ${state.currentPulka} · Игра ${state.currentGame}${phase}`;if(!state.trump)E.trump.textContent='Козырь: ждём раздачу';else if(state.trump.type==='no-trump')E.trump.textContent='Без козыря';else E.trump.replaceChildren('Козырь',trumpCard(state.trump))}function renderHand(){E.hand.replaceChildren(...(state.hands.human||[]).map(c=>card(c,{playable:canHuman(c)})))}function renderTrick(){E.slot.replaceChildren(...state.currentTrick.map(x=>{let w=document.createElement('div'),l=document.createElement('span'),ce=card(x.card);w.className='played-card '+x.player.seat;l.className='played-label';l.textContent=x.player.seat==='bottom'?'Ты':x.player.name;ce.disabled=true;w.append(l,ce);return w}))}function renderBid(){E.bid.hidden=state.phase!=='bidding';if(E.bid.hidden){E.bidOptions.replaceChildren();return}let sum=state.players.reduce((s,p)=>s+(typeof p.bid==='number'?p.bid:0),0);E.bidOptions.replaceChildren(...BO.map(b=>{let x=document.createElement('button');x.type='button';x.className='bid-option';x.dataset.bid=String(b);x.textContent=b==='pass'?'Пас':b;let bad=b!=='pass'&&sum+b===9;x.disabled=bad;x.classList.toggle('is-forbidden',bad);return x}))}function leadSuit(){let p=state.currentTrick.find(x=>x.card.type!=='joker');return p?.card.suit||null}function legal(id,c){let s=leadSuit();return !s||c.type==='joker'||c.suit===s||!state.hands[id].some(x=>x.type!=='joker'&&x.suit===s)}function canHuman(c){return state.phase==='playing'&&!state.busy&&state.activePlayerId==='human'&&legal('human',c)}function next(id){let i=state.players.findIndex(p=>p.id===id);return state.players[(i+1)%state.players.length].id}function play(id,cid){let h=state.hands[id],i=h.findIndex(c=>c.id===cid);if(i<0)return false;let c=h[i];if(!legal(id,c))return false;h.splice(i,1);state.currentTrick.push({player:byId(id),card:c,order:state.currentTrick.length});state.activePlayerId=next(id);render();return true}function humanClick(e){let b=e.target.closest('[data-card]');if(!b||state.phase!=='playing'||state.activePlayerId!=='human'||state.busy)return;if(!play('human',b.dataset.card)){b.classList.remove('is-invalid');void b.offsetWidth;b.classList.add('is-invalid');return}bots()}function bidClick(e){let b=e.target.closest('[data-bid]');if(!b||state.phase!=='bidding'||b.disabled)return;byId('human').bid=b.dataset.bid==='pass'?'pass':Number(b.dataset.bid);state.phase='playing';state.activePlayerId='human';render()}function bots(){if(state.currentTrick.length===state.players.length)return finishSoon();if(state.activePlayerId==='human')return render();state.busy=true;render();setTimeout(()=>{let id=state.activePlayerId,c=choose(id);if(c)play(id,c.id);state.busy=false;bots()},520)}function choose(id){let h=state.hands[id],cs=h.filter(c=>legal(id,c));return[...(cs.length?cs:h)].sort(botCmp)[0]}function botCmp(a,b){if(a.type==='joker'||b.type==='joker')return a.type===b.type?(a.color==='black'?-1:1):(a.type==='joker'?1:-1);return RP[a.rank]-RP[b.rank]}function finishSoon(){state.busy=true;render();setTimeout(()=>{let w=winner().player;w.tricks++;state.activePlayerId=w.id;state.currentTrick=[];state.trickNumber++;state.busy=false;render();if(!Object.values(state.hands).some(h=>h.length))return finishGame();if(state.activePlayerId!=='human')bots()},900)}function winner(){let js=state.currentTrick.filter(x=>x.card.type==='joker');if(js.length)return js.at(-1);let ts=state.trump?.type==='standard'?state.trump.suit:null,tp=ts?state.currentTrick.filter(x=>x.card.suit===ts):[],pool=tp.length?tp:state.currentTrick.filter(x=>x.card.suit===leadSuit());return[...pool].sort((a,b)=>RP[b.card.rank]-RP[a.card.rank])[0]}function finishGame(){state.busy=true;render();showNotice(`Игра ${state.currentGame} завершена`);setTimeout(()=>{writeScore();advance();deal();showNotice(`Игра ${state.currentGame}. Новая раздача`);render();setTimeout(hideNotice,1200)},1300)}function writeScore(){let off=(state.currentPulka-1)*5,row=state.scoreRows[off+state.currentGame-1];row.cells=state.players.map(scoreText);row.values=state.players.map(scoreVal);if(state.currentGame===4){let total=state.scoreRows[off+4];total.cells=state.players.map((p,i)=>fmtTotal(state.scoreRows.slice(off,off+4).reduce((s,r)=>s+(r.values?.[i]||0),0)))}}function scoreText(p){if(p.bid==='pass')return p.tricks===0?'- 50':`- ${p.tricks*50}`;if(p.tricks===0)return `${p.bid} ⊣`;if(p.tricks===p.bid)return `${p.bid} ${OK[p.bid]||p.bid*50}`;return `${p.bid} ${p.tricks*10}`}function scoreVal(p){if(p.bid==='pass')return p.tricks===0?50:-p.tricks*50;if(p.tricks===0)return-250;if(p.tricks===p.bid)return OK[p.bid]||p.bid*50;return p.tricks*10}function fmtTotal(v){return(v/100).toFixed(1).replace('.',',')}function advance(){if(state.currentGame<4)state.currentGame++;else{state.currentGame=1;state.currentPulka=Math.min(state.currentPulka+1,5)}}function showNotice(t){E.notice.textContent=t;E.notice.hidden=false}function hideNotice(){E.notice.hidden=true}function cell(t,c=''){let d=document.createElement('div');d.className='score-cell '+c;d.innerHTML=String(t).replaceAll('•','<span class="joker-dot">•</span>').replace('⊣','<span class="barrel-mark">⊣</span>');return d}function renderScore(){let heads=['',...state.players.map(p=>p.name)].map(x=>cell(x,'header')),body=state.scoreRows.flatMap(r=>r.type==='total'?[cell('', 'total'),...r.cells.map(x=>cell(x,'total'))]:[cell(r.game+')','round-label'),...r.cells.map(x=>cell(x))]);E.grid.replaceChildren(...heads,...body)}E.startBtn.onclick=start;E.rulesBtn.onclick=()=>E.rules.hidden=!E.rules.hidden;E.scoreBtn.onclick=()=>E.sheet.hidden=!E.sheet.hidden;E.close.onclick=()=>E.sheet.hidden=true;E.hand.onclick=humanClick;E.bidOptions.onclick=bidClick;if(new URLSearchParams(location.search).has('demo'))start();if(new URLSearchParams(location.search).has('score'))E.sheet.hidden=false;window.jokerState=state;
+const SUITS = [
+  { id: "spades", symbol: "♠", color: "black", name: "пика" },
+  { id: "clubs", symbol: "♣", color: "black", name: "крест" },
+  { id: "hearts", symbol: "♥", color: "red", name: "сердце" },
+  { id: "diamonds", symbol: "♦", color: "red", name: "кирпич" },
+];
+
+const RANKS = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+const BOT_NAMES = ["Клод", "GPT", "Qwen"];
+const FIXED_TRUMP_BY_GAME = ["hearts", "clubs", "diamonds", "spades"];
+const SUIT_SORT_WEIGHT = {
+  spades: 0,
+  clubs: 1,
+  hearts: 2,
+  diamonds: 3,
+};
+const RANK_SORT_WEIGHT = {
+  A: 0,
+  K: 1,
+  Q: 2,
+  J: 3,
+  10: 4,
+  9: 5,
+  8: 6,
+  7: 7,
+  6: 8,
+};
+const RANK_POWER = {
+  6: 0,
+  7: 1,
+  8: 2,
+  9: 3,
+  10: 4,
+  J: 5,
+  Q: 6,
+  K: 7,
+  A: 8,
+};
+const DEMO_BIDS = [
+  [2, "pass", 3, 1],
+  [3, 2, "pass", 2],
+  [1, 3, 2, "pass"],
+  [4, 1, 2, 3],
+];
+const BID_OPTIONS = ["pass", 1, 2, 3, 4, 5, 6, 7, 8, 9];
+const FULFILLED_SCORE = {
+  pass: 50,
+  1: 100,
+  2: 150,
+  3: 200,
+  4: 250,
+  5: 300,
+  6: 350,
+  7: 400,
+  8: 450,
+  9: 900,
+};
+
+const state = {
+  players: [],
+  deck: [],
+  hands: {},
+  currentTrick: [],
+  phase: "idle",
+  leadPlayerId: "human",
+  activePlayerId: "human",
+  pendingJokerCardId: null,
+  pendingJokerCommand: null,
+  trumpChooserId: null,
+  biddingOrder: [],
+  biddingIndex: 0,
+  busy: false,
+  trickNumber: 1,
+  scoreRows: [],
+  currentPulka: 1,
+  currentGame: 1,
+  trump: null,
+  winnerId: null,
+  autoPlay: false,
+  devTarget: null,
+  started: false,
+};
+
+const elements = {
+  startScreen: document.querySelector("#start-screen"),
+  playerName: document.querySelector("#player-name"),
+  startGame: document.querySelector("#start-game"),
+  rulesToggle: document.querySelector("#rules-toggle"),
+  rulesCard: document.querySelector("#rules-card"),
+  playerHand: document.querySelector("#player-hand"),
+  playedCardSlot: document.querySelector("#played-card-slot"),
+  tableNotice: document.querySelector("#table-notice"),
+  bidPanel: document.querySelector("#bid-panel"),
+  bidTitle: document.querySelector(".bid-title"),
+  bidOptions: document.querySelector("#bid-options"),
+  roundLabel: document.querySelector("#round-label"),
+  trumpLabel: document.querySelector("#trump-label"),
+  scoreButton: document.querySelector("#score-button"),
+  scoreSheet: document.querySelector("#score-sheet"),
+  scoreClose: document.querySelector("#score-close"),
+  scoreGrid: document.querySelector("#score-grid"),
+};
+
+const urlParams = new URLSearchParams(window.location.search);
+
+function createJokerDeck() {
+  const cards = [];
+
+  for (const suit of SUITS) {
+    for (const rank of RANKS) {
+      if (rank === "6" && (suit.id === "spades" || suit.id === "clubs")) {
+        continue;
+      }
+
+      cards.push({
+        id: `${rank}-${suit.id}`,
+        rank,
+        suit: suit.id,
+        symbol: suit.symbol,
+        color: suit.color,
+        type: "standard",
+      });
+    }
+  }
+
+  cards.push(
+    { id: "joker-red", rank: "Joker", suit: null, symbol: "★", color: "red", type: "joker" },
+    { id: "joker-black", rank: "Joker", suit: null, symbol: "★", color: "black", type: "joker" },
+  );
+
+  return cards;
+}
+
+function shuffle(cards) {
+  const shuffled = [...cards];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
+
+function buildPlayers(playerName) {
+  return [
+    { id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },
+    { id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },
+    { id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },
+    { id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },
+  ];
+}
+
+function startGame() {
+  const playerName = elements.playerName.value.trim() || "Игрок";
+
+  state.started = true;
+  state.autoPlay = urlParams.get("autoplay") === "1";
+  state.devTarget = getDevTargetFromUrl();
+  state.players = buildPlayers(playerName);
+  elements.startScreen.classList.add("is-hidden");
+  startAceDeal();
+}
+
+function startAceDeal() {
+  state.phase = "ace-deal";
+  state.busy = true;
+  state.trump = null;
+  state.hands = {};
+  state.currentTrick = [];
+  state.activePlayerId = null;
+  render();
+
+  const aceDeal = dealUntilFirstAce();
+  applyTableOrderFromAceWinner(aceDeal.winnerId);
+  state.scoreRows = createEmptyScoreRows();
+
+  const winner = getPlayerById(aceDeal.winnerId);
+  const orderText = state.players.map((player) => player.name).join(" → ");
+
+  if (state.devTarget) {
+    state.currentPulka = state.devTarget.pulka;
+    state.currentGame = state.devTarget.game;
+  }
+
+  const jumpText = state.devTarget ? ` Старт: пулька ${state.currentPulka}, игра ${state.currentGame}.` : "";
+  showNotice(`Раздача на туза: первый туз у ${winner.name}. Порядок: ${orderText}.${jumpText}`);
+  render();
+
+  window.setTimeout(() => {
+    startDeal();
+    render();
+    window.setTimeout(hideNotice, getDelay(1400));
+  }, getDelay(1700));
+}
+
+function dealUntilFirstAce() {
+  const deck = shuffle(createJokerDeck());
+  let dealIndex = 0;
+
+  while (deck.length) {
+    const player = state.players[dealIndex % state.players.length];
+    const card = deck.pop();
+
+    if (card.rank === "A") {
+      return {
+        winnerId: player.id,
+        card,
+      };
+    }
+
+    dealIndex += 1;
+  }
+
+  return {
+    winnerId: state.players.at(-1).id,
+    card: null,
+  };
+}
+
+function applyTableOrderFromAceWinner(aceWinnerId) {
+  const aceWinnerIndex = state.players.findIndex((player) => player.id === aceWinnerId);
+  const firstPlayerIndex = (aceWinnerIndex + 1) % state.players.length;
+  const orderedPlayers = [];
+
+  for (let offset = 0; offset < state.players.length; offset += 1) {
+    orderedPlayers.push(state.players[(firstPlayerIndex + offset) % state.players.length]);
+  }
+
+  state.players = orderedPlayers.map((player, index) => ({
+    ...player,
+    order: index + 1,
+  }));
+}
+
+function startDeal() {
+  state.players.forEach((player) => {
+    player.bid = null;
+    player.tricks = 0;
+    player.jokersPlayed = 0;
+  });
+
+  const deck = shuffle(createJokerDeck());
+  const hands = Object.fromEntries(state.players.map((player) => [player.id, []]));
+
+  for (let cardIndex = 0; cardIndex < 3; cardIndex += 1) {
+    for (const player of state.players) {
+      hands[player.id].push(deck.pop());
+    }
+  }
+
+  state.deck = deck;
+  state.hands = sortHands(hands);
+  state.currentTrick = [];
+  state.leadPlayerId = getGameLeaderId();
+  state.activePlayerId = null;
+  state.trumpChooserId = null;
+  state.busy = false;
+  state.biddingOrder = getPlayerOrderFrom(state.leadPlayerId);
+  state.biddingIndex = 0;
+  state.trickNumber = 1;
+  hideNotice();
+
+  if (isChooseTrumpPulka()) {
+    startTrumpSelection();
+    return;
+  }
+
+  state.trump = getTrumpForCurrentGame(state.deck);
+  completeDealAfterTrump();
+}
+
+function completeDealAfterTrump() {
+  state.activePlayerId = null;
+  state.trumpChooserId = null;
+
+  for (let cardIndex = 0; cardIndex < 6; cardIndex += 1) {
+    for (const player of state.players) {
+      state.hands[player.id].push(state.deck.pop());
+    }
+  }
+
+  state.hands = sortHands(state.hands);
+
+  if (isFourHundredPulka()) {
+    state.players.forEach((player) => {
+      player.bid = 3;
+    });
+    startPlayingCurrentGame();
+    return;
+  }
+
+  state.phase = "bidding";
+  processBiddingTurns();
+}
+
+function startTrumpSelection() {
+  state.phase = "trump-select";
+  state.trump = null;
+  state.trumpChooserId = getGameLeaderId();
+  state.activePlayerId = state.trumpChooserId;
+
+  if (state.trumpChooserId === "human" && state.autoPlay) {
+    state.trump = chooseBotTrump("human");
+    completeDealAfterTrump();
+    render();
+    return;
+  }
+
+  if (state.trumpChooserId === "human") {
+    showNotice("Выбери козырь");
+    render();
+    return;
+  }
+
+  state.busy = true;
+  showNotice(`${getPlayerById(state.trumpChooserId).name} выбирает козырь`);
+  render();
+
+  window.setTimeout(() => {
+    state.trump = chooseBotTrump(state.trumpChooserId);
+    state.busy = false;
+    completeDealAfterTrump();
+    render();
+  }, getDelay(700));
+}
+
+function sortHands(hands) {
+  return Object.fromEntries(
+    Object.entries(hands).map(([playerId, hand]) => [playerId, [...hand].sort(compareCards)]),
+  );
+}
+
+function compareCards(firstCard, secondCard) {
+  return getSortPower(firstCard) - getSortPower(secondCard);
+}
+
+function getSortPower(card) {
+  if (card.type === "joker") {
+    return card.color === "red" ? 1001 : 1000;
+  }
+
+  const trumpBonus = state.trump?.type === "standard" && card.suit === state.trump.suit ? 500 : 0;
+  return trumpBonus + SUIT_SORT_WEIGHT[card.suit] * 20 + RANK_POWER[card.rank];
+}
+
+function createEmptyScoreRows() {
+  const rows = [];
+
+  for (let pulka = 1; pulka <= 5; pulka += 1) {
+    for (let game = 1; game <= 4; game += 1) {
+      rows.push({
+        type: "game",
+        game,
+        cells: state.players.map(() => ""),
+      });
+    }
+
+    rows.push({
+      type: "total",
+      game: "",
+      cells: state.players.map(() => ""),
+    });
+  }
+
+  return rows;
+}
+
+function render() {
+  renderPlayers();
+  renderHud();
+  renderHand();
+  renderTrick();
+  renderBidding();
+  renderScoreSheet();
+}
+
+function renderPlayers() {
+  for (const player of state.players) {
+    const playerElement = document.querySelector(`[data-seat="${player.seat}"]`)?.closest(".player");
+    const name = document.querySelector(`[data-name="${player.seat}"]`);
+    const avatar = document.querySelector(`[data-seat="${player.seat}"]`);
+    const orderBadge = document.querySelector(`[data-order-badge="${player.seat}"]`);
+    const order = document.querySelector(`[data-order="${player.seat}"]`);
+    const bid = document.querySelector(`[data-bid="${player.seat}"]`);
+    const taken = document.querySelector(`[data-taken="${player.seat}"]`);
+    const stats = taken?.closest(".player-stats");
+
+    name.textContent = player.seat === "bottom" ? "Ты" : player.name;
+    avatar.textContent = player.name.slice(0, 1).toUpperCase();
+    orderBadge.textContent = String(player.order);
+    order.textContent = String(player.order);
+    bid.textContent = formatBid(player.bid);
+    bid.classList.toggle("is-pass", player.bid === "pass");
+    taken.textContent = String(player.tricks);
+    taken.classList.toggle("is-danger", isBidBroken(player));
+    stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
+    playerElement?.classList.toggle("is-active", player.id === state.activePlayerId && !state.busy);
+  }
+}
+
+function formatBid(bid) {
+  if (bid === null) {
+    return "—";
+  }
+
+  return bid === "pass" ? "П" : String(bid);
+}
+
+function isBidBroken(player, final = false) {
+  if (player.bid === "pass") {
+    return player.tricks > 0;
+  }
+
+  if (player.tricks > player.bid) {
+    return true;
+  }
+
+  const remainingCards = state.hands[player.id]?.length || 0;
+
+  if (player.tricks + remainingCards < player.bid) {
+    return true;
+  }
+
+  return final && player.tricks !== player.bid;
+}
+
+function isBidFulfilledNow(player) {
+  if (player.bid === null) {
+    return false;
+  }
+
+  if (player.bid === "pass") {
+    return player.tricks === 0 && state.phase === "playing";
+  }
+
+  return player.tricks === player.bid;
+}
+
+function renderHud() {
+  const activePlayer = getPlayerById(state.activePlayerId);
+  const turnText = activePlayer ? ` · ход ${activePlayer.seat === "bottom" ? "твой" : activePlayer.name}` : "";
+  const chooser = getPlayerById(state.trumpChooserId);
+  const phaseText =
+    state.phase === "finished"
+      ? " · партия завершена"
+      : state.phase === "trump-select"
+        ? ` · выбор козыря${chooser ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}` : ""}`
+      : isFourHundredPulka() && state.phase === "playing"
+        ? ` · 400 · Взятка ${state.trickNumber}${turnText}`
+      : state.phase === "bidding"
+        ? " · заказ"
+        : ` · Взятка ${state.trickNumber}${turnText}`;
+  elements.roundLabel.textContent = `Пулька ${state.currentPulka} · Игра ${state.currentGame}${phaseText}`;
+
+  if (!state.trump) {
+    elements.trumpLabel.textContent = "Козырь: ждём раздачу";
+    return;
+  }
+
+  if (state.trump.type === "no-trump") {
+    elements.trumpLabel.textContent = "Без козыря";
+    return;
+  }
+
+  elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump));
+}
+
+function renderHand() {
+  const hand = state.hands.human || [];
+  elements.playerHand.replaceChildren(...hand.map((card) => createCardElement(card, { playable: canHumanPlay(card) })));
+}
+
+function createCardElement(card, options = {}) {
+  const cardElement = document.createElement("button");
+  cardElement.className = `card ${card.color} ${card.type === "joker" ? "joker-card" : ""}`;
+  cardElement.type = "button";
+  cardElement.dataset.card = card.id;
+  cardElement.disabled = options.playable === false;
+
+  if (options.playable !== undefined) {
+    cardElement.classList.toggle("is-disabled", options.playable === false);
+  }
+
+  if (card.type === "joker") {
+    cardElement.innerHTML = `
+      <span class="joker-word">JOKER</span>
+      <span class="card-center">★<span class="mini-rank">JOKER</span></span>
+      <span class="joker-word bottom">JOKER</span>
+    `;
+    return cardElement;
+  }
+
+  cardElement.innerHTML = `
+    <span class="card-corner top">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${card.symbol}</span>
+    </span>
+    <span class="card-center">${card.symbol}</span>
+    <span class="card-corner bottom">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${card.symbol}</span>
+    </span>
+  `;
+
+  return cardElement;
+}
+
+function renderTrick() {
+  elements.playedCardSlot.replaceChildren(
+    ...state.currentTrick.map((play) => {
+      const playedCard = document.createElement("div");
+      playedCard.className = `played-card ${play.player.seat} ${play.jokerMode === "duck" ? "is-ducked" : ""}`;
+
+      const label = document.createElement("span");
+      label.className = "played-label";
+      label.textContent = `${play.player.seat === "bottom" ? "Ты" : play.player.name}${formatJokerPlaySuffix(play)}`;
+
+      const cardElement = createCardElement(play.card);
+      cardElement.disabled = true;
+
+      playedCard.append(label, cardElement);
+      return playedCard;
+    }),
+  );
+}
+
+function formatJokerPlaySuffix(play) {
+  if (play.jokerMode === "duck") {
+    return " · под";
+  }
+
+  if (play.card.type === "joker" && play.jokerMode === "lead" && play.jokerCommand && play.jokerSuit) {
+    const suit = SUITS.find((item) => item.id === play.jokerSuit);
+    return ` · ${play.jokerCommand === "take" ? "бер" : "выс"} ${suit?.symbol || ""}`;
+  }
+
+  return "";
+}
+
+function canHumanPlay(card) {
+  if (state.phase !== "playing" || state.busy || state.activePlayerId !== "human") {
+    return false;
+  }
+
+  return isLegalCard("human", card);
+}
+
+function isLegalCard(playerId, card) {
+  return getIllegalMoveReason(playerId, card) === "";
+}
+
+function getIllegalMoveReason(playerId, card) {
+  const leadSuit = getLeadSuit();
+
+  if (!leadSuit || card.type === "joker") {
+    return "";
+  }
+
+  if (card.suit === leadSuit) {
+    return "";
+  }
+
+  if (hasSuit(playerId, leadSuit)) {
+    return "Нужно ходить в масть";
+  }
+
+  const trumpSuit = getTrumpSuit();
+
+  if (trumpSuit && card.suit !== trumpSuit && hasSuit(playerId, trumpSuit)) {
+    return "Масти нет — нужно кинуть козырь";
+  }
+
+  return "";
+}
+
+function getLeadSuit() {
+  const firstPlay = state.currentTrick[0];
+
+  if (firstPlay?.card.type === "joker" && firstPlay.jokerMode === "lead" && firstPlay.jokerSuit) {
+    return firstPlay.jokerSuit;
+  }
+
+  const leadPlay = state.currentTrick.find((play) => play.card.type !== "joker");
+  return leadPlay?.card.suit || null;
+}
+
+function getTrumpSuit() {
+  return state.trump?.type === "standard" ? state.trump.suit : null;
+}
+
+function hasSuit(playerId, suit) {
+  return state.hands[playerId].some((handCard) => handCard.type !== "joker" && handCard.suit === suit);
+}
+
+function playCard(playerId, cardId, options = {}) {
+  const hand = state.hands[playerId];
+  const cardIndex = hand.findIndex((card) => card.id === cardId);
+
+  if (cardIndex === -1) {
+    return false;
+  }
+
+  const card = hand[cardIndex];
+
+  const illegalReason = getIllegalMoveReason(playerId, card);
+
+  if (illegalReason) {
+    if (playerId === "human") {
+      showNotice(illegalReason);
+    }
+
+    return false;
+  }
+
+  hand.splice(cardIndex, 1);
+
+  if (card.type === "joker") {
+    getPlayerById(playerId).jokersPlayed += 1;
+  }
+
+  state.currentTrick.push({
+    player: getPlayerById(playerId),
+    card,
+    jokerMode: card.type === "joker" ? options.jokerMode || "lead" : null,
+    jokerCommand: options.jokerCommand || null,
+    jokerSuit: options.jokerSuit || null,
+    order: state.currentTrick.length,
+  });
+  state.activePlayerId = getNextPlayerId(playerId);
+  render();
+  return true;
+}
+
+function handleHumanCardClick(event) {
+  const cardButton = event.target.closest("[data-card]");
+
+  if (!cardButton || state.phase !== "playing" || state.activePlayerId !== "human" || state.busy) {
+    return;
+  }
+
+  const card = state.hands.human?.find((handCard) => handCard.id === cardButton.dataset.card);
+
+  if (needsLeadJokerChoice(card)) {
+    state.phase = "joker-lead-command";
+    state.pendingJokerCardId = card.id;
+    state.pendingJokerCommand = null;
+    showNotice("Команда джокера");
+    render();
+    return;
+  }
+
+  if (needsJokerModeChoice(card)) {
+    state.phase = "joker-mode";
+    state.pendingJokerCardId = card.id;
+    showNotice("Как сыграть джокером?");
+    render();
+    return;
+  }
+
+  if (!playCard("human", cardButton.dataset.card)) {
+    cardButton.classList.remove("is-invalid");
+    void cardButton.offsetWidth;
+    cardButton.classList.add("is-invalid");
+    return;
+  }
+
+  continueBotTurns();
+}
+
+function renderBidding() {
+  if (state.phase === "joker-lead-command" && state.activePlayerId === "human") {
+    renderLeadJokerCommandSelection();
+    return;
+  }
+
+  if (state.phase === "joker-lead-suit" && state.activePlayerId === "human") {
+    renderLeadJokerSuitSelection();
+    return;
+  }
+
+  if (state.phase === "joker-mode" && state.activePlayerId === "human") {
+    renderJokerModeSelection();
+    return;
+  }
+
+  if (state.phase === "trump-select" && state.trumpChooserId === "human") {
+    renderTrumpSelection();
+    return;
+  }
+
+  elements.bidPanel.hidden = state.phase !== "bidding" || getCurrentBidderId() !== "human";
+
+  if (elements.bidPanel.hidden) {
+    elements.bidOptions.replaceChildren();
+    return;
+  }
+
+  elements.bidTitle.textContent = "Заказ";
+  const currentBidTotal = getOrderedBidTotal();
+  const isLastBidder = state.biddingIndex === state.biddingOrder.length - 1;
+  const buttons = BID_OPTIONS.map((bid) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "bid-option";
+    button.dataset.bid = String(bid);
+    button.textContent = bid === "pass" ? "Пас" : String(bid);
+
+    const bidValue = bid === "pass" ? 0 : bid;
+    const isForbidden = isLastBidder && currentBidTotal + bidValue === 9;
+    button.disabled = isForbidden;
+    button.classList.toggle("is-forbidden", isForbidden);
+
+    return button;
+  });
+
+  elements.bidOptions.replaceChildren(...buttons);
+}
+
+function renderTrumpSelection() {
+  elements.bidPanel.hidden = false;
+  elements.bidTitle.textContent = "Козырь";
+
+  const suitButtons = FIXED_TRUMP_BY_GAME.map((suitId) => SUITS.find((suit) => suit.id === suitId)).map((suit) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "bid-option";
+    button.dataset.trump = suit.id;
+    button.textContent = suit.symbol;
+    return button;
+  });
+
+  const noTrumpButton = document.createElement("button");
+  noTrumpButton.type = "button";
+  noTrumpButton.className = "bid-option";
+  noTrumpButton.dataset.trump = "no-trump";
+  noTrumpButton.textContent = "Безка";
+
+  elements.bidOptions.replaceChildren(...suitButtons, noTrumpButton);
+}
+
+function renderJokerModeSelection() {
+  elements.bidPanel.hidden = false;
+  elements.bidTitle.textContent = "Джокер";
+
+  const beatButton = document.createElement("button");
+  beatButton.type = "button";
+  beatButton.className = "bid-option";
+  beatButton.dataset.jokerMode = "beat";
+  beatButton.textContent = "Перебить";
+
+  const duckButton = document.createElement("button");
+  duckButton.type = "button";
+  duckButton.className = "bid-option";
+  duckButton.dataset.jokerMode = "duck";
+  duckButton.textContent = "Подсунуть";
+
+  elements.bidOptions.replaceChildren(beatButton, duckButton);
+}
+
+function renderLeadJokerCommandSelection() {
+  elements.bidPanel.hidden = false;
+  elements.bidTitle.textContent = "Джокер";
+
+  const highButton = document.createElement("button");
+  highButton.type = "button";
+  highButton.className = "bid-option";
+  highButton.dataset.jokerLeadCommand = "high";
+  highButton.textContent = "Высшая";
+
+  const takeButton = document.createElement("button");
+  takeButton.type = "button";
+  takeButton.className = "bid-option";
+  takeButton.dataset.jokerLeadCommand = "take";
+  takeButton.textContent = "Берёт";
+
+  elements.bidOptions.replaceChildren(highButton, takeButton);
+}
+
+function renderLeadJokerSuitSelection() {
+  elements.bidPanel.hidden = false;
+  elements.bidTitle.textContent = state.pendingJokerCommand === "take" ? "Берёт масть" : "Высшая масть";
+
+  const suitButtons = FIXED_TRUMP_BY_GAME.map((suitId) => SUITS.find((suit) => suit.id === suitId)).map((suit) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "bid-option";
+    button.dataset.jokerLeadSuit = suit.id;
+    button.textContent = suit.symbol;
+    return button;
+  });
+
+  elements.bidOptions.replaceChildren(...suitButtons);
+}
+
+function getOrderedBidTotal() {
+  return state.players.reduce((sum, player) => {
+    return sum + (typeof player.bid === "number" ? player.bid : 0);
+  }, 0);
+}
+
+function handleBidClick(event) {
+  const leadCommandButton = event.target.closest("[data-joker-lead-command]");
+
+  if (leadCommandButton && state.phase === "joker-lead-command" && state.activePlayerId === "human") {
+    state.pendingJokerCommand = leadCommandButton.dataset.jokerLeadCommand;
+    state.phase = "joker-lead-suit";
+    render();
+    return;
+  }
+
+  const leadSuitButton = event.target.closest("[data-joker-lead-suit]");
+
+  if (leadSuitButton && state.phase === "joker-lead-suit" && state.activePlayerId === "human") {
+    const cardId = state.pendingJokerCardId;
+    const command = state.pendingJokerCommand;
+    state.pendingJokerCardId = null;
+    state.pendingJokerCommand = null;
+    state.phase = "playing";
+    elements.bidPanel.hidden = true;
+    hideNotice();
+
+    if (cardId && playCard("human", cardId, { jokerMode: "lead", jokerCommand: command, jokerSuit: leadSuitButton.dataset.jokerLeadSuit })) {
+      continueBotTurns();
+    }
+
+    return;
+  }
+
+  const jokerModeButton = event.target.closest("[data-joker-mode]");
+
+  if (jokerModeButton && state.phase === "joker-mode" && state.activePlayerId === "human") {
+    const cardId = state.pendingJokerCardId;
+    state.pendingJokerCardId = null;
+    state.phase = "playing";
+    elements.bidPanel.hidden = true;
+    hideNotice();
+
+    if (cardId && playCard("human", cardId, { jokerMode: jokerModeButton.dataset.jokerMode })) {
+      continueBotTurns();
+    }
+
+    return;
+  }
+
+  const trumpButton = event.target.closest("[data-trump]");
+
+  if (trumpButton && state.phase === "trump-select" && state.trumpChooserId === "human") {
+    state.trump = createTrumpFromChoice(trumpButton.dataset.trump);
+    state.trumpChooserId = null;
+    hideNotice();
+    completeDealAfterTrump();
+    render();
+    return;
+  }
+
+  const button = event.target.closest("[data-bid]");
+
+  if (!button || state.phase !== "bidding" || button.disabled || getCurrentBidderId() !== "human") {
+    return;
+  }
+
+  const bid = button.dataset.bid === "pass" ? "pass" : Number(button.dataset.bid);
+  submitBid("human", bid);
+  hideNotice();
+  processBiddingTurns();
+}
+
+function processBiddingTurns() {
+  if (state.phase !== "bidding") {
+    return;
+  }
+
+  const bidderId = getCurrentBidderId();
+
+  if (!bidderId) {
+    startPlayingCurrentGame();
+    return;
+  }
+
+  if (bidderId === "human") {
+    if (state.autoPlay) {
+      submitBid("human", chooseBotBid("human"));
+      processBiddingTurns();
+      return;
+    }
+
+    state.busy = false;
+    showNotice("Твой заказ");
+    render();
+    return;
+  }
+
+  state.busy = true;
+  render();
+
+  window.setTimeout(() => {
+    submitBid(bidderId, chooseBotBid(bidderId));
+    processBiddingTurns();
+  }, getDelay(420));
+}
+
+function getCurrentBidderId() {
+  return state.biddingOrder[state.biddingIndex] || null;
+}
+
+function submitBid(playerId, bid) {
+  getPlayerById(playerId).bid = bid;
+  state.biddingIndex += 1;
+}
+
+function chooseBotBid(playerId) {
+  const preferredBid = estimateBidFromHand(playerId);
+
+  if (isBidAllowedForCurrentTurn(preferredBid)) {
+    return preferredBid;
+  }
+
+  const fallbackBids = [...BID_OPTIONS].sort((firstBid, secondBid) => {
+    return Math.abs(getBidNumber(firstBid) - getBidNumber(preferredBid)) - Math.abs(getBidNumber(secondBid) - getBidNumber(preferredBid));
+  });
+
+  return fallbackBids.find((bid) => isBidAllowedForCurrentTurn(bid)) ?? "pass";
+}
+
+function estimateBidFromHand(playerId) {
+  const hand = state.hands[playerId] || [];
+  const rawScore = hand.reduce((sum, card) => sum + getBidCardValue(card), 0);
+  const estimated = Math.floor(rawScore);
+  const capped = clamp(estimated, 0, 8);
+
+  if (capped >= 8 && hand.filter((card) => card.type === "joker").length === 2 && hand.some(isAceOrTrumpAce)) {
+    return 9;
+  }
+
+  return capped === 0 ? "pass" : capped;
+}
+
+function getBidCardValue(card) {
+  if (card.type === "joker") {
+    return 1.65;
+  }
+
+  const trumpSuit = getTrumpSuit();
+  const isTrump = trumpSuit && card.suit === trumpSuit;
+
+  if (isTrump) {
+    if (card.rank === "A") return 1.25;
+    if (card.rank === "K") return 0.95;
+    if (card.rank === "Q") return 0.65;
+    if (card.rank === "J" || card.rank === "10") return 0.42;
+    return 0.22;
+  }
+
+  if (card.rank === "A") return 0.85;
+  if (card.rank === "K") return 0.45;
+  if (card.rank === "Q") return 0.22;
+
+  return 0.06;
+}
+
+function isAceOrTrumpAce(card) {
+  return card.type === "standard" && card.rank === "A" && (!getTrumpSuit() || card.suit === getTrumpSuit());
+}
+
+function getBidNumber(bid) {
+  return bid === "pass" ? 0 : bid;
+}
+
+function isBidAllowedForCurrentTurn(bid) {
+  const isLastBidder = state.biddingIndex === state.biddingOrder.length - 1;
+  const bidValue = bid === "pass" ? 0 : bid;
+
+  return !isLastBidder || getOrderedBidTotal() + bidValue !== 9;
+}
+
+function startPlayingCurrentGame() {
+  state.phase = "playing";
+  state.busy = false;
+  state.activePlayerId = state.leadPlayerId;
+  hideNotice();
+  render();
+
+  if (state.autoPlay) {
+    continueBotTurns();
+    return;
+  }
+
+  if (state.activePlayerId !== "human") {
+    continueBotTurns();
+  }
+}
+
+function continueBotTurns() {
+  if (state.currentTrick.length === state.players.length) {
+    finishTrickSoon();
+    return;
+  }
+
+  if (state.activePlayerId === "human") {
+    if (state.autoPlay) {
+      const chosenCard = chooseBotCard("human");
+
+      if (chosenCard) {
+        playCard("human", chosenCard.id, getJokerPlayOptions("human", chosenCard));
+      }
+
+      continueBotTurns();
+      return;
+    }
+
+    render();
+    return;
+  }
+
+  state.busy = true;
+  render();
+
+  window.setTimeout(() => {
+    const botId = state.activePlayerId;
+    const chosenCard = chooseBotCard(botId);
+
+    if (chosenCard) {
+      playCard(botId, chosenCard.id, getJokerPlayOptions(botId, chosenCard));
+    }
+
+    state.busy = false;
+    continueBotTurns();
+  }, getDelay(520));
+}
+
+function chooseBotCard(playerId) {
+  const hand = state.hands[playerId];
+  const legalCards = hand.filter((card) => isLegalCard(playerId, card));
+  const candidates = legalCards.length ? legalCards : hand;
+  const wantsTrick = shouldPlayerTakeTrick(playerId);
+
+  if (!state.currentTrick.length) {
+    return [...candidates].sort((firstCard, secondCard) => {
+      return wantsTrick ? compareBotCards(secondCard, firstCard) : compareBotCards(firstCard, secondCard);
+    })[0];
+  }
+
+  if (wantsTrick) {
+    const winningCards = candidates.filter((card) => wouldCardWinCurrentTrick(playerId, card));
+
+    if (winningCards.length) {
+      return [...winningCards].sort(compareBotCards)[0];
+    }
+  }
+
+  return [...candidates].sort(compareBotCards)[0];
+}
+
+function shouldPlayerTakeTrick(playerId) {
+  const player = getPlayerById(playerId);
+
+  if (isFourHundredPulka()) {
+    return player.tricks < 3;
+  }
+
+  if (player.bid === "pass") {
+    return false;
+  }
+
+  return player.tricks < player.bid;
+}
+
+function wouldCardWinCurrentTrick(playerId, card) {
+  const simulatedPlay = {
+    player: getPlayerById(playerId),
+    card,
+    jokerMode: chooseJokerMode(playerId, card),
+    jokerCommand: card.type === "joker" && state.currentTrick.length === 0 ? chooseLeadJokerAction(playerId).jokerCommand : null,
+    jokerSuit: card.type === "joker" && state.currentTrick.length === 0 ? chooseLeadJokerAction(playerId).jokerSuit : null,
+    order: state.currentTrick.length,
+  };
+
+  state.currentTrick.push(simulatedPlay);
+  const winner = state.currentTrick.length === state.players.length ? getTrickWinner() : getCurrentWinningPlay();
+  state.currentTrick.pop();
+
+  return winner?.player.id === playerId;
+}
+
+function getCurrentWinningPlay() {
+  return getTrickWinner();
+}
+
+function needsJokerModeChoice(card) {
+  return card?.type === "joker" && state.currentTrick.length > 0;
+}
+
+function needsLeadJokerChoice(card) {
+  return card?.type === "joker" && state.currentTrick.length === 0;
+}
+
+function getJokerPlayOptions(playerId, card) {
+  if (needsLeadJokerChoice(card)) {
+    return {
+      jokerMode: "lead",
+      ...chooseLeadJokerAction(playerId),
+    };
+  }
+
+  return {
+    jokerMode: chooseJokerMode(playerId, card),
+  };
+}
+
+function chooseJokerMode(playerId, card) {
+  if (!needsJokerModeChoice(card)) {
+    return card?.type === "joker" ? "lead" : null;
+  }
+
+  const player = getPlayerById(playerId);
+
+  if (player.bid !== "pass" && player.tricks < player.bid) {
+    return "beat";
+  }
+
+  return "duck";
+}
+
+function chooseLeadJokerAction(playerId) {
+  const player = getPlayerById(playerId);
+  const needsTrick = player.bid === "pass" ? player.tricks === 0 : player.tricks < player.bid;
+
+  return {
+    jokerCommand: needsTrick ? "high" : "take",
+    jokerSuit: chooseLeadJokerSuit(playerId),
+  };
+}
+
+function chooseLeadJokerSuit(playerId) {
+  const suitCounts = new Map();
+
+  for (const card of state.hands[playerId]) {
+    if (card.type === "standard") {
+      suitCounts.set(card.suit, (suitCounts.get(card.suit) || 0) + 1);
+    }
+  }
+
+  if (suitCounts.size) {
+    return [...suitCounts.entries()].sort((first, second) => {
+      if (second[1] !== first[1]) {
+        return second[1] - first[1];
+      }
+
+      return FIXED_TRUMP_BY_GAME.indexOf(first[0]) - FIXED_TRUMP_BY_GAME.indexOf(second[0]);
+    })[0][0];
+  }
+
+  return getTrumpSuit() || "hearts";
+}
+
+function compareBotCards(firstCard, secondCard) {
+  if (firstCard.type === "joker" && secondCard.type !== "joker") {
+    return 1;
+  }
+
+  if (firstCard.type !== "joker" && secondCard.type === "joker") {
+    return -1;
+  }
+
+  if (firstCard.type === "joker" && secondCard.type === "joker") {
+    return firstCard.color === "black" ? -1 : 1;
+  }
+
+  return RANK_POWER[firstCard.rank] - RANK_POWER[secondCard.rank];
+}
+
+function finishTrickSoon() {
+  state.busy = true;
+  render();
+
+  window.setTimeout(() => {
+    const winnerPlay = getTrickWinner();
+    const winner = winnerPlay.player;
+
+    winner.tricks += 1;
+    state.leadPlayerId = winner.id;
+    state.activePlayerId = winner.id;
+    state.currentTrick = [];
+    state.trickNumber += 1;
+    state.busy = false;
+    render();
+
+    if (!hasCardsLeft()) {
+      finishGameSoon();
+      return;
+    }
+
+    if (hasCardsLeft() && (state.autoPlay || state.activePlayerId !== "human")) {
+      continueBotTurns();
+    }
+  }, getDelay(900));
+}
+
+function finishGameSoon() {
+  state.busy = true;
+  render();
+  showNotice(`Игра ${state.currentGame} завершена`);
+
+  window.setTimeout(() => {
+    const finishedGame = state.currentGame;
+    writeCurrentGameScore();
+
+    if (isFinalGame()) {
+      finishMatch();
+      return;
+    }
+
+    const finishedPulka = state.currentPulka;
+    advanceGame();
+    startDeal();
+
+    const nextText =
+      finishedGame === 4 && state.currentPulka !== finishedPulka
+        ? `Пулька ${state.currentPulka}. Игра ${state.currentGame}. Новая раздача`
+        : `Игра ${state.currentGame}. Новая раздача`;
+
+    showNotice(nextText);
+    render();
+
+    window.setTimeout(hideNotice, getDelay(1200));
+  }, getDelay(1300));
+}
+
+function writeCurrentGameScore() {
+  const pulkaOffset = (state.currentPulka - 1) * 5;
+  const gameRow = state.scoreRows[pulkaOffset + state.currentGame - 1];
+  const playerScores = state.players.map((player) => ({
+    ...calculatePlayerScore(player),
+    jokerCount: player.jokersPlayed,
+  }));
+
+  gameRow.entries = playerScores.map(createScoreEntry);
+  syncScoreRow(gameRow);
+
+  if (state.currentGame === 4) {
+    applyPulkaBonuses(pulkaOffset);
+    const totalRow = state.scoreRows[pulkaOffset + 4];
+    totalRow.cells = state.players.map((player) => formatTotalScore(calculateMatchTotal(player.id)));
+  }
+}
+
+function formatPlayerScore(player) {
+  return formatScoreEntryLabel(calculatePlayerScore(player));
+}
+
+function scoreValue(player) {
+  return calculatePlayerScore(player).value;
+}
+
+function calculatePlayerScore(player) {
+  if (isFourHundredPulka()) {
+    return calculateFourHundredScore(player);
+  }
+
+  if (player.bid === "pass") {
+    const value = player.tricks === 0 ? FULFILLED_SCORE.pass : player.tricks * 10;
+
+    return {
+      bidLabel: "-",
+      scoreLabel: String(value),
+      value,
+      fulfilled: player.tricks === 0,
+    };
+  }
+
+  if (player.tricks === 0) {
+    return {
+      bidLabel: String(player.bid),
+      scoreLabel: "⊣",
+      value: -250,
+      fulfilled: false,
+    };
+  }
+
+  if (player.tricks === player.bid) {
+    const value = FULFILLED_SCORE[player.bid];
+
+    return {
+      bidLabel: String(player.bid),
+      scoreLabel: String(value),
+      value,
+      fulfilled: true,
+    };
+  }
+
+  const value = player.tricks * 10;
+
+  return {
+    bidLabel: String(player.bid),
+    scoreLabel: String(value),
+    value,
+    fulfilled: false,
+  };
+}
+
+function calculateFourHundredScore(player) {
+  if (player.tricks === 0) {
+    return {
+      bidLabel: "3",
+      scoreLabel: "⊣",
+      value: -500,
+      fulfilled: false,
+    };
+  }
+
+  if (player.tricks === 3) {
+    return {
+      bidLabel: "3",
+      scoreLabel: "400",
+      value: 400,
+      fulfilled: true,
+    };
+  }
+
+  const value = player.tricks * 20;
+
+  return {
+    bidLabel: "3",
+    scoreLabel: String(value),
+    value,
+    fulfilled: false,
+  };
+}
+
+function createScoreEntry(score) {
+  return {
+    ...score,
+    label: formatScoreEntryLabel(score),
+    jokerCount: score.jokerCount || 0,
+    crossed: false,
+    premium: false,
+  };
+}
+
+function formatScoreEntryLabel(entry) {
+  return `${entry.bidLabel} ${entry.scoreLabel}`;
+}
+
+function syncScoreRow(row) {
+  row.cells = row.entries.map(formatScoreEntryLabel);
+  row.values = row.entries.map((entry) => (entry.crossed ? 0 : entry.value));
+}
+
+function applyPulkaBonuses(pulkaOffset) {
+  const gameRows = state.scoreRows.slice(pulkaOffset, pulkaOffset + 4);
+  const premiumPlayerIndexes = [];
+
+  state.players.forEach((_, playerIndex) => {
+    const entries = gameRows.map((row) => row.entries[playerIndex]);
+
+    if (!entries.every((entry) => entry.fulfilled)) {
+      return;
+    }
+
+    const bonus = Math.max(...entries.slice(0, 3).map((entry) => entry.value));
+    const lastEntry = entries[3];
+    lastEntry.value += bonus;
+    lastEntry.scoreLabel = String(lastEntry.value);
+    lastEntry.premium = true;
+    premiumPlayerIndexes.push(playerIndex);
+  });
+
+  if (premiumPlayerIndexes.length) {
+    state.players.forEach((_, playerIndex) => {
+      if (premiumPlayerIndexes.includes(playerIndex)) {
+        return;
+      }
+
+      crossBestSuccessfulEntry(gameRows, playerIndex);
+    });
+  }
+
+  gameRows.forEach(syncScoreRow);
+}
+
+function crossBestSuccessfulEntry(gameRows, playerIndex) {
+  const candidates = gameRows.slice(0, 3).flatMap((row, rowIndex) => {
+    const entry = row.entries[playerIndex];
+
+    return entry.fulfilled && !entry.crossed ? [{ entry, rowIndex }] : [];
+  });
+
+  if (!candidates.length) {
+    return;
+  }
+
+  candidates.sort((first, second) => {
+    if (second.entry.value !== first.entry.value) {
+      return second.entry.value - first.entry.value;
+    }
+
+    return first.rowIndex - second.rowIndex;
+  });
+
+  candidates[0].entry.crossed = true;
+}
+
+function calculateMatchTotal(playerId) {
+  const playerIndex = state.players.findIndex((player) => player.id === playerId);
+
+  return state.scoreRows.reduce((sum, row) => {
+    if (row.type !== "game") {
+      return sum;
+    }
+
+    if (row.entries) {
+      const entry = row.entries[playerIndex];
+      return sum + (entry && !entry.crossed ? entry.value : 0);
+    }
+
+    return sum + (row.values?.[playerIndex] || 0);
+  }, 0);
+}
+
+function formatTotalScore(value) {
+  return (value / 100).toFixed(1).replace(".", ",");
+}
+
+function advanceGame() {
+  if (state.currentGame < 4) {
+    state.currentGame += 1;
+    return;
+  }
+
+  state.currentGame = 1;
+  state.currentPulka += 1;
+}
+
+function isFinalGame() {
+  return state.currentPulka === 5 && state.currentGame === 4;
+}
+
+function finishMatch() {
+  const winner = [...state.players].sort((firstPlayer, secondPlayer) => {
+    return calculateMatchTotal(secondPlayer.id) - calculateMatchTotal(firstPlayer.id);
+  })[0];
+
+  state.phase = "finished";
+  state.busy = false;
+  state.activePlayerId = null;
+  state.leadPlayerId = null;
+  state.currentTrick = [];
+  state.winnerId = winner.id;
+  showNotice(`Партия завершена. Победитель: ${winner.name}`);
+  render();
+}
+
+function showNotice(text) {
+  elements.tableNotice.textContent = text;
+  elements.tableNotice.hidden = false;
+}
+
+function hideNotice() {
+  elements.tableNotice.hidden = true;
+}
+
+function getTrickWinner() {
+  const activePlays = state.currentTrick.filter((play) => play.jokerMode !== "duck");
+  const leadJokerPlay = activePlays[0]?.card.type === "joker" && activePlays[0].jokerMode === "lead" ? activePlays[0] : null;
+  const jokerPlays = activePlays.filter((play) => play.card.type === "joker" && play.jokerMode === "beat");
+
+  if (jokerPlays.length) {
+    return jokerPlays.at(-1);
+  }
+
+  const trumpSuit = state.trump?.type === "standard" ? state.trump.suit : null;
+  const trumpPlays = trumpSuit ? activePlays.filter((play) => play.card.suit === trumpSuit) : [];
+
+  if (trumpPlays.length) {
+    return getHighestStandardPlay(trumpPlays);
+  }
+
+  if (leadJokerPlay) {
+    if (leadJokerPlay.jokerCommand === "take") {
+      const suitPlays = activePlays.filter((play) => play.card.suit === leadJokerPlay.jokerSuit);
+      return suitPlays.length ? getHighestStandardPlay(suitPlays) : leadJokerPlay;
+    }
+
+    return leadJokerPlay;
+  }
+
+  const winningPool = activePlays.filter((play) => play.card.suit === getLeadSuit());
+
+  return getHighestStandardPlay(winningPool);
+}
+
+function getHighestStandardPlay(plays) {
+  return [...plays].sort((firstPlay, secondPlay) => {
+    return RANK_POWER[secondPlay.card.rank] - RANK_POWER[firstPlay.card.rank];
+  })[0];
+}
+
+function getPlayerById(playerId) {
+  return state.players.find((player) => player.id === playerId);
+}
+
+function getGameLeaderId() {
+  return state.players[(state.currentGame - 1) % state.players.length].id;
+}
+
+function getTrumpForCurrentGame(deck) {
+  if (isNoTrumpPulka()) {
+    return { type: "no-trump" };
+  }
+
+  if (isFixedTrumpPulka()) {
+    return createSuitTrump(FIXED_TRUMP_BY_GAME[state.currentGame - 1]);
+  }
+
+  return getMiddleDeckTrump(deck);
+}
+
+function createTrumpFromChoice(choice) {
+  return choice === "no-trump" ? { type: "no-trump" } : createSuitTrump(choice);
+}
+
+function chooseBotTrump(playerId) {
+  const suitCounts = new Map();
+
+  for (const card of state.hands[playerId]) {
+    if (card.type === "standard") {
+      suitCounts.set(card.suit, (suitCounts.get(card.suit) || 0) + 1);
+    }
+  }
+
+  if (!suitCounts.size) {
+    return { type: "no-trump" };
+  }
+
+  const chosenSuit = [...suitCounts.entries()].sort((first, second) => {
+    if (second[1] !== first[1]) {
+      return second[1] - first[1];
+    }
+
+    return FIXED_TRUMP_BY_GAME.indexOf(first[0]) - FIXED_TRUMP_BY_GAME.indexOf(second[0]);
+  })[0][0];
+
+  return createSuitTrump(chosenSuit);
+}
+
+function getMiddleDeckTrump(deck) {
+  const trumpCard = deck[Math.floor(deck.length / 2)];
+
+  return trumpCard.type === "joker" ? { type: "no-trump" } : trumpCard;
+}
+
+function createSuitTrump(suitId) {
+  const suit = SUITS.find((item) => item.id === suitId);
+
+  return {
+    id: `fixed-${suit.id}`,
+    rank: "",
+    suit: suit.id,
+    symbol: suit.symbol,
+    color: suit.color,
+    type: "standard",
+    fixed: true,
+  };
+}
+
+function isFourHundredPulka() {
+  return state.currentPulka === 3;
+}
+
+function isChooseTrumpPulka() {
+  return state.currentPulka === 2;
+}
+
+function isNoTrumpPulka() {
+  return state.currentPulka === 4;
+}
+
+function isFixedTrumpPulka() {
+  return state.currentPulka === 5;
+}
+
+function getPlayerOrderFrom(playerId) {
+  const startIndex = state.players.findIndex((player) => player.id === playerId);
+
+  return state.players.map((_, offset) => {
+    return state.players[(startIndex + offset) % state.players.length].id;
+  });
+}
+
+function getNextPlayerId(playerId) {
+  const playerIndex = state.players.findIndex((player) => player.id === playerId);
+  const nextPlayer = state.players[(playerIndex + 1) % state.players.length];
+  return nextPlayer.id;
+}
+
+function hasCardsLeft() {
+  return Object.values(state.hands).some((hand) => hand.length > 0);
+}
+
+function createTrumpCardElement(card) {
+  const cardElement = document.createElement("span");
+  cardElement.className = `trump-card ${card.color}`;
+  cardElement.innerHTML = `
+    <span class="trump-rank">${card.fixed ? "К" : card.rank}</span>
+    <span class="trump-suit">${card.symbol}</span>
+  `;
+
+  return cardElement;
+}
+
+function renderScoreSheet() {
+  const headerCells = [
+    createScoreCell("", "header"),
+    ...state.players.map((player) => createScoreCell(player.name, "header")),
+  ];
+
+  const rowCells = state.scoreRows.flatMap((row) => {
+    if (row.type === "total") {
+      return [createScoreCell("", "total"), ...row.cells.map((cell) => createScoreCell(cell, "total"))];
+    }
+
+    return [
+      createScoreCell(`${row.game})`, "round-label"),
+      ...(row.entries
+        ? row.entries.map((entry) => createScoreCell(createScoreEntryElement(entry), entry.premium ? "premium" : ""))
+        : row.cells.map((cell) => createScoreCell(formatScoreCell(cell)))),
+    ];
+  });
+
+  elements.scoreGrid.replaceChildren(...headerCells, ...rowCells);
+}
+
+function createScoreCell(content, className = "") {
+  const cell = document.createElement("div");
+  cell.className = `score-cell ${className}`.trim();
+
+  if (typeof content === "string") {
+    cell.innerHTML = content.replaceAll("•", '<span class="joker-dot">•</span>');
+  } else {
+    cell.append(content);
+  }
+
+  return cell;
+}
+
+function formatScoreCell(value) {
+  return value.replace("⊣", '<span class="barrel-mark">⊣</span>');
+}
+
+function createScoreEntryElement(entry) {
+  const wrapper = document.createElement("span");
+  wrapper.className = "score-entry";
+
+  const bid = document.createElement("span");
+  bid.textContent = entry.bidLabel;
+
+  const score = document.createElement("span");
+  score.className = entry.crossed ? "score-points is-crossed" : "score-points";
+  score.innerHTML = formatScoreCell(entry.scoreLabel);
+
+  wrapper.append(bid, " ", score);
+
+  if (entry.jokerCount > 0) {
+    const dots = document.createElement("span");
+    dots.className = "joker-dots";
+    dots.textContent = "•".repeat(entry.jokerCount);
+    wrapper.append(" ", dots);
+  }
+
+  return wrapper;
+}
+
+function toggleScoreSheet() {
+  elements.scoreSheet.hidden = !elements.scoreSheet.hidden;
+}
+
+function getDevTargetFromUrl() {
+  const pulka = Number(urlParams.get("pulka"));
+  const game = Number(urlParams.get("game"));
+
+  if (!Number.isInteger(pulka) || !Number.isInteger(game)) {
+    return null;
+  }
+
+  return {
+    pulka: clamp(pulka, 1, 5),
+    game: clamp(game, 1, 4),
+  };
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getDelay(delay) {
+  return state.autoPlay ? 0 : delay;
+}
+
+elements.startGame.addEventListener("click", startGame);
+elements.rulesToggle.addEventListener("click", () => {
+  elements.rulesCard.hidden = !elements.rulesCard.hidden;
+});
+elements.scoreButton.addEventListener("click", toggleScoreSheet);
+elements.scoreClose.addEventListener("click", toggleScoreSheet);
+elements.playerHand.addEventListener("click", handleHumanCardClick);
+elements.bidOptions.addEventListener("click", handleBidClick);
+
+if (urlParams.has("demo")) {
+  startGame();
+}
+
+if (urlParams.has("score")) {
+  elements.scoreSheet.hidden = false;
+}
+
+window.jokerDeck = createJokerDeck();
+window.jokerState = state;
