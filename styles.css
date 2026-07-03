@@ -189,12 +189,11 @@ input {
 }
 
 .trump-card {
-  width: 34px;
-  height: 48px;
+  width: 42px;
+  height: 58px;
   display: grid;
-  grid-template-rows: 18px 1fr;
   place-items: center;
-  padding: 4px 3px;
+  padding: 4px;
   border: 1px solid rgba(10, 20, 26, 0.32);
   border-radius: 4px;
   background:
@@ -207,12 +206,43 @@ input {
   line-height: 1;
 }
 
-.trump-rank {
-  font-size: 13px;
+.trump-card.is-revealed {
+  animation: trump-reveal 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes trump-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) rotate(-8deg) scale(0.72);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(2px) rotate(2deg) scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
 }
 
 .trump-suit {
-  font-size: 22px;
+  font-size: 38px;
+}
+
+.trump-card.no-trump-card {
+  color: #d61022;
+  grid-template-rows: 1fr auto;
+}
+
+.trump-joker-star {
+  font-size: 30px;
+}
+
+.trump-joker-label {
+  font-size: 9px;
+  letter-spacing: 0;
 }
 
 .table::before {
@@ -454,6 +484,26 @@ input {
   box-shadow: none;
 }
 
+.table-menu {
+  position: absolute;
+  top: 4.5%;
+  right: 5%;
+  z-index: 6;
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 200, 255, 0.45);
+  border-radius: 50%;
+  background: rgba(2, 15, 20, 0.82);
+  color: #eaffff;
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
 .hidden-cards {
   position: absolute;
   z-index: 2;
@@ -569,6 +619,57 @@ input {
   display: none;
 }
 
+.game-dialog {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 14;
+  width: min(350px, 68%);
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255, 214, 41, 0.5);
+  border-radius: 7px;
+  background: rgba(4, 14, 18, 0.94);
+  color: #fff;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+.game-dialog[hidden] {
+  display: none;
+}
+
+.dialog-title {
+  color: #fff3a6;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dialog-action {
+  min-height: 38px;
+  border: 1px solid rgba(0, 200, 255, 0.42);
+  border-radius: 6px;
+  background: rgba(5, 26, 36, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.dialog-action.primary {
+  border-color: rgba(255, 214, 41, 0.72);
+  background: #ffd629;
+  color: #07110d;
+}
+
 .bid-title {
   margin-bottom: 8px;
   color: #fff3a6;
@@ -601,26 +702,109 @@ input {
   cursor: not-allowed;
 }
 
+.joker-duck-option {
+  border-color: rgba(255, 196, 74, 0.7);
+  background: rgba(120, 76, 12, 0.92);
+  color: #ffe6a3;
+}
+
+.joker-beat-option {
+  border-color: rgba(21, 216, 101, 0.72);
+  background: rgba(9, 92, 44, 0.92);
+  color: #baffce;
+}
+
+.joker-take-option,
+.joker-high-option {
+  min-height: 38px;
+}
+
 .played-card {
+  --played-transform: none;
   display: grid;
   justify-items: center;
   gap: 3px;
+  transform: var(--played-transform);
 }
 
 .played-card.left {
-  transform: translateY(8px) rotate(-6deg);
+  --played-transform: translateY(8px) rotate(-6deg);
 }
 
 .played-card.top {
-  transform: translateY(-4px) rotate(2deg);
+  --played-transform: translateY(-4px) rotate(2deg);
 }
 
 .played-card.right {
-  transform: translateY(8px) rotate(6deg);
+  --played-transform: translateY(8px) rotate(6deg);
 }
 
 .played-card.bottom {
-  transform: translateY(15px);
+  --played-transform: translateY(15px);
+}
+
+.played-card.is-entering {
+  animation: card-enter-bottom 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.played-card.left.is-entering {
+  animation-name: card-enter-left;
+}
+
+.played-card.top.is-entering {
+  animation-name: card-enter-top;
+}
+
+.played-card.right.is-entering {
+  animation-name: card-enter-right;
+}
+
+@keyframes card-enter-left {
+  0% {
+    opacity: 0;
+    transform: translate(-150px, 18px) rotate(-22deg) scale(0.72);
+  }
+
+  100% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+}
+
+@keyframes card-enter-top {
+  0% {
+    opacity: 0;
+    transform: translate(0, -110px) rotate(8deg) scale(0.72);
+  }
+
+  100% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+}
+
+@keyframes card-enter-right {
+  0% {
+    opacity: 0;
+    transform: translate(150px, 18px) rotate(22deg) scale(0.72);
+  }
+
+  100% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+}
+
+@keyframes card-enter-bottom {
+  0% {
+    opacity: 0;
+    transform: translate(0, 130px) rotate(-5deg) scale(0.72);
+  }
+
+  100% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
 }
 
 .played-card.is-ducked .card {
@@ -929,10 +1113,35 @@ input {
 
 .barrel-mark {
   display: inline-block;
-  color: #172146;
-  font-size: 23px;
-  font-weight: 900;
-  transform: translateY(2px) skewX(-8deg);
+  position: relative;
+  width: 13px;
+  height: 17px;
+  margin-left: 1px;
+  vertical-align: -3px;
+  transform: rotate(-3deg);
+}
+
+.barrel-mark::before,
+.barrel-mark::after {
+  content: "";
+  position: absolute;
+  background: #172146;
+  border-radius: 999px;
+}
+
+.barrel-mark::before {
+  left: 2px;
+  top: 1px;
+  width: 2px;
+  height: 15px;
+}
+
+.barrel-mark::after {
+  left: 3px;
+  top: 9px;
+  width: 9px;
+  height: 2px;
+  transform: rotate(-2deg);
 }
 
 @media (max-width: 700px), (max-height: 340px) {
@@ -1005,6 +1214,12 @@ input {
     font-size: 35px;
   }
 
+  .table-menu {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+
   .score {
     width: 34px;
     height: 53px;
@@ -1025,7 +1240,289 @@ input {
   }
 
   .trump-card {
-    width: 30px;
+    width: 36px;
+    height: 50px;
+  }
+
+  .trump-suit {
+    font-size: 32px;
+  }
+
+  .trump-joker-star {
+    font-size: 26px;
+  }
+}
+
+@media (orientation: portrait) {
+  html,
+  body {
+    min-height: 100%;
+    min-height: 100dvh;
+  }
+
+  .phone-screen {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .table-wrap {
+    padding: 8px;
+  }
+
+  .game-hud {
+    left: 10px;
+    top: 10px;
+    max-width: 150px;
+  }
+
+  .hud-pill {
+    padding: 5px 7px;
+  }
+
+  .trump-pill {
+    min-height: 47px;
+    gap: 6px;
+  }
+
+  .trump-card {
+    width: 34px;
+    height: 48px;
+  }
+
+  .trump-suit {
+    font-size: 30px;
+  }
+
+  .trump-joker-star {
+    font-size: 24px;
+  }
+
+  .player {
+    width: 64px;
+  }
+
+  .avatar {
+    width: 42px;
     height: 42px;
+    font-size: 21px;
+  }
+
+  .player-you .avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .name {
+    max-width: 70px;
+    min-width: 46px;
+    padding: 3px 7px 4px;
+    overflow: hidden;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .player-stats {
+    min-width: 42px;
+    height: 27px;
+    padding: 3px 6px;
+  }
+
+  .stat-score {
+    font-size: 13px;
+  }
+
+  .player-left {
+    top: 17%;
+    left: 2%;
+  }
+
+  .player-left .player-stats {
+    top: 51px;
+    left: 8px;
+  }
+
+  .player-top {
+    top: 9px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .player-top .player-stats {
+    top: 49px;
+    left: 11px;
+  }
+
+  .player-right {
+    top: 17%;
+    right: 2%;
+  }
+
+  .player-right .player-stats {
+    top: 51px;
+    left: 8px;
+  }
+
+  .player-you {
+    left: 12px;
+    bottom: 78px;
+  }
+
+  .player-you .player-stats {
+    top: 10px;
+    right: -50px;
+  }
+
+  .turn-pill {
+    width: 92px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .player-you .turn-pill {
+    top: -28px;
+    left: 55px;
+  }
+
+  .smile {
+    top: 10px;
+    right: 58px;
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+  }
+
+  .table-menu {
+    top: 12px;
+    right: 12px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .hidden-cards span {
+    width: 22px;
+    height: 31px;
+  }
+
+  .left-stack {
+    left: 3%;
+    top: 37%;
+  }
+
+  .right-stack {
+    right: 3%;
+    top: 37%;
+  }
+
+  .top-stack {
+    left: 50%;
+    top: 80px;
+    transform: translateX(-50%);
+  }
+
+  .played-card-slot {
+    top: 36%;
+    min-width: 240px;
+    max-width: 84%;
+    min-height: 76px;
+    gap: 4px;
+  }
+
+  .played-label {
+    max-width: 52px;
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+
+  .table-notice {
+    top: 50%;
+    width: min(280px, 78%);
+    max-width: none;
+    font-size: 13px;
+  }
+
+  .bid-panel {
+    bottom: 142px;
+    width: min(350px, 88%);
+    padding: 9px;
+  }
+
+  .bid-options {
+    gap: 5px;
+  }
+
+  .bid-option {
+    min-height: 38px;
+    padding: 0 4px;
+    font-size: 13px;
+  }
+
+  .game-dialog {
+    width: min(340px, 84%);
+  }
+
+  .hand {
+    left: 50%;
+    bottom: 10px;
+    width: calc(100% - 18px);
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .card {
+    width: min(42px, calc((100vw - 42px) / 9));
+    height: min(59px, calc((100vw - 42px) / 9 * 1.42));
+    padding: 4px;
+    border-radius: 5px;
+  }
+
+  .card-center {
+    font-size: 25px;
+  }
+
+  .card-center .mini-rank {
+    font-size: 9px;
+  }
+
+  .card-corner {
+    font-size: 10px;
+  }
+
+  .card-corner.top {
+    top: 4px;
+    left: 4px;
+  }
+
+  .card-corner.bottom {
+    right: 4px;
+    bottom: 4px;
+  }
+
+  .joker-word {
+    left: 4px;
+    top: 5px;
+    font-size: 7px;
+  }
+
+  .joker-word.bottom {
+    right: 4px;
+    bottom: 5px;
+  }
+
+  .score {
+    right: 12px;
+    bottom: 82px;
+    width: 34px;
+    height: 50px;
+  }
+
+  .sheet-paper {
+    width: 94vw;
+    height: 86vh;
+    height: 86dvh;
+    padding: 18px 12px 22px;
   }
 }
