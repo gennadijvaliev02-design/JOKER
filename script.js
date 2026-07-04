@@ -242,15 +242,13 @@ function applyTableOrderFromAceWinner(aceWinnerId) {
 }
 
 function applyVisualSeatsFromPlayerOrder() {
-  const humanIndex = state.players.findIndex((player) => player.id === "human");
-  const seatsFromHuman = ["bottom", "left", "top", "right"];
+  const botSeatsByScoreOrder = ["left", "top", "right"];
+  let botSeatIndex = 0;
 
   state.players = state.players.map((player, index) => {
-    const relativeIndex = (index - humanIndex + state.players.length) % state.players.length;
-
     return {
       ...player,
-      seat: seatsFromHuman[relativeIndex],
+      seat: player.id === "human" ? "bottom" : botSeatsByScoreOrder[botSeatIndex++],
     };
   });
 }
