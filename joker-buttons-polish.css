@@ -1,0 +1,79 @@
+/* UI polish: slimmer Joker command buttons */
+.joker-take-option,
+.joker-high-option {
+  min-height: 38px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.joker-take-option {
+  min-width: 118px;
+}
+
+.joker-high-option {
+  min-width: 128px;
+}
+
+.bid-options .joker-take-option,
+.bid-options .joker-high-option {
+  aspect-ratio: auto;
+}
+
+/* Joker suit choice stays large enough for fingers, but cleaner */
+.bid-option[data-joker-lead-suit] {
+  min-width: 54px;
+  min-height: 48px;
+  padding: 4px 8px;
+  border-radius: 14px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+@media (max-width: 760px), (max-height: 430px) {
+  .joker-take-option,
+  .joker-high-option {
+    min-height: 34px;
+    height: 34px;
+    padding: 0 15px;
+    border-radius: 11px;
+    font-size: 14px;
+  }
+
+  .joker-take-option {
+    min-width: 104px;
+  }
+
+  .joker-high-option {
+    min-width: 112px;
+  }
+
+  .bid-option[data-joker-lead-suit] {
+    min-width: 48px;
+    min-height: 44px;
+    border-radius: 12px;
+    font-size: 27px;
+  }
+}
+
+@media (max-width: 420px) {
+  .joker-take-option,
+  .joker-high-option {
+    min-height: 32px;
+    height: 32px;
+    padding: 0 13px;
+    font-size: 13px;
+  }
+
+  .joker-take-option {
+    min-width: 96px;
+  }
+
+  .joker-high-option {
+    min-width: 104px;
+  }
+}
