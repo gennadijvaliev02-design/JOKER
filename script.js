@@ -651,6 +651,7 @@ function markDealAnimation() {
 }
 
 function renderTrick() {
+  elements.playedCardSlot.className = "played-card-slot";
   elements.playedCardSlot.replaceChildren(
     ...state.currentTrick.map((play) => {
       const playedCard = document.createElement("div");
@@ -1651,24 +1652,46 @@ function finishTrickSoon() {
     const winnerPlay = getTrickWinner();
     const winner = winnerPlay.player;
 
-    winner.tricks += 1;
-    playSound("trick");
-    state.leadPlayerId = winner.id;
-    state.activePlayerId = winner.id;
-    state.currentTrick = [];
-    state.trickNumber += 1;
-    state.busy = false;
-    render();
+    markTrickWinnerCard(winnerPlay);
 
-    if (!hasCardsLeft()) {
-      finishGameSoon();
-      return;
-    }
+    scheduleGameTask(() => {
+      playCollectAnimation(winner.seat);
 
-    if (hasCardsLeft() && (state.autoPlay || state.activePlayerId !== "human")) {
-      continueBotTurns();
-    }
+      scheduleGameTask(() => {
+        winner.tricks += 1;
+        playSound("trick");
+        state.leadPlayerId = winner.id;
+        state.activePlayerId = winner.id;
+        state.currentTrick = [];
+        state.trickNumber += 1;
+        state.busy = false;
+        render();
+
+        if (!hasCardsLeft()) {
+          finishGameSoon();
+          return;
+        }
+
+        if (hasCardsLeft() && (state.autoPlay || state.activePlayerId !== "human")) {
+          continueBotTurns();
+        }
+      }, getDelay(420));
+    }, getDelay(450));
   }, getDelay(900));
+}
+
+function markTrickWinnerCard(winnerPlay) {
+  const playedCards = elements.playedCardSlot?.children;
+  if (!playedCards) return;
+
+  Array.from(playedCards).forEach((cardEl, index) => {
+    cardEl.classList.toggle("is-trick-winner", state.currentTrick[index] === winnerPlay);
+  });
+}
+
+function playCollectAnimation(winnerSeat) {
+  if (!elements.playedCardSlot) return;
+  elements.playedCardSlot.classList.add(`is-collecting-${winnerSeat}`);
 }
 
 function finishGameSoon() {
