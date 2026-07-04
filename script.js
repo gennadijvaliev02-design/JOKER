@@ -238,6 +238,21 @@ function applyTableOrderFromAceWinner(aceWinnerId) {
     ...player,
     order: index + 1,
   }));
+  applyVisualSeatsFromPlayerOrder();
+}
+
+function applyVisualSeatsFromPlayerOrder() {
+  const humanIndex = state.players.findIndex((player) => player.id === "human");
+  const seatsFromHuman = ["bottom", "left", "top", "right"];
+
+  state.players = state.players.map((player, index) => {
+    const relativeIndex = (index - humanIndex + state.players.length) % state.players.length;
+
+    return {
+      ...player,
+      seat: seatsFromHuman[relativeIndex],
+    };
+  });
 }
 
 function startDeal() {
@@ -1073,6 +1088,16 @@ function chooseBotCard(playerId) {
     return [...standardCards, ...jokerCards].sort(compareBotLeadHighCards)[0];
   }
 
+  const highLeadJokerPlay = getHighLeadJokerPlay();
+
+  if (highLeadJokerPlay?.jokerSuit) {
+    const requestedSuitCards = standardCards.filter((card) => card.suit === highLeadJokerPlay.jokerSuit);
+
+    if (requestedSuitCards.length) {
+      return [...requestedSuitCards].sort(compareBotLeadHighCards)[0];
+    }
+  }
+
   if (wantsTrick) {
     const standardWinningCards = standardCards.filter((card) => wouldCardWinCurrentTrick(playerId, card));
 
@@ -1160,6 +1185,16 @@ function wouldCardWinCurrentTrick(playerId, card) {
 
 function getCurrentWinningPlay() {
   return getTrickWinner();
+}
+
+function getHighLeadJokerPlay() {
+  const firstPlay = state.currentTrick[0];
+
+  if (firstPlay?.card.type === "joker" && firstPlay.jokerMode === "lead" && firstPlay.jokerCommand === "high") {
+    return firstPlay;
+  }
+
+  return null;
 }
 
 function needsJokerModeChoice(card) {
@@ -1660,6 +1695,10 @@ function getTrickWinner() {
       }
 
       return suitPlays.length ? getHighestStandardPlay(suitPlays) : leadJokerPlay;
+    }
+
+    if (leadJokerPlay.jokerSuit === trumpSuit) {
+      return leadJokerPlay;
     }
 
     if (trumpPlays.length) {
