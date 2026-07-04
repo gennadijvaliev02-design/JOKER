@@ -1,0 +1,72 @@
+/* UI polish: make played cards in the center easier to read */
+.played-card-slot {
+  width: min(82vw, 560px);
+  min-height: 150px;
+  gap: 14px;
+}
+
+.played-card {
+  gap: 7px;
+}
+
+.played-card .card {
+  width: clamp(66px, 6.3vw, 88px);
+  height: clamp(92px, 8.8vw, 124px);
+  border-radius: 12px;
+}
+
+.played-card .card-face {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.played-label {
+  max-width: 98px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+}
+
+.played-card.is-trick-winner .card {
+  box-shadow:
+    0 0 0 3px rgba(255, 221, 87, 0.9),
+    0 0 22px rgba(255, 221, 87, 0.55),
+    0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 760px), (max-height: 430px) {
+  .played-card-slot {
+    width: min(92vw, 500px);
+    min-height: 132px;
+    gap: 10px;
+  }
+
+  .played-card .card {
+    width: clamp(58px, 13.2vw, 78px);
+    height: clamp(82px, 18.6vw, 110px);
+    border-radius: 10px;
+  }
+
+  .played-label {
+    max-width: 86px;
+    padding: 3px 7px;
+    font-size: 11.5px;
+  }
+}
+
+@media (max-width: 420px) {
+  .played-card-slot {
+    width: 94vw;
+    gap: 8px;
+  }
+
+  .played-card .card {
+    width: clamp(54px, 14vw, 70px);
+    height: clamp(76px, 19.5vw, 99px);
+  }
+}
