@@ -9,10 +9,10 @@ const RANKS = ["6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const BOT_NAMES = ["Клод", "GPT", "Qwen"];
 const FIXED_TRUMP_BY_GAME = ["hearts", "clubs", "diamonds", "spades"];
 const SUIT_SORT_WEIGHT = {
-  spades: 0,
-  clubs: 1,
-  hearts: 2,
-  diamonds: 3,
+  diamonds: 0,
+  hearts: 1,
+  clubs: 2,
+  spades: 3,
 };
 const RANK_SORT_WEIGHT = {
   A: 0,
@@ -43,6 +43,7 @@ const DEMO_BIDS = [
   [4, 1, 2, 3],
 ];
 const BID_OPTIONS = ["pass", 1, 2, 3, 4, 5, 6, 7, 8, 9];
+const EMOTIONS = ["😀", "😂", "😎", "😮", "😡", "😢", "😍", "🤔", "👏", "🔥"];
 const FULFILLED_SCORE = {
   pass: 50,
   1: 100,
@@ -61,6 +62,7 @@ const state = {
   deck: [],
   hands: {},
   currentTrick: [],
+  playedCards: [],
   phase: "idle",
   leadPlayerId: "human",
   activePlayerId: "human",
@@ -83,6 +85,8 @@ const state = {
   audioContext: null,
   dealAnimationKey: 0,
   renderedDealAnimationKey: 0,
+  emotionCooldownUntil: 0,
+  emotionTimeoutId: null,
 };
 
 const elements = {
@@ -104,6 +108,8 @@ const elements = {
   scoreSheet: document.querySelector("#score-sheet"),
   scoreClose: document.querySelector("#score-close"),
   scoreGrid: document.querySelector("#score-grid"),
+  emotionButton: document.querySelector("#emotion-button"),
+  emotionPanel: document.querySelector("#emotion-panel"),
   tableMenu: document.querySelector("#table-menu"),
   gameDialog: document.querySelector("#game-dialog"),
   gameDialogTitle: document.querySelector("#game-dialog-title"),
@@ -277,6 +283,7 @@ function startDeal() {
   state.hands = sortHands(hands);
   markDealAnimation();
   state.currentTrick = [];
+  state.playedCards = [];
   state.leadPlayerId = getGameLeaderId();
   state.activePlayerId = null;
   state.trumpChooserId = null;
@@ -333,7 +340,7 @@ function runAfterDealAnimation(callback) {
     return;
   }
 
-  scheduleGameTask(callback, 760);
+  scheduleGameTask(callback, 5600);
 }
 
 function startTrumpSelection() {
@@ -402,7 +409,7 @@ function getHandSuitGroup(suit) {
   const trumpSuit = getTrumpSuit();
 
   if (trumpSuit && suit === trumpSuit) {
-    return 10;
+    return -1;
   }
 
   return SUIT_SORT_WEIGHT[suit];
@@ -452,7 +459,10 @@ function renderPlayers() {
     const stats = taken?.closest(".player-stats");
 
     name.textContent = player.seat === "bottom" ? "Ты" : player.name;
-    avatar.textContent = player.name.slice(0, 1).toUpperCase();
+    const avatarInitial = avatar.querySelector(".avatar-initial") || document.createElement("span");
+    avatarInitial.className = "avatar-initial";
+    avatarInitial.textContent = player.name.slice(0, 1).toUpperCase();
+    avatar.prepend(avatarInitial);
     orderBadge.textContent = String(player.order);
     order.textContent = String(player.order);
     bid.textContent = formatBid(player.bid);
@@ -517,24 +527,16 @@ function isBidFulfilledNow(player) {
 }
 
 function renderHud() {
-  const activePlayer = getPlayerById(state.activePlayerId);
-  const turnText = activePlayer ? ` · ход ${activePlayer.seat === "bottom" ? "твой" : activePlayer.name}` : "";
   const chooser = getPlayerById(state.trumpChooserId);
-  const bidBalanceText = getBidBalanceText();
-  const phaseText =
-    state.phase === "finished"
-      ? " · партия завершена"
-      : state.phase === "trump-select"
-        ? ` · выбор козыря${chooser ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}` : ""}`
-      : isFourHundredPulka() && state.phase === "playing"
-        ? ` · 400${bidBalanceText} · Взятка ${state.trickNumber}${turnText}`
-      : state.phase === "bidding"
-        ? " · заказ"
-        : `${bidBalanceText} · Взятка ${state.trickNumber}${turnText}`;
-  elements.roundLabel.textContent = `Пулька ${state.currentPulka} · Игра ${state.currentGame}${phaseText}`;
+  const bidBalance = getBidBalance();
+  elements.roundLabel.hidden = !bidBalance;
+  elements.roundLabel.textContent = bidBalance?.text || "";
+  elements.roundLabel.classList.toggle("is-push", bidBalance?.type === "push");
+  elements.roundLabel.classList.toggle("is-take", bidBalance?.type === "take");
 
   if (!state.trump) {
-    elements.trumpLabel.textContent = "Козырь: ждём раздачу";
+    const chooserText = state.phase === "trump-select" && chooser ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}` : "";
+    elements.trumpLabel.textContent = state.phase === "trump-select" ? `Козырь${chooserText}` : "Козырь";
     elements.trumpLabel.dataset.trumpKey = "";
     return;
   }
@@ -543,17 +545,12 @@ function renderHud() {
   const shouldReveal = elements.trumpLabel.dataset.trumpKey !== trumpKey;
   elements.trumpLabel.dataset.trumpKey = trumpKey;
 
-  if (state.trump.type === "no-trump") {
-    elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
-    return;
-  }
-
   elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
 }
 
-function getBidBalanceText() {
+function getBidBalance() {
   if (!state.players.length || state.players.some((player) => player.bid === null)) {
-    return "";
+    return null;
   }
 
   const totalBid = state.players.reduce((sum, player) => {
@@ -562,14 +559,14 @@ function getBidBalanceText() {
   const balance = totalBid - 9;
 
   if (balance > 0) {
-    return ` · отнимается ${balance}`;
+    return { type: "take", text: `отнимается ${balance}` };
   }
 
   if (balance < 0) {
-    return ` · пихается ${Math.abs(balance)}`;
+    return { type: "push", text: `пихается ${Math.abs(balance)}` };
   }
 
-  return " · ровно";
+  return null;
 }
 
 function renderHand() {
@@ -592,7 +589,7 @@ function renderHand() {
     elements.table?.classList.add("is-dealing");
     window.setTimeout(() => {
       elements.table?.classList.remove("is-dealing");
-    }, getDelay(900));
+    }, getDelay(5600));
   }
 }
 
@@ -609,7 +606,7 @@ function createCardElement(card, options = {}) {
 
   if (options.dealIndex !== null && options.dealIndex !== undefined) {
     cardElement.classList.add("is-dealt");
-    cardElement.style.setProperty("--deal-delay", `${Math.min(options.dealIndex, 8) * 48}ms`);
+    cardElement.style.setProperty("--deal-delay", `${Math.min(options.dealIndex, 8) * 240}ms`);
   }
 
   if (options.handIndex !== undefined && options.handCount) {
@@ -770,14 +767,17 @@ function playCard(playerId, cardId, options = {}) {
     playSound("card");
   }
 
-  state.currentTrick.push({
+  const playedCard = {
     player: getPlayerById(playerId),
     card,
     jokerMode: card.type === "joker" ? options.jokerMode || "lead" : null,
     jokerCommand: options.jokerCommand || null,
     jokerSuit: options.jokerSuit || null,
     order: state.currentTrick.length,
-  });
+  };
+
+  state.currentTrick.push(playedCard);
+  state.playedCards.push(playedCard);
   state.activePlayerId = getNextPlayerId(playerId);
   render();
   return true;
@@ -866,6 +866,75 @@ function renderBidding() {
   });
 
   elements.bidOptions.replaceChildren(...buttons);
+}
+
+function renderEmotionPanel() {
+  const buttons = EMOTIONS.map((emotion) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "emotion-option";
+    button.dataset.emotion = emotion;
+    button.textContent = emotion;
+    return button;
+  });
+
+  elements.emotionPanel.replaceChildren(...buttons);
+}
+
+function toggleEmotionPanel() {
+  if (!state.started || state.phase === "idle" || isEmotionCoolingDown()) {
+    return;
+  }
+
+  elements.emotionPanel.hidden = !elements.emotionPanel.hidden;
+}
+
+function handleEmotionClick(event) {
+  const button = event.target.closest("[data-emotion]");
+
+  if (!button || isEmotionCoolingDown()) {
+    return;
+  }
+
+  showPlayerEmotion("bottom", button.dataset.emotion);
+  elements.emotionPanel.hidden = true;
+  startEmotionCooldown();
+}
+
+function showPlayerEmotion(seat, emotion) {
+  const avatar = document.querySelector(`[data-seat="${seat}"]`);
+
+  if (!avatar) {
+    return;
+  }
+
+  avatar.querySelector(".avatar-emotion")?.remove();
+
+  const bubble = document.createElement("span");
+  bubble.className = "avatar-emotion";
+  bubble.textContent = emotion;
+  avatar.append(bubble);
+
+  if (state.emotionTimeoutId) {
+    window.clearTimeout(state.emotionTimeoutId);
+  }
+
+  state.emotionTimeoutId = window.setTimeout(() => {
+    bubble.remove();
+    state.emotionTimeoutId = null;
+  }, 3000);
+}
+
+function startEmotionCooldown() {
+  state.emotionCooldownUntil = Date.now() + 3000;
+  elements.emotionButton.disabled = true;
+  window.setTimeout(() => {
+    elements.emotionButton.disabled = false;
+  }, 3000);
+}
+
+function isEmotionCoolingDown() {
+  return Date.now() < state.emotionCooldownUntil;
 }
 
 function renderTrumpSelection() {
@@ -1026,6 +1095,13 @@ function processBiddingTurns() {
   const bidderId = getCurrentBidderId();
 
   if (!bidderId) {
+    if (hasForbiddenBidTotal()) {
+      rewindLastBidForForbiddenTotal();
+      render();
+      processBiddingTurns();
+      return;
+    }
+
     startPlayingCurrentGame();
     return;
   }
@@ -1058,8 +1134,19 @@ function getCurrentBidderId() {
 }
 
 function submitBid(playerId, bid) {
+  if (!isBidAllowedForCurrentTurn(bid)) {
+    console.warn("Blocked forbidden bid total 9", {
+      playerId,
+      bid,
+      biddingIndex: state.biddingIndex,
+      currentTotal: getOrderedBidTotal(),
+    });
+    return false;
+  }
+
   getPlayerById(playerId).bid = bid;
   state.biddingIndex += 1;
+  return true;
 }
 
 function chooseBotBid(playerId) {
@@ -1080,11 +1167,8 @@ function estimateBidFromHand(playerId) {
   const hand = state.hands[playerId] || [];
   const rawScore = hand.reduce((sum, card) => sum + getBidCardValue(card), 0);
   const estimated = Math.floor(rawScore);
-  const capped = clamp(estimated, 0, 8);
-
-  if (capped >= 8 && hand.filter((card) => card.type === "joker").length === 2 && hand.some(isAceOrTrumpAce)) {
-    return 9;
-  }
+  const reservedEstimate = Math.max(0, estimated - 1);
+  const capped = clamp(reservedEstimate, 0, 8);
 
   return capped === 0 ? "pass" : capped;
 }
@@ -1112,10 +1196,6 @@ function getBidCardValue(card) {
   return 0.06;
 }
 
-function isAceOrTrumpAce(card) {
-  return card.type === "standard" && card.rank === "A" && (!getTrumpSuit() || card.suit === getTrumpSuit());
-}
-
 function getBidNumber(bid) {
   return bid === "pass" ? 0 : bid;
 }
@@ -1125,6 +1205,27 @@ function isBidAllowedForCurrentTurn(bid) {
   const bidValue = bid === "pass" ? 0 : bid;
 
   return !isLastBidder || getOrderedBidTotal() + bidValue !== 9;
+}
+
+function hasForbiddenBidTotal() {
+  return !isFourHundredPulka() && state.players.every((player) => player.bid !== null) && getOrderedBidTotal() === 9;
+}
+
+function rewindLastBidForForbiddenTotal() {
+  const lastBidderId = state.biddingOrder.at(-1);
+  const lastBidder = getPlayerById(lastBidderId);
+
+  if (!lastBidder) {
+    return;
+  }
+
+  console.error("Forbidden bid total 9 reached; rewinding last bid", {
+    playerId: lastBidderId,
+    bid: lastBidder.bid,
+  });
+  lastBidder.bid = null;
+  state.biddingIndex = Math.max(0, state.biddingOrder.length - 1);
+  showNotice(`${lastBidder.seat === "bottom" ? "Твой" : lastBidder.name} перезаказ`);
 }
 
 function startPlayingCurrentGame() {
@@ -1197,11 +1298,29 @@ function chooseBotCard(playerId) {
       return [...standardCards, ...jokerCards].sort(compareBotLeadLowCards)[0];
     }
 
+    if (jokerCards.length && shouldLeadHighTrumpJoker(playerId)) {
+      return [...jokerCards].sort(compareBotCards)[0];
+    }
+
     if (shouldSpendJokerNow(playerId) && jokerCards.length && !hasStrongLeadCard(playerId, standardCards)) {
       return [...jokerCards].sort(compareBotCards)[0];
     }
 
     return [...standardCards, ...jokerCards].sort(compareBotLeadHighCards)[0];
+  }
+
+  if (!wantsTrick) {
+    const losingStandardCards = standardCards.filter((card) => !wouldCardWinCurrentTrick(playerId, card));
+
+    if (losingStandardCards.length) {
+      return [...losingStandardCards].sort(compareBotCards).at(-1);
+    }
+
+    if (jokerCards.length) {
+      return [...jokerCards].sort(compareBotCards)[0];
+    }
+
+    return [...standardCards].sort(compareBotCards)[0];
   }
 
   const highLeadJokerPlay = getHighLeadJokerPlay();
@@ -1223,7 +1342,7 @@ function chooseBotCard(playerId) {
 
     const jokerWinningCards = jokerCards.filter((card) => wouldCardWinCurrentTrick(playerId, card));
 
-    if (jokerWinningCards.length && shouldSpendJokerNow(playerId)) {
+    if (jokerWinningCards.length && (shouldSpendJokerNow(playerId) || shouldBeatStrongTrumpWithJoker(playerId))) {
       return [...jokerWinningCards].sort(compareBotCards)[0];
     }
   }
@@ -1268,13 +1387,117 @@ function shouldSpendJokerNow(playerId) {
   return neededTricks >= remainingTricksIncludingCurrent || remainingCards <= 3;
 }
 
+function shouldLeadHighTrumpJoker(playerId) {
+  const trumpSuit = getTrumpSuit();
+
+  if (!trumpSuit || !shouldPlayerTakeTrick(playerId)) {
+    return false;
+  }
+
+  const jokerCount = getJokerCount(playerId);
+  const trumpCount = getSuitCards(playerId, trumpSuit).length;
+  const player = getPlayerById(playerId);
+  const target = isFourHundredPulka() ? 3 : player.bid;
+  const neededTricks = target === "pass" ? 0 : target - player.tricks;
+
+  if (neededTricks <= 0) {
+    return false;
+  }
+
+  return (jokerCount >= 2 && trumpCount >= 2) || (jokerCount >= 1 && trumpCount >= 2 && neededTricks >= 2);
+}
+
+function shouldBeatStrongTrumpWithJoker(playerId) {
+  if (!shouldPlayerTakeTrick(playerId) || !getJokerCount(playerId)) {
+    return false;
+  }
+
+  const currentWinner = getCurrentWinningPlay();
+
+  if (!isStrongTrumpPlay(currentWinner)) {
+    return false;
+  }
+
+  const player = getPlayerById(playerId);
+  const target = isFourHundredPulka() ? 3 : player.bid;
+  const neededTricks = target === "pass" ? 0 : target - player.tricks;
+  const remainingCards = state.hands[playerId]?.length || 0;
+
+  return neededTricks > 0 && remainingCards >= neededTricks;
+}
+
+function isStrongTrumpPlay(play) {
+  const trumpSuit = getTrumpSuit();
+
+  if (!play || !trumpSuit || play.card.type !== "standard" || play.card.suit !== trumpSuit) {
+    return false;
+  }
+
+  return RANK_POWER[play.card.rank] >= RANK_POWER.K;
+}
+
+function getJokerCount(playerId) {
+  return (state.hands[playerId] || []).filter((card) => card.type === "joker").length;
+}
+
+function getSuitCards(playerId, suit) {
+  return (state.hands[playerId] || []).filter((card) => card.type === "standard" && card.suit === suit);
+}
+
+function getPlayedStandardCards(suit = null) {
+  return state.playedCards
+    .map((play) => play.card)
+    .filter((card) => card.type === "standard" && (!suit || card.suit === suit));
+}
+
+function isHigherCardAlreadyPlayed(card, rank) {
+  return getPlayedStandardCards(card.suit).some((playedCard) => RANK_POWER[playedCard.rank] === rank);
+}
+
+function getUnseenHigherCardCount(card) {
+  if (card.type !== "standard") {
+    return 0;
+  }
+
+  return RANKS.filter((rank) => RANK_POWER[rank] > RANK_POWER[card.rank] && !isHigherCardAlreadyPlayed(card, RANK_POWER[rank])).length;
+}
+
+function isLikelyHighCard(card) {
+  if (card.type !== "standard") {
+    return false;
+  }
+
+  if (card.rank === "A") {
+    return true;
+  }
+
+  const trumpSuit = getTrumpSuit();
+  const unseenHigherCards = getUnseenHigherCardCount(card);
+
+  if (trumpSuit && card.suit === trumpSuit) {
+    return unseenHigherCards <= 1 && RANK_POWER[card.rank] >= RANK_POWER.J;
+  }
+
+  return unseenHigherCards === 0 && RANK_POWER[card.rank] >= RANK_POWER.J;
+}
+
+function getBotAttackPower(card) {
+  if (card.type === "joker") {
+    return 100;
+  }
+
+  const trumpBonus = getTrumpSuit() && card.suit === getTrumpSuit() ? 30 : 0;
+  const memoryBonus = isLikelyHighCard(card) ? 14 : 0;
+  return trumpBonus + memoryBonus + RANK_POWER[card.rank];
+}
+
 function hasStrongLeadCard(playerId, cards) {
   return cards.some((card) => {
     if (card.type === "joker") {
       return false;
     }
 
-    if (card.rank === "A") {
+    if (isLikelyHighCard(card)) {
       return true;
     }
 
@@ -1339,6 +1562,10 @@ function chooseJokerMode(playerId, card) {
     return card?.type === "joker" ? "lead" : null;
   }
 
+  if (!shouldPlayerTakeTrick(playerId)) {
+    return "duck";
+  }
+
   if (shouldSpendJokerNow(playerId)) {
     return "beat";
   }
@@ -1348,10 +1575,11 @@ function chooseJokerMode(playerId, card) {
 
 function chooseLeadJokerAction(playerId) {
   const needsTrick = shouldSpendJokerNow(playerId);
+  const leadHighTrump = shouldLeadHighTrumpJoker(playerId);
 
   return {
-    jokerCommand: needsTrick ? "high" : "take",
-    jokerSuit: chooseLeadJokerSuit(playerId),
+    jokerCommand: needsTrick || leadHighTrump ? "high" : "take",
+    jokerSuit: leadHighTrump ? getTrumpSuit() : chooseLeadJokerSuit(playerId),
   };
 }
 
@@ -1404,6 +1632,12 @@ function compareBotLeadHighCards(firstCard, secondCard) {
 
   if (firstCard.type !== "joker" && secondCard.type === "joker") {
     return -1;
+  }
+
+  const powerDifference = getBotAttackPower(secondCard) - getBotAttackPower(firstCard);
+
+  if (powerDifference !== 0) {
+    return powerDifference;
   }
 
   return compareBotCards(secondCard, firstCard);
@@ -1725,10 +1959,12 @@ function clearGameTasks() {
 
 function resetGameState() {
   clearGameTasks();
+  clearEmotionState();
   state.players = [];
   state.deck = [];
   state.hands = {};
   state.currentTrick = [];
+  state.playedCards = [];
   state.phase = "idle";
   state.leadPlayerId = "human";
   state.activePlayerId = "human";
@@ -1752,6 +1988,18 @@ function resetGameState() {
   elements.gameDialogActions.replaceChildren();
   hideNotice();
   render();
+}
+
+function clearEmotionState() {
+  if (state.emotionTimeoutId) {
+    window.clearTimeout(state.emotionTimeoutId);
+    state.emotionTimeoutId = null;
+  }
+
+  state.emotionCooldownUntil = 0;
+  elements.emotionButton.disabled = false;
+  elements.emotionPanel.hidden = true;
+  document.querySelectorAll(".avatar-emotion").forEach((emotion) => emotion.remove());
 }
 
 function goToMainMenu() {
@@ -2185,9 +2433,13 @@ elements.rulesToggle.addEventListener("click", () => {
 });
 elements.scoreButton.addEventListener("click", toggleScoreSheet);
 elements.scoreClose.addEventListener("click", toggleScoreSheet);
+elements.emotionButton.addEventListener("click", toggleEmotionPanel);
+elements.emotionPanel.addEventListener("click", handleEmotionClick);
 elements.tableMenu.addEventListener("click", showExitDialog);
 elements.playerHand.addEventListener("click", handleHumanCardClick);
 elements.bidOptions.addEventListener("click", handleBidClick);
+
+renderEmotionPanel();
 
 if (urlParams.has("demo")) {
   startGame();

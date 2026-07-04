@@ -181,6 +181,29 @@ input {
   background: rgba(2, 15, 20, 0.78);
 }
 
+#round-label {
+  padding: 7px 12px;
+  border-width: 2px;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.26);
+}
+
+#round-label.is-push {
+  border-color: rgba(255, 214, 41, 0.82);
+  background: rgba(104, 68, 5, 0.9);
+  color: #ffe889;
+}
+
+#round-label.is-take {
+  border-color: rgba(255, 91, 91, 0.82);
+  background: rgba(102, 18, 24, 0.9);
+  color: #ffd0d0;
+}
+
 .trump-pill {
   min-height: 54px;
   display: flex;
@@ -283,6 +306,7 @@ input {
 }
 
 .avatar {
+  position: relative;
   width: 50px;
   height: 50px;
   display: grid;
@@ -295,6 +319,47 @@ input {
   font-weight: 800;
   line-height: 1;
   box-shadow: 0 0 12px rgba(0, 200, 255, 0.38);
+}
+
+.avatar-initial {
+  grid-area: 1 / 1;
+}
+
+.avatar-emotion {
+  position: absolute;
+  left: 50%;
+  top: -19px;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  border-radius: 50%;
+  background: rgba(4, 14, 18, 0.92);
+  font-size: 21px;
+  line-height: 1;
+  transform: translateX(-50%);
+  animation: avatar-emotion-pop 3s ease both;
+  pointer-events: none;
+}
+
+@keyframes avatar-emotion-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.65);
+  }
+
+  12%,
+  82% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.9);
+  }
 }
 
 .badge {
@@ -484,6 +549,49 @@ input {
   box-shadow: none;
 }
 
+.smile:disabled {
+  opacity: 0.45;
+  cursor: default;
+  filter: grayscale(0.45);
+}
+
+.emotion-panel {
+  position: absolute;
+  top: calc(4% + 52px);
+  right: 8%;
+  z-index: 9;
+  display: grid;
+  grid-template-columns: repeat(5, 35px);
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid rgba(0, 200, 255, 0.42);
+  border-radius: 8px;
+  background: rgba(3, 15, 21, 0.92);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.35);
+}
+
+.emotion-panel[hidden] {
+  display: none;
+}
+
+.emotion-option {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(5, 26, 36, 0.94);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.emotion-option:active {
+  transform: translateY(1px);
+}
+
 .table-menu {
   position: absolute;
   top: 4.5%;
@@ -529,39 +637,39 @@ input {
 }
 
 .table.is-dealing .hidden-cards span {
-  animation: hidden-card-deal 0.52s cubic-bezier(0.2, 0.82, 0.2, 1) both;
+  animation: hidden-card-deal 2.6s cubic-bezier(0.2, 0.82, 0.2, 1) both;
 }
 
 .table.is-dealing .hidden-cards span:nth-child(2) {
-  animation-delay: 70ms;
-}
-
-.table.is-dealing .hidden-cards span:nth-child(3) {
-  animation-delay: 140ms;
-}
-
-.table.is-dealing .hidden-cards span:nth-child(4) {
-  animation-delay: 210ms;
-}
-
-.table.is-dealing .hidden-cards span:nth-child(5) {
-  animation-delay: 280ms;
-}
-
-.table.is-dealing .hidden-cards span:nth-child(6) {
   animation-delay: 350ms;
 }
 
+.table.is-dealing .hidden-cards span:nth-child(3) {
+  animation-delay: 700ms;
+}
+
+.table.is-dealing .hidden-cards span:nth-child(4) {
+  animation-delay: 1050ms;
+}
+
+.table.is-dealing .hidden-cards span:nth-child(5) {
+  animation-delay: 1400ms;
+}
+
+.table.is-dealing .hidden-cards span:nth-child(6) {
+  animation-delay: 1750ms;
+}
+
 .table.is-dealing .hidden-cards span:nth-child(7) {
-  animation-delay: 420ms;
+  animation-delay: 2100ms;
 }
 
 .table.is-dealing .hidden-cards span:nth-child(8) {
-  animation-delay: 490ms;
+  animation-delay: 2450ms;
 }
 
 .table.is-dealing .hidden-cards span:nth-child(9) {
-  animation-delay: 560ms;
+  animation-delay: 2800ms;
 }
 
 @keyframes hidden-card-deal {
@@ -648,7 +756,7 @@ input {
 }
 
 .table.is-dealing .deal-deck {
-  animation: deal-deck-pulse 0.9s ease-out both;
+  animation: deal-deck-pulse 4.5s ease-out both;
 }
 
 @keyframes deal-deck-pulse {
@@ -997,7 +1105,7 @@ input {
 }
 
 .hand .card.is-dealt {
-  animation: hand-card-deal 0.5s cubic-bezier(0.18, 0.86, 0.2, 1) both;
+  animation: hand-card-deal 2.5s cubic-bezier(0.18, 0.86, 0.2, 1) both;
   animation-delay: var(--deal-delay, 0ms);
 }
 
@@ -1023,8 +1131,9 @@ input {
 }
 
 .hand .card.is-disabled {
-  opacity: 0.45;
-  filter: saturate(0.55);
+  opacity: 1;
+  filter: none;
+  cursor: default;
 }
 
 .hand .card.is-disabled:hover,
@@ -1422,6 +1531,11 @@ input {
     padding: 4px 6px;
   }
 
+  #round-label {
+    padding: 6px 10px;
+    font-size: 15px;
+  }
+
   .trump-pill {
     min-height: 46px;
   }
@@ -1467,6 +1581,11 @@ input {
 
   .hud-pill {
     padding: 5px 7px;
+  }
+
+  #round-label {
+    padding: 6px 9px;
+    font-size: 14px;
   }
 
   .trump-pill {
@@ -1580,6 +1699,20 @@ input {
     width: 40px;
     height: 40px;
     font-size: 30px;
+  }
+
+  .emotion-panel {
+    top: 54px;
+    right: 44px;
+    grid-template-columns: repeat(5, 31px);
+    gap: 5px;
+    padding: 7px;
+  }
+
+  .emotion-option {
+    width: 31px;
+    height: 31px;
+    font-size: 19px;
   }
 
   .table-menu {
