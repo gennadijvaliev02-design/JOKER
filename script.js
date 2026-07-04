@@ -81,10 +81,13 @@ const state = {
   started: false,
   timeoutIds: [],
   audioContext: null,
+  dealAnimationKey: 0,
+  renderedDealAnimationKey: 0,
 };
 
 const elements = {
   startScreen: document.querySelector("#start-screen"),
+  table: document.querySelector(".table"),
   playerName: document.querySelector("#player-name"),
   startGame: document.querySelector("#start-game"),
   rulesToggle: document.querySelector("#rules-toggle"),
@@ -272,6 +275,7 @@ function startDeal() {
 
   state.deck = deck;
   state.hands = sortHands(hands);
+  markDealAnimation();
   state.currentTrick = [];
   state.leadPlayerId = getGameLeaderId();
   state.activePlayerId = null;
@@ -283,7 +287,8 @@ function startDeal() {
   hideNotice();
 
   if (isChooseTrumpPulka()) {
-    startTrumpSelection();
+    render();
+    runAfterDealAnimation(startTrumpSelection);
     return;
   }
 
@@ -303,7 +308,13 @@ function completeDealAfterTrump() {
   }
 
   state.hands = sortHands(state.hands);
+  markDealAnimation();
 
+  render();
+  runAfterDealAnimation(startTurnAfterDeal);
+}
+
+function startTurnAfterDeal() {
   if (isFourHundredPulka()) {
     state.players.forEach((player) => {
       player.bid = 3;
@@ -314,6 +325,15 @@ function completeDealAfterTrump() {
 
   state.phase = "bidding";
   processBiddingTurns();
+}
+
+function runAfterDealAnimation(callback) {
+  if (state.autoPlay) {
+    callback();
+    return;
+  }
+
+  scheduleGameTask(callback, 760);
 }
 
 function startTrumpSelection() {
@@ -356,16 +376,36 @@ function sortHands(hands) {
 }
 
 function compareCards(firstCard, secondCard) {
-  return getSortPower(firstCard) - getSortPower(secondCard);
-}
-
-function getSortPower(card) {
-  if (card.type === "joker") {
-    return card.color === "red" ? 1001 : 1000;
+  if (firstCard.type === "joker" && secondCard.type !== "joker") {
+    return -1;
   }
 
-  const trumpBonus = state.trump?.type === "standard" && card.suit === state.trump.suit ? 500 : 0;
-  return trumpBonus + SUIT_SORT_WEIGHT[card.suit] * 20 + RANK_POWER[card.rank];
+  if (firstCard.type !== "joker" && secondCard.type === "joker") {
+    return 1;
+  }
+
+  if (firstCard.type === "joker" && secondCard.type === "joker") {
+    return firstCard.color === "red" ? -1 : 1;
+  }
+
+  const firstSuitGroup = getHandSuitGroup(firstCard.suit);
+  const secondSuitGroup = getHandSuitGroup(secondCard.suit);
+
+  if (firstSuitGroup !== secondSuitGroup) {
+    return firstSuitGroup - secondSuitGroup;
+  }
+
+  return RANK_POWER[secondCard.rank] - RANK_POWER[firstCard.rank];
+}
+
+function getHandSuitGroup(suit) {
+  const trumpSuit = getTrumpSuit();
+
+  if (trumpSuit && suit === trumpSuit) {
+    return 10;
+  }
+
+  return SUIT_SORT_WEIGHT[suit];
 }
 
 function createEmptyScoreRows() {
@@ -393,6 +433,7 @@ function createEmptyScoreRows() {
 function render() {
   renderPlayers();
   renderHud();
+  renderOpponentCardStacks();
   renderHand();
   renderTrick();
   renderBidding();
@@ -420,6 +461,20 @@ function renderPlayers() {
     taken.classList.toggle("is-danger", isBidBroken(player));
     stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
     playerElement?.classList.toggle("is-active", player.id === state.activePlayerId && !state.busy);
+  }
+}
+
+function renderOpponentCardStacks() {
+  for (const seat of ["left", "top", "right"]) {
+    const player = state.players.find((candidate) => candidate.seat === seat);
+    const stack = document.querySelector(`.${seat}-stack`);
+
+    if (!stack) {
+      continue;
+    }
+
+    const cardCount = player ? state.hands[player.id]?.length || 0 : 0;
+    stack.replaceChildren(...Array.from({ length: cardCount }, () => document.createElement("span")));
   }
 }
 
@@ -465,16 +520,17 @@ function renderHud() {
   const activePlayer = getPlayerById(state.activePlayerId);
   const turnText = activePlayer ? ` · ход ${activePlayer.seat === "bottom" ? "твой" : activePlayer.name}` : "";
   const chooser = getPlayerById(state.trumpChooserId);
+  const bidBalanceText = getBidBalanceText();
   const phaseText =
     state.phase === "finished"
       ? " · партия завершена"
       : state.phase === "trump-select"
         ? ` · выбор козыря${chooser ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}` : ""}`
       : isFourHundredPulka() && state.phase === "playing"
-        ? ` · 400 · Взятка ${state.trickNumber}${turnText}`
+        ? ` · 400${bidBalanceText} · Взятка ${state.trickNumber}${turnText}`
       : state.phase === "bidding"
         ? " · заказ"
-        : ` · Взятка ${state.trickNumber}${turnText}`;
+        : `${bidBalanceText} · Взятка ${state.trickNumber}${turnText}`;
   elements.roundLabel.textContent = `Пулька ${state.currentPulka} · Игра ${state.currentGame}${phaseText}`;
 
   if (!state.trump) {
@@ -495,9 +551,49 @@ function renderHud() {
   elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
 }
 
+function getBidBalanceText() {
+  if (!state.players.length || state.players.some((player) => player.bid === null)) {
+    return "";
+  }
+
+  const totalBid = state.players.reduce((sum, player) => {
+    return sum + (player.bid === "pass" ? 0 : player.bid);
+  }, 0);
+  const balance = totalBid - 9;
+
+  if (balance > 0) {
+    return ` · отнимается ${balance}`;
+  }
+
+  if (balance < 0) {
+    return ` · пихается ${Math.abs(balance)}`;
+  }
+
+  return " · ровно";
+}
+
 function renderHand() {
   const hand = state.hands.human || [];
-  elements.playerHand.replaceChildren(...hand.map((card) => createCardElement(card, { playable: canHumanPlay(card) })));
+  const shouldAnimateDeal = state.dealAnimationKey !== state.renderedDealAnimationKey;
+
+  elements.playerHand.replaceChildren(
+    ...hand.map((card, index) =>
+      createCardElement(card, {
+        playable: canHumanPlay(card),
+        dealIndex: shouldAnimateDeal ? index : null,
+        handIndex: index,
+        handCount: hand.length,
+      }),
+    ),
+  );
+
+  if (shouldAnimateDeal) {
+    state.renderedDealAnimationKey = state.dealAnimationKey;
+    elements.table?.classList.add("is-dealing");
+    window.setTimeout(() => {
+      elements.table?.classList.remove("is-dealing");
+    }, getDelay(900));
+  }
 }
 
 function createCardElement(card, options = {}) {
@@ -509,6 +605,20 @@ function createCardElement(card, options = {}) {
 
   if (options.playable !== undefined) {
     cardElement.classList.toggle("is-disabled", options.playable === false);
+  }
+
+  if (options.dealIndex !== null && options.dealIndex !== undefined) {
+    cardElement.classList.add("is-dealt");
+    cardElement.style.setProperty("--deal-delay", `${Math.min(options.dealIndex, 8) * 48}ms`);
+  }
+
+  if (options.handIndex !== undefined && options.handCount) {
+    const middle = (options.handCount - 1) / 2;
+    const offset = options.handIndex - middle;
+    const lift = Math.round(Math.abs(offset) * 2.2);
+
+    cardElement.style.setProperty("--hand-rotate", `${offset * 1.8}deg`);
+    cardElement.style.setProperty("--hand-lift", `${lift}px`);
   }
 
   if (card.type === "joker") {
@@ -533,6 +643,14 @@ function createCardElement(card, options = {}) {
   `;
 
   return cardElement;
+}
+
+function markDealAnimation() {
+  if (state.autoPlay) {
+    return;
+  }
+
+  state.dealAnimationKey += 1;
 }
 
 function renderTrick() {
@@ -1363,6 +1481,7 @@ function writeCurrentGameScore() {
   if (state.currentGame === 4) {
     applyPulkaBonuses(pulkaOffset);
     const totalRow = state.scoreRows[pulkaOffset + 4];
+    totalRow.deltas = state.players.map((player) => calculatePulkaTotal(player.id, pulkaOffset));
     totalRow.cells = state.players.map((player) => formatTotalScore(calculateMatchTotal(player.id)));
   }
 }
@@ -1540,8 +1659,23 @@ function calculateMatchTotal(playerId) {
   }, 0);
 }
 
+function calculatePulkaTotal(playerId, pulkaOffset) {
+  const playerIndex = state.players.findIndex((player) => player.id === playerId);
+  const gameRows = state.scoreRows.slice(pulkaOffset, pulkaOffset + 4);
+
+  return gameRows.reduce((sum, row) => {
+    const entry = row.entries?.[playerIndex];
+    return sum + (entry && !entry.crossed ? entry.value : 0);
+  }, 0);
+}
+
 function formatTotalScore(value) {
   return (value / 100).toFixed(1).replace(".", ",");
+}
+
+function formatPulkaDelta(value) {
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${formatTotalScore(value)}`;
 }
 
 function advanceGame() {
@@ -1852,7 +1986,14 @@ function renderScoreSheet() {
 
   const rowCells = state.scoreRows.flatMap((row) => {
     if (row.type === "total") {
-      return [createScoreCell("", "total"), ...row.cells.map((cell) => createScoreCell(cell, "total"))];
+      return [
+        createScoreCell("", "total"),
+        ...row.cells.map((cell, index) => {
+          const delta = row.deltas?.[index];
+          const content = delta === undefined ? cell : createPulkaTotalElement(cell, delta);
+          return createScoreCell(content, "total");
+        }),
+      ];
     }
 
     return [
@@ -1877,6 +2018,22 @@ function createScoreCell(content, className = "") {
   }
 
   return cell;
+}
+
+function createPulkaTotalElement(total, delta) {
+  const wrapper = document.createElement("span");
+  wrapper.className = "pulka-total";
+
+  const totalValue = document.createElement("span");
+  totalValue.className = "pulka-total-value";
+  totalValue.textContent = total;
+
+  const deltaValue = document.createElement("span");
+  deltaValue.className = `pulka-delta ${delta > 0 ? "is-positive" : delta < 0 ? "is-negative" : "is-zero"}`;
+  deltaValue.textContent = formatPulkaDelta(delta);
+
+  wrapper.append(totalValue, deltaValue);
+  return wrapper;
 }
 
 function formatScoreCell(value) {
@@ -2011,11 +2168,11 @@ function getSoundProfile(type) {
 }
 
 function getBotPlayDelay() {
-  return state.autoPlay ? 0 : getRandomDelay(2200, 3500);
+  return state.autoPlay ? 0 : getRandomDelay(1100, 1750);
 }
 
 function getBotDecisionDelay() {
-  return state.autoPlay ? 0 : getRandomDelay(3000, 5000);
+  return state.autoPlay ? 0 : getRandomDelay(1500, 2500);
 }
 
 function getRandomDelay(min, max) {
