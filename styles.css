@@ -2132,3 +2132,173 @@ input {
     padding: 18px 12px 22px;
   }
 }
+
+
+/* === JOKER UI PATCH 1: bigger straight player hand cards === */
+.hand {
+  bottom: 2.2%;
+  width: min(92%, 820px);
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.hand .card {
+  width: clamp(72px, 8.4vw, 98px);
+  height: clamp(101px, 11.9vw, 138px);
+  transform: translateY(calc(var(--hand-lift, 0px) * -0.35)) rotate(0deg);
+  border-radius: 8px;
+}
+
+.hand .card + .card {
+  margin-left: clamp(-14px, -1.15vw, -8px);
+}
+
+.hand .card:hover {
+  transform: translateY(calc((var(--hand-lift, 0px) + 14px) * -1)) rotate(0deg) scale(1.08);
+}
+
+.hand .card.is-dealt {
+  animation-name: hand-card-deal-straight;
+}
+
+@keyframes hand-card-deal-straight {
+  0% {
+    opacity: 0;
+    transform: translateY(-130px) scale(0.64) rotate(-5deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translateY(8px) scale(1.05) rotate(0deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(calc(var(--hand-lift, 0px) * -0.35)) rotate(0deg);
+  }
+}
+
+.card-face {
+  object-fit: contain;
+}
+
+@media (max-width: 760px), (max-height: 430px) {
+  .hand {
+    bottom: 8px;
+    width: calc(100% - 22px);
+  }
+
+  .hand .card {
+    width: clamp(56px, 11.6vw, 82px);
+    height: clamp(79px, 16.5vw, 116px);
+  }
+
+  .hand .card + .card {
+    margin-left: clamp(-18px, -3vw, -8px);
+  }
+}
+
+
+/* === JOKER UI PATCH 2: separated large joker action buttons === */
+.bid-panel:has(.joker-high-option),
+.bid-panel:has(.joker-take-option),
+.bid-panel:has(.joker-beat-option),
+.bid-panel:has(.joker-duck-option) {
+  width: min(420px, 72%);
+  padding: 12px;
+}
+
+.bid-options:has(.joker-high-option),
+.bid-options:has(.joker-take-option),
+.bid-options:has(.joker-beat-option),
+.bid-options:has(.joker-duck-option) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.joker-take-option,
+.joker-high-option,
+.joker-duck-option,
+.joker-beat-option {
+  min-height: 58px;
+  border-radius: 10px;
+  font-size: 19px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.34);
+}
+
+.joker-high-option,
+.joker-beat-option {
+  border-color: rgba(70, 126, 255, 0.78);
+  background: linear-gradient(180deg, rgba(45, 89, 224, 0.98), rgba(19, 51, 160, 0.98));
+  color: #fff;
+}
+
+.joker-take-option,
+.joker-duck-option {
+  border-color: rgba(45, 230, 96, 0.78);
+  background: linear-gradient(180deg, rgba(26, 172, 55, 0.98), rgba(8, 98, 33, 0.98));
+  color: #eaffef;
+}
+
+@media (max-width: 760px), (max-height: 430px) {
+  .bid-panel:has(.joker-high-option),
+  .bid-panel:has(.joker-take-option),
+  .bid-panel:has(.joker-beat-option),
+  .bid-panel:has(.joker-duck-option) {
+    width: min(430px, 86%);
+    bottom: 118px;
+  }
+
+  .joker-take-option,
+  .joker-high-option,
+  .joker-duck-option,
+  .joker-beat-option {
+    min-height: 52px;
+    font-size: 17px;
+  }
+}
+
+
+/* === JOKER UI PATCH 3: bigger suit choice after joker command === */
+.bid-panel:has(.bid-option[data-joker-lead-suit]) {
+  width: min(500px, 78%);
+  padding: 14px;
+}
+
+.bid-options:has(.bid-option[data-joker-lead-suit]) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bid-option[data-joker-lead-suit] {
+  min-height: 76px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(226, 231, 232, 0.98));
+  color: #111;
+  font-size: 46px;
+  line-height: 1;
+  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.34);
+}
+
+.bid-option[data-joker-lead-suit="hearts"],
+.bid-option[data-joker-lead-suit="diamonds"] {
+  color: #d71920;
+}
+
+.bid-option[data-joker-lead-suit="clubs"],
+.bid-option[data-joker-lead-suit="spades"] {
+  color: #111;
+}
+
+@media (max-width: 760px), (max-height: 430px) {
+  .bid-panel:has(.bid-option[data-joker-lead-suit]) {
+    width: min(430px, 88%);
+    bottom: 112px;
+  }
+
+  .bid-option[data-joker-lead-suit] {
+    min-height: 62px;
+    font-size: 38px;
+  }
+}
