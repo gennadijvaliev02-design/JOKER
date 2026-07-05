@@ -1,49 +1,71 @@
-/* UI polish: make bid selection clearer and more premium */
+/* UI polish: premium bid selection panel */
 .bid-panel {
-  min-width: 285px;
-  padding: 16px 17px 18px;
-  border: 1px solid rgba(88, 177, 255, 0.58);
-  border-radius: 18px;
+  min-width: 310px;
+  padding: 18px 18px 19px;
+  border: 2px solid rgba(255, 214, 41, 0.58);
+  border-radius: 22px;
   background:
-    radial-gradient(circle at 50% 0%, rgba(65, 150, 255, 0.18), transparent 46%),
-    rgba(4, 13, 21, 0.94);
+    linear-gradient(145deg, rgba(10, 34, 42, 0.96), rgba(2, 10, 18, 0.96) 52%, rgba(18, 42, 72, 0.95)),
+    radial-gradient(circle at 50% -20%, rgba(255, 219, 87, 0.32), transparent 42%);
   box-shadow:
-    0 18px 42px rgba(0, 0, 0, 0.42),
-    0 0 18px rgba(77, 169, 255, 0.16),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(9px);
+    0 20px 46px rgba(0, 0, 0, 0.52),
+    0 0 24px rgba(255, 214, 41, 0.18),
+    0 0 18px rgba(0, 170, 255, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
 }
 
 .bid-title {
-  margin-bottom: 11px;
+  margin-bottom: 13px;
   color: #ffe889;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 950;
-  letter-spacing: 0.03em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65);
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.75),
+    0 0 10px rgba(255, 214, 41, 0.28);
 }
 
 .bid-options {
-  gap: 10px;
+  gap: 11px;
 }
 
 .bid-option {
-  min-width: 58px;
-  min-height: 50px;
-  padding: 8px 12px;
-  border-width: 2px;
-  border-radius: 13px;
-  font-size: 19px;
+  min-width: 62px;
+  min-height: 54px;
+  padding: 9px 13px;
+  border: 2px solid rgba(67, 190, 255, 0.86);
+  border-radius: 15px;
+  background:
+    linear-gradient(180deg, rgba(27, 69, 101, 0.92), rgba(7, 22, 36, 0.96));
+  color: #fff;
+  font-size: 20px;
   font-weight: 950;
   line-height: 1;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.72);
   box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.28),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    0 9px 20px rgba(0, 0, 0, 0.34),
+    0 0 12px rgba(39, 171, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.18);
 }
 
 .bid-option[data-bid="pass"] {
-  min-width: 72px;
+  min-width: 78px;
+  border-color: rgba(255, 89, 89, 0.82);
+  background:
+    linear-gradient(180deg, rgba(105, 33, 38, 0.96), rgba(34, 11, 18, 0.96));
+  color: #ffd8d8;
   font-size: 16px;
+}
+
+.bid-option:not(:disabled):hover {
+  border-color: rgba(255, 229, 93, 0.95);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.38),
+    0 0 18px rgba(255, 214, 41, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.18);
 }
 
 .bid-option:not(:disabled):active {
@@ -53,52 +75,53 @@
 .bid-option.is-forbidden,
 .bid-option:disabled {
   opacity: 0.42;
+  filter: grayscale(0.4);
 }
 
 @media (max-width: 760px), (max-height: 430px) {
   .bid-panel {
-    min-width: 260px;
-    padding: 13px 14px 15px;
-    border-radius: 16px;
+    min-width: 280px;
+    padding: 15px 15px 16px;
+    border-radius: 19px;
   }
 
   .bid-title {
-    margin-bottom: 9px;
-    font-size: 16px;
-  }
-
-  .bid-options {
-    gap: 8px;
-  }
-
-  .bid-option {
-    min-width: 52px;
-    min-height: 45px;
-    padding: 7px 10px;
-    border-radius: 12px;
+    margin-bottom: 10px;
     font-size: 17px;
   }
 
+  .bid-options {
+    gap: 9px;
+  }
+
+  .bid-option {
+    min-width: 56px;
+    min-height: 48px;
+    padding: 8px 11px;
+    border-radius: 13px;
+    font-size: 18px;
+  }
+
   .bid-option[data-bid="pass"] {
-    min-width: 64px;
+    min-width: 68px;
     font-size: 14px;
   }
 }
 
 @media (max-width: 420px) {
   .bid-panel {
-    min-width: 242px;
-    padding: 12px 12px 14px;
+    min-width: 258px;
+    padding: 13px 13px 15px;
   }
 
   .bid-option {
-    min-width: 48px;
-    min-height: 42px;
-    font-size: 16px;
+    min-width: 50px;
+    min-height: 44px;
+    font-size: 17px;
   }
 
   .bid-option[data-bid="pass"] {
-    min-width: 58px;
+    min-width: 60px;
     font-size: 13px;
   }
 }
