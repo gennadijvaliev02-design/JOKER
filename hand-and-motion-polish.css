@@ -1,0 +1,129 @@
+/* Restore clean hand cards and calmer table motion after animation experiments */
+
+.hand {
+  bottom: 0.9% !important;
+  gap: 0 !important;
+  align-items: flex-end !important;
+}
+
+.hand .card {
+  width: clamp(72px, 9.2vw, 96px) !important;
+  height: clamp(101px, 12.9vw, 135px) !important;
+  border-radius: 10px !important;
+  transform: translateY(calc(var(--hand-lift, 0px) * -1)) rotate(0deg) !important;
+}
+
+.hand .card + .card {
+  margin-left: clamp(-31px, -3.8vw, -21px) !important;
+}
+
+.hand .card:hover {
+  z-index: 8;
+  transform: translateY(calc((var(--hand-lift, 0px) + 14px) * -1)) rotate(0deg) scale(1.045) !important;
+}
+
+.hand .card.is-disabled:hover {
+  transform: translateY(calc(var(--hand-lift, 0px) * -1)) rotate(0deg) !important;
+}
+
+.hand .card.is-dealt {
+  animation: hand-card-soft-deal 520ms ease-out both !important;
+  animation-delay: calc(var(--deal-delay, 0ms) * 0.18) !important;
+}
+
+@keyframes hand-card-soft-deal {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.96) rotate(0deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(calc(var(--hand-lift, 0px) * -1)) scale(1) rotate(0deg);
+  }
+}
+
+.played-card {
+  transform: var(--played-transform) !important;
+}
+
+.played-card.left,
+.played-card.top,
+.played-card.right,
+.played-card.bottom {
+  --played-transform: translateY(0) rotate(0deg) !important;
+}
+
+.played-card.is-entering,
+.played-card.left.is-entering,
+.played-card.top.is-entering,
+.played-card.right.is-entering,
+.played-card.bottom.is-entering {
+  animation: played-card-soft-place 180ms ease-out both !important;
+}
+
+@keyframes played-card-soft-place {
+  0% {
+    opacity: 0.55;
+    transform: translateY(10px) scale(0.985) rotate(0deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+}
+
+.played-card.is-trick-winner .card,
+.played-card.is-collecting .card {
+  box-shadow:
+    0 0 0 3px rgba(255, 221, 87, 0.98),
+    0 0 18px rgba(255, 221, 87, 0.42),
+    0 12px 24px rgba(0, 0, 0, 0.34) !important;
+  filter: none !important;
+}
+
+.played-card.is-collecting {
+  animation: played-card-winner-outline 620ms ease-out both !important;
+  opacity: 1 !important;
+}
+
+.played-card.is-collecting .played-label {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+@keyframes played-card-winner-outline {
+  0%,
+  70% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+
+  100% {
+    opacity: 0;
+    transform: var(--played-transform) scale(0.98);
+  }
+}
+
+@media (max-width: 760px), (max-height: 430px) {
+  .hand .card {
+    width: clamp(66px, 14.8vw, 88px) !important;
+    height: clamp(93px, 20.8vw, 124px) !important;
+  }
+
+  .hand .card + .card {
+    margin-left: clamp(-30px, -6.1vw, -20px) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .hand .card {
+    width: clamp(61px, 17vw, 78px) !important;
+    height: clamp(86px, 23.8vw, 110px) !important;
+  }
+
+  .hand .card + .card {
+    margin-left: clamp(-29px, -7.6vw, -20px) !important;
+  }
+}
