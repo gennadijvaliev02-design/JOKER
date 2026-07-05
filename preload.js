@@ -4,6 +4,17 @@
     loading: false,
   };
 
+  function loadBotLogicPolish() {
+    if (document.querySelector('script[data-bot-logic-polish="1"]')) return;
+
+    const script = document.createElement("script");
+    script.src = "bot-logic-polish.js?v=1";
+    script.dataset.botLogicPolish = "1";
+    document.body.append(script);
+  }
+
+  loadBotLogicPolish();
+
   function getStandardCardImagePaths() {
     return createJokerDeck()
       .filter((card) => card.type === "standard")
