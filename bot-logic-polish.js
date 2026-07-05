@@ -97,6 +97,26 @@
     }).length;
   }
 
+  function getSafeExitCardsAfterJoker(playerId) {
+    const trumpSuit = getTrumpSuit();
+    const hand = state.hands[playerId] || [];
+
+    return hand
+      .filter((card) => card.type === "standard")
+      .filter((card) => !trumpSuit || card.suit !== trumpSuit)
+      .filter((card) => RANK_POWER[card.rank] <= RANK_POWER[10])
+      .filter((card) => !isLikelyHighCard(card))
+      .sort(compareBotCards);
+  }
+
+  function hasSafeExitAfterJoker(playerId) {
+    return getSafeExitCardsAfterJoker(playerId).length > 0;
+  }
+
+  function chooseSafeJokerSuit(playerId) {
+    return getSafeExitCardsAfterJoker(playerId)[0]?.suit || chooseLeadJokerSuit(playerId);
+  }
+
   function canAffordSetupMove(playerId) {
     const player = getPlayerById(playerId);
     if (!player || player.bid === "pass" || isBotBroken(playerId)) return false;
@@ -210,6 +230,7 @@
   chooseBotCard = function polishedChooseBotCard(playerId) {
     const candidates = getLegalCandidates(playerId);
     const standardCards = candidates.filter((card) => card.type !== "joker");
+    const jokerCards = candidates.filter((card) => card.type === "joker");
 
     if (isBotBroken(playerId)) {
       const spoilerCard = chooseBrokenSpoilerCard(playerId, candidates);
@@ -225,6 +246,14 @@
         if (winningStandardCards.length) {
           return [...winningStandardCards].sort(compareBotCards)[0];
         }
+
+        const winningJokers = jokerCards.filter((card) => wouldCardWinCurrentTrick(playerId, card));
+        const remainingCards = state.hands[playerId]?.length || 0;
+        const hasExit = hasSafeExitAfterJoker(playerId);
+
+        if (winningJokers.length && (hasExit || remainingCards <= 2) && Math.random() < 0.65) {
+          return [...winningJokers].sort(compareBotCards)[0];
+        }
       }
     }
 
@@ -238,6 +267,11 @@
     if (shouldPreserveJokerForFinalTrick(playerId)) {
       const candidates = getLegalCandidates(playerId);
       const standardCards = candidates.filter((card) => card.type !== "joker");
+      const remainingCards = state.hands[playerId]?.length || 0;
+
+      if (remainingCards > 2 && !hasSafeExitAfterJoker(playerId)) {
+        return false;
+      }
 
       if (!state.currentTrick.length && chooseStrongNormalBeforeJoker(playerId, standardCards)) {
         return false;
@@ -258,6 +292,8 @@
       if (chooseStrongNormalBeforeJoker(playerId, standardCards)) {
         return false;
       }
+
+      return hasSafeExitAfterJoker(playerId);
     }
 
     return originalShouldLeadHighTrumpJoker(playerId);
@@ -266,6 +302,20 @@
   chooseLeadJokerAction = function polishedChooseLeadJokerAction(playerId) {
     const player = getPlayerById(playerId);
     const target = getBotTarget(player);
+
+    if (shouldPreserveJokerForFinalTrick(playerId)) {
+      if (!hasSafeExitAfterJoker(playerId)) {
+        return {
+          jokerCommand: "take",
+          jokerSuit: chooseSafeJokerSuit(playerId),
+        };
+      }
+
+      return {
+        jokerCommand: "high",
+        jokerSuit: getTrumpSuit() || chooseSafeJokerSuit(playerId),
+      };
+    }
 
     if (player && target > 0 && player.tricks >= target) {
       return {
