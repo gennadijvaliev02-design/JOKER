@@ -205,10 +205,12 @@ input {
 }
 
 .trump-pill {
+  position: relative;
   min-height: 54px;
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow: visible;
 }
 
 .trump-card {
@@ -227,26 +229,71 @@ input {
     0 2px 5px rgba(0, 0, 0, 0.32);
   font-weight: 900;
   line-height: 1;
+  transform-origin: 50% 70%;
+  backface-visibility: hidden;
 }
 
 .trump-card.is-revealed {
-  animation: trump-reveal 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: trump-reveal 0.86s cubic-bezier(0.16, 0.86, 0.22, 1) both;
+}
+
+.trump-pill:has(.trump-card.is-revealed)::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  z-index: -1;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 214, 41, 0.28), transparent 60%),
+    conic-gradient(from 20deg, transparent, rgba(255, 214, 41, 0.22), transparent 42%, rgba(0, 200, 255, 0.16), transparent 72%);
+  filter: blur(1px);
+  transform: translateY(-50%) scale(0.6);
+  animation: trump-aura 0.92s ease-out both;
 }
 
 @keyframes trump-reveal {
   0% {
     opacity: 0;
-    transform: translateY(-14px) rotate(-8deg) scale(0.72);
+    filter: brightness(0.75);
+    transform: translate(-92px, 34px) rotateY(78deg) rotate(-18deg) scale(0.56);
   }
 
-  70% {
+  44% {
     opacity: 1;
-    transform: translateY(2px) rotate(2deg) scale(1.08);
+    filter: brightness(1.08);
+    transform: translate(-20px, -8px) rotateY(18deg) rotate(5deg) scale(1.12);
+  }
+
+  72% {
+    opacity: 1;
+    filter: brightness(1.22);
+    transform: translate(3px, 2px) rotateY(-6deg) rotate(-2deg) scale(0.98);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0) rotate(0) scale(1);
+    filter: brightness(1);
+    transform: translate(0, 0) rotateY(0) rotate(0) scale(1);
+  }
+}
+
+@keyframes trump-aura {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.48) rotate(-20deg);
+  }
+
+  38% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.05) rotate(10deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) scale(1.34) rotate(35deg);
   }
 }
 
@@ -305,6 +352,57 @@ input {
     0 0 18px rgba(255, 214, 41, 0.68);
 }
 
+.player.is-active .avatar::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 2px solid rgba(255, 214, 41, 0.58);
+  border-radius: 50%;
+  opacity: 0;
+  animation: active-player-ring 1.55s ease-out infinite;
+}
+
+.player.is-thinking .avatar::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow:
+    -9px 0 0 rgba(255, 214, 41, 0.55),
+    9px 0 0 rgba(255, 214, 41, 0.55);
+  transform: translateX(-50%);
+  animation: thinking-dots 0.9s ease-in-out infinite;
+}
+
+@keyframes active-player-ring {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.82);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes thinking-dots {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
+  }
+}
+
 .avatar {
   position: relative;
   width: 50px;
@@ -319,56 +417,6 @@ input {
   font-weight: 800;
   line-height: 1;
   box-shadow: 0 0 12px rgba(0, 200, 255, 0.38);
-}
-
-.turn-timer-ring {
-  position: absolute;
-  inset: -6px;
-  width: calc(100% + 12px);
-  height: calc(100% + 12px);
-  transform: rotate(-90deg);
-  pointer-events: none;
-  overflow: visible;
-}
-
-.turn-timer-ring-track {
-  fill: none;
-  stroke: rgba(0, 200, 255, 0.16);
-  stroke-width: 6;
-}
-
-.turn-timer-ring-progress {
-  fill: none;
-  stroke: var(--cyan);
-  stroke-width: 6;
-  stroke-linecap: round;
-  stroke-dasharray: 289;
-  stroke-dashoffset: 0;
-  filter: drop-shadow(0 0 4px rgba(0, 200, 255, 0.75));
-}
-
-.turn-timer-ring-progress.is-running {
-  animation: turn-timer-countdown 40s linear forwards;
-}
-
-@keyframes turn-timer-countdown {
-  0% {
-    stroke-dashoffset: 0;
-    stroke: var(--cyan);
-  }
-
-  70% {
-    stroke: var(--cyan);
-  }
-
-  88% {
-    stroke: #ff9f2e;
-  }
-
-  100% {
-    stroke-dashoffset: 289;
-    stroke: #ff3b30;
-  }
 }
 
 .avatar-initial {
@@ -809,6 +857,103 @@ input {
   animation: deal-deck-pulse 4.5s ease-out both;
 }
 
+.deal-flight-layer {
+  position: absolute;
+  left: 50%;
+  top: 36%;
+  z-index: 6;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.flying-card-back {
+  position: absolute;
+  left: -21px;
+  top: -29px;
+  width: 42px;
+  height: 58px;
+  border: 2px solid #f5f1e7;
+  border-radius: 6px;
+  background:
+    linear-gradient(45deg, transparent 42%, rgba(255, 255, 255, 0.36) 43% 47%, transparent 48%),
+    linear-gradient(-45deg, transparent 42%, rgba(255, 255, 255, 0.36) 43% 47%, transparent 48%),
+    radial-gradient(circle at 50% 50%, #f8e1d8 0 2px, transparent 3px),
+    linear-gradient(135deg, #b01222, #e33745 48%, #8d0b18);
+  background-size: 11px 11px, 11px 11px, 13px 13px, 100% 100%;
+  box-shadow:
+    inset 0 0 0 2px #c81b2d,
+    inset 0 0 0 4px rgba(255, 255, 255, 0.24),
+    0 14px 22px rgba(0, 0, 0, 0.34);
+  opacity: 0;
+  transform: translate(0, 0) scale(0.64) rotate(-10deg);
+  animation: flying-card-deal 980ms cubic-bezier(0.16, 0.84, 0.2, 1) both;
+  animation-delay: var(--flight-delay, 0ms);
+}
+
+.flying-card-back.is-ace-probe {
+  animation-duration: 1120ms;
+}
+
+.flying-card-back.is-winning-ace {
+  display: grid;
+  place-items: center;
+  color: #b01222;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 214, 41, 0.2), transparent 38%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(246, 247, 247, 0.99));
+  font-size: 20px;
+  font-weight: 900;
+  text-shadow: 0 1px 0 #fff;
+  animation-name: flying-ace-deal;
+}
+
+@keyframes flying-card-deal {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.58) rotate(-14deg);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(calc(var(--flight-x) * 0.92), calc(var(--flight-y) * 0.92)) scale(1.03) rotate(calc(var(--flight-r) + 5deg));
+  }
+
+  100% {
+    opacity: 0.96;
+    transform: translate(var(--flight-x), var(--flight-y)) scale(0.92) rotate(var(--flight-r));
+  }
+}
+
+@keyframes flying-ace-deal {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.58) rotate(-14deg);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  64% {
+    opacity: 1;
+    transform: translate(calc(var(--flight-x) * 0.86), calc(var(--flight-y) * 0.86)) scale(1.06) rotate(calc(var(--flight-r) + 4deg));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(var(--flight-x), var(--flight-y)) scale(1.08) rotate(var(--flight-r));
+    box-shadow:
+      0 0 0 3px rgba(255, 214, 41, 0.22),
+      0 18px 28px rgba(0, 0, 0, 0.38);
+  }
+}
+
 @keyframes deal-deck-pulse {
   0% {
     opacity: 0;
@@ -842,86 +987,6 @@ input {
   min-width: 310px;
   min-height: 90px;
   transform: translateX(-50%);
-  transition: none;
-}
-
-.played-card.is-trick-winner .card {
-  box-shadow:
-    0 0 0 2px rgba(255, 214, 41, 0.95),
-    0 0 18px 4px rgba(255, 214, 41, 0.55),
-    0 4px 8px rgba(0, 0, 0, 0.36);
-  transform: translateY(-4px) scale(1.06);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.played-card-slot[class*="is-collecting-"] {
-  animation-duration: 0.42s;
-  animation-timing-function: cubic-bezier(0.36, 0, 0.66, -0.04);
-  animation-fill-mode: forwards;
-}
-
-.played-card-slot.is-collecting-left {
-  animation-name: collect-to-left;
-}
-
-.played-card-slot.is-collecting-top {
-  animation-name: collect-to-top;
-}
-
-.played-card-slot.is-collecting-right {
-  animation-name: collect-to-right;
-}
-
-.played-card-slot.is-collecting-bottom {
-  animation-name: collect-to-bottom;
-}
-
-@keyframes collect-to-left {
-  0% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% - 140px), 40px) scale(0.5) rotate(-14deg);
-  }
-}
-
-@keyframes collect-to-top {
-  0% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -120px) scale(0.5) rotate(6deg);
-  }
-}
-
-@keyframes collect-to-right {
-  0% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% + 140px), 40px) scale(0.5) rotate(14deg);
-  }
-}
-
-@keyframes collect-to-bottom {
-  0% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(-50%, 150px) scale(0.5) rotate(-6deg);
-  }
 }
 
 .table-notice {
@@ -1071,6 +1136,7 @@ input {
   justify-items: center;
   gap: 3px;
   transform: var(--played-transform);
+  transform-origin: 50% 85%;
 }
 
 .played-card.left {
@@ -1090,7 +1156,7 @@ input {
 }
 
 .played-card.is-entering {
-  animation: card-enter-bottom 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: card-enter-bottom 0.58s cubic-bezier(0.16, 0.88, 0.2, 1) both;
 }
 
 .played-card.left.is-entering {
@@ -1108,7 +1174,17 @@ input {
 @keyframes card-enter-left {
   0% {
     opacity: 0;
-    transform: translate(-150px, 18px) rotate(-22deg) scale(0.72);
+    transform: translate(-205px, 22px) rotate(-32deg) scale(0.58);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translate(-22px, -20px) rotate(-11deg) scale(1.06);
+  }
+
+  82% {
+    opacity: 1;
+    transform: translate(5px, 4px) rotate(-4deg) scale(0.98);
   }
 
   100% {
@@ -1120,7 +1196,17 @@ input {
 @keyframes card-enter-top {
   0% {
     opacity: 0;
-    transform: translate(0, -110px) rotate(8deg) scale(0.72);
+    transform: translate(12px, -168px) rotate(18deg) scale(0.58);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translate(-10px, -24px) rotate(5deg) scale(1.06);
+  }
+
+  82% {
+    opacity: 1;
+    transform: translate(3px, 3px) rotate(1deg) scale(0.98);
   }
 
   100% {
@@ -1132,7 +1218,17 @@ input {
 @keyframes card-enter-right {
   0% {
     opacity: 0;
-    transform: translate(150px, 18px) rotate(22deg) scale(0.72);
+    transform: translate(205px, 22px) rotate(32deg) scale(0.58);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translate(22px, -20px) rotate(11deg) scale(1.06);
+  }
+
+  82% {
+    opacity: 1;
+    transform: translate(-5px, 4px) rotate(4deg) scale(0.98);
   }
 
   100% {
@@ -1144,7 +1240,17 @@ input {
 @keyframes card-enter-bottom {
   0% {
     opacity: 0;
-    transform: translate(0, 130px) rotate(-5deg) scale(0.72);
+    transform: translate(0, 184px) rotate(-10deg) scale(0.58);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translate(-8px, 20px) rotate(-4deg) scale(1.06);
+  }
+
+  82% {
+    opacity: 1;
+    transform: translate(3px, -4px) rotate(1deg) scale(0.98);
   }
 
   100% {
@@ -1157,6 +1263,230 @@ input {
   opacity: 0.62;
   filter: grayscale(0.25);
   transform: rotate(90deg);
+}
+
+.played-card.is-joker-play {
+  position: relative;
+  z-index: 7;
+}
+
+.played-card.is-joker-play::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 57%;
+  z-index: -1;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(214, 16, 34, 0.28), transparent 56%),
+    conic-gradient(from 0deg, transparent, rgba(255, 214, 41, 0.28), transparent 35%, rgba(0, 200, 255, 0.18), transparent 70%);
+  filter: blur(1px);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.62);
+  animation: joker-aura 1.1s ease-out both;
+}
+
+.played-card.is-joker-play .joker-card {
+  border-color: rgba(214, 16, 34, 0.5);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.94),
+    inset 0 0 0 4px rgba(214, 16, 34, 0.08),
+    0 0 0 2px rgba(255, 214, 41, 0.2),
+    0 16px 30px rgba(0, 0, 0, 0.46);
+}
+
+.played-card.is-joker-take .joker-card {
+  animation: joker-take-impact 0.82s cubic-bezier(0.16, 0.86, 0.24, 1) both;
+}
+
+.played-card.is-joker-high .joker-card,
+.played-card.is-joker-beat .joker-card {
+  animation: joker-high-impact 0.9s cubic-bezier(0.14, 0.9, 0.18, 1) both;
+}
+
+.played-card.is-joker-duck::before {
+  background:
+    radial-gradient(circle, rgba(255, 196, 74, 0.2), transparent 58%),
+    conic-gradient(from 20deg, transparent, rgba(255, 196, 74, 0.16), transparent 52%);
+}
+
+.played-card.is-joker-duck .joker-card {
+  animation: joker-duck-impact 0.72s cubic-bezier(0.2, 0.74, 0.3, 1) both;
+}
+
+@keyframes joker-aura {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.52) rotate(-30deg);
+  }
+
+  34% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(18deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.28) rotate(65deg);
+  }
+}
+
+@keyframes joker-take-impact {
+  0% {
+    filter: brightness(0.9);
+    transform: translateY(-10px) rotate(-7deg) scale(0.88);
+  }
+
+  54% {
+    filter: brightness(1.18);
+    transform: translateY(-3px) rotate(3deg) scale(1.1);
+  }
+
+  100% {
+    filter: brightness(1);
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+
+@keyframes joker-high-impact {
+  0% {
+    filter: brightness(0.85) saturate(1);
+    transform: translateY(-16px) rotate(-12deg) scale(0.82);
+  }
+
+  38% {
+    filter: brightness(1.35) saturate(1.18);
+    transform: translateY(-9px) rotate(8deg) scale(1.18);
+  }
+
+  58% {
+    filter: brightness(1.16) saturate(1.08);
+    transform: translateY(2px) rotate(-3deg) scale(0.96);
+  }
+
+  100% {
+    filter: brightness(1) saturate(1);
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+
+@keyframes joker-duck-impact {
+  0% {
+    opacity: 1;
+    filter: grayscale(0) brightness(1);
+    transform: translateY(-8px) rotate(42deg) scale(0.9);
+  }
+
+  64% {
+    opacity: 0.64;
+    filter: grayscale(0.25) brightness(0.9);
+    transform: translateY(7px) rotate(94deg) scale(0.94);
+  }
+
+  100% {
+    opacity: 0.62;
+    filter: grayscale(0.25) brightness(0.92);
+    transform: rotate(90deg);
+  }
+}
+
+.played-card.is-collecting {
+  animation: trick-collect-bottom 0.52s cubic-bezier(0.18, 0.84, 0.22, 1) both;
+  pointer-events: none;
+}
+
+.played-card.is-collecting .played-label {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.86);
+}
+
+.played-card.is-collecting .card {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.92),
+    inset 0 0 0 4px rgba(8, 16, 24, 0.035),
+    0 16px 26px rgba(0, 0, 0, 0.42);
+}
+
+.played-card.is-collecting[data-collect-to="left"] {
+  animation-name: trick-collect-left;
+}
+
+.played-card.is-collecting[data-collect-to="top"] {
+  animation-name: trick-collect-top;
+}
+
+.played-card.is-collecting[data-collect-to="right"] {
+  animation-name: trick-collect-right;
+}
+
+@keyframes trick-collect-left {
+  0% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translate(-82px, -8px) rotate(-18deg) scale(0.86);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-172px, 18px) rotate(-34deg) scale(0.46);
+  }
+}
+
+@keyframes trick-collect-top {
+  0% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translate(8px, -62px) rotate(8deg) scale(0.86);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(30px, -142px) rotate(18deg) scale(0.46);
+  }
+}
+
+@keyframes trick-collect-right {
+  0% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translate(82px, -8px) rotate(18deg) scale(0.86);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(172px, 18px) rotate(34deg) scale(0.46);
+  }
+}
+
+@keyframes trick-collect-bottom {
+  0% {
+    opacity: 1;
+    transform: var(--played-transform);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translate(-4px, 64px) rotate(-4deg) scale(0.86);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(0, 154px) rotate(-10deg) scale(0.46);
+  }
 }
 
 .played-label {
@@ -1186,8 +1516,6 @@ input {
 }
 
 .hand .card {
-  width: 78px;
-  height: 108px;
   flex: 0 0 auto;
   transform: translateY(calc(var(--hand-lift, 0px) * -1)) rotate(var(--hand-rotate, 0deg));
   transform-origin: 50% 100%;
@@ -1198,46 +1526,8 @@ input {
     filter 0.16s ease;
 }
 
-.hand .card .card-center {
-  font-size: 49px;
-}
-
-.hand .card .card-center .mini-rank {
-  font-size: 15px;
-}
-
-.hand .card .card-corner {
-  font-size: 19px;
-}
-
-.hand .card .card-rank,
-.hand .card .card-suit {
-  font-size: 20px;
-}
-
-.hand .card .card-corner.top {
-  top: 7px;
-  left: 7px;
-}
-
-.hand .card .card-corner.bottom {
-  right: 7px;
-  bottom: 7px;
-}
-
-.hand .card .joker-word {
-  font-size: 11px;
-  left: 7px;
-  top: 8px;
-}
-
-.hand .card .joker-word.bottom {
-  right: 7px;
-  bottom: 8px;
-}
-
 .hand .card + .card {
-  margin-left: -21px;
+  margin-left: -17px;
 }
 
 .card {
@@ -1263,22 +1553,6 @@ input {
 
 .card:hover {
   transform: translateY(-5px);
-}
-
-.card.card-image {
-  padding: 0;
-  overflow: hidden;
-  background: #fff;
-}
-
-.card-face {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 6px;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
 }
 
 .hand .card:hover {
@@ -1394,67 +1668,9 @@ input {
 
 .card.joker-card {
   color: #d61022;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(249, 249, 247, 0.99));
-  overflow: hidden;
-}
-
-.card.joker-card.black {
-  color: #14162b;
-}
-
-.joker-badge {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-}
-
-.joker-star {
-  position: relative;
-  display: grid;
-  place-items: center;
-  font-size: 26px;
-  line-height: 1;
-  color: inherit;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.12));
-}
-
-.joker-star::before,
-.joker-star::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  width: 2px;
-  height: 13px;
-  background: currentColor;
-  opacity: 0.55;
-  transform: translateX(-50%);
-}
-
-.joker-star::before {
-  bottom: calc(100% + 3px);
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-}
-
-.joker-star::after {
-  top: calc(100% + 3px);
-  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
-}
-
-.joker-diamonds {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.joker-diamonds span {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: currentColor;
-  opacity: 0.32;
-  transform: rotate(45deg);
+  background:
+    radial-gradient(circle at 50% 55%, rgba(214, 16, 34, 0.08), transparent 35%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(249, 249, 247, 0.99));
 }
 
 .joker-word {
@@ -1465,7 +1681,7 @@ input {
   color: inherit;
   font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
 }
 
 .joker-word.bottom {
@@ -1506,6 +1722,106 @@ input {
     0 3px 6px rgba(0, 0, 0, 0.28),
     inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   transform: rotate(-1deg);
+}
+
+.game-summary {
+  position: absolute;
+  left: 50%;
+  top: 19%;
+  z-index: 12;
+  width: min(360px, 78vw);
+  padding: 12px;
+  border: 1px solid rgba(255, 214, 41, 0.5);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 0, rgba(255, 214, 41, 0.18), transparent 46%),
+    rgba(3, 16, 21, 0.94);
+  color: #fff8d8;
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transform: translateX(-50%);
+  animation: summary-pop 5s ease both;
+  pointer-events: none;
+}
+
+.game-summary[hidden] {
+  display: none;
+}
+
+.summary-title {
+  margin-bottom: 8px;
+  color: #ffe889;
+  font-size: 16px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.summary-list {
+  display: grid;
+  gap: 5px;
+}
+
+.summary-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 54px 52px;
+  align-items: center;
+  gap: 7px;
+  min-height: 31px;
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+  font-weight: 850;
+}
+
+.summary-row.is-success {
+  border-color: rgba(56, 211, 117, 0.35);
+}
+
+.summary-row.is-missed {
+  border-color: rgba(255, 91, 91, 0.28);
+}
+
+.summary-medal {
+  text-align: center;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.summary-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-detail {
+  color: rgba(255, 255, 255, 0.74);
+  text-align: center;
+}
+
+.summary-score {
+  color: #ffe889;
+  text-align: right;
+}
+
+@keyframes summary-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.92);
+  }
+
+  9%,
+  82% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.98);
+  }
 }
 
 .score-sheet {
@@ -1734,27 +2050,6 @@ input {
     width: 51px;
     height: 72px;
     border-radius: 5px;
-  }
-
-  .hand .card {
-    width: 64px;
-    height: 90px;
-  }
-
-  .hand .card + .card {
-    margin-left: -20px;
-  }
-
-  .hand .card .card-center {
-    font-size: 38px;
-  }
-
-  .hand .card .card-center .mini-rank {
-    font-size: 13px;
-  }
-
-  .hand .card .card-corner {
-    font-size: 15px;
   }
 
   .card-center {
@@ -2065,24 +2360,12 @@ input {
   }
 
   .hand .card {
-    width: min(68px, calc((100vw - 20px) / 5.4));
-    height: min(95px, calc((100vw - 20px) / 5.4 * 1.42));
+    width: min(54px, calc((100vw - 20px) / 6.5));
+    height: min(76px, calc((100vw - 20px) / 6.5 * 1.42));
   }
 
   .hand .card + .card {
-    margin-left: max(-24px, calc((100vw - 390px) * 0.03 - 24px));
-  }
-
-  .hand .card .card-center {
-    font-size: 40px;
-  }
-
-  .hand .card .card-center .mini-rank {
-    font-size: 13px;
-  }
-
-  .hand .card .card-corner {
-    font-size: 16px;
+    margin-left: max(-22px, calc((100vw - 390px) * 0.03 - 22px));
   }
 
   .card-center {
@@ -2130,175 +2413,5 @@ input {
     height: 86vh;
     height: 86dvh;
     padding: 18px 12px 22px;
-  }
-}
-
-
-/* === JOKER UI PATCH 1: bigger straight player hand cards === */
-.hand {
-  bottom: 2.2%;
-  width: min(92%, 820px);
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.hand .card {
-  width: clamp(72px, 8.4vw, 98px);
-  height: clamp(101px, 11.9vw, 138px);
-  transform: translateY(calc(var(--hand-lift, 0px) * -0.35)) rotate(0deg);
-  border-radius: 8px;
-}
-
-.hand .card + .card {
-  margin-left: clamp(-14px, -1.15vw, -8px);
-}
-
-.hand .card:hover {
-  transform: translateY(calc((var(--hand-lift, 0px) + 14px) * -1)) rotate(0deg) scale(1.08);
-}
-
-.hand .card.is-dealt {
-  animation-name: hand-card-deal-straight;
-}
-
-@keyframes hand-card-deal-straight {
-  0% {
-    opacity: 0;
-    transform: translateY(-130px) scale(0.64) rotate(-5deg);
-  }
-
-  72% {
-    opacity: 1;
-    transform: translateY(8px) scale(1.05) rotate(0deg);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(calc(var(--hand-lift, 0px) * -0.35)) rotate(0deg);
-  }
-}
-
-.card-face {
-  object-fit: contain;
-}
-
-@media (max-width: 760px), (max-height: 430px) {
-  .hand {
-    bottom: 8px;
-    width: calc(100% - 22px);
-  }
-
-  .hand .card {
-    width: clamp(56px, 11.6vw, 82px);
-    height: clamp(79px, 16.5vw, 116px);
-  }
-
-  .hand .card + .card {
-    margin-left: clamp(-18px, -3vw, -8px);
-  }
-}
-
-
-/* === JOKER UI PATCH 2: separated large joker action buttons === */
-.bid-panel:has(.joker-high-option),
-.bid-panel:has(.joker-take-option),
-.bid-panel:has(.joker-beat-option),
-.bid-panel:has(.joker-duck-option) {
-  width: min(420px, 72%);
-  padding: 12px;
-}
-
-.bid-options:has(.joker-high-option),
-.bid-options:has(.joker-take-option),
-.bid-options:has(.joker-beat-option),
-.bid-options:has(.joker-duck-option) {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.joker-take-option,
-.joker-high-option,
-.joker-duck-option,
-.joker-beat-option {
-  min-height: 58px;
-  border-radius: 10px;
-  font-size: 19px;
-  letter-spacing: 0.3px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.34);
-}
-
-.joker-high-option,
-.joker-beat-option {
-  border-color: rgba(70, 126, 255, 0.78);
-  background: linear-gradient(180deg, rgba(45, 89, 224, 0.98), rgba(19, 51, 160, 0.98));
-  color: #fff;
-}
-
-.joker-take-option,
-.joker-duck-option {
-  border-color: rgba(45, 230, 96, 0.78);
-  background: linear-gradient(180deg, rgba(26, 172, 55, 0.98), rgba(8, 98, 33, 0.98));
-  color: #eaffef;
-}
-
-@media (max-width: 760px), (max-height: 430px) {
-  .bid-panel:has(.joker-high-option),
-  .bid-panel:has(.joker-take-option),
-  .bid-panel:has(.joker-beat-option),
-  .bid-panel:has(.joker-duck-option) {
-    width: min(430px, 86%);
-    bottom: 118px;
-  }
-
-  .joker-take-option,
-  .joker-high-option,
-  .joker-duck-option,
-  .joker-beat-option {
-    min-height: 52px;
-    font-size: 17px;
-  }
-}
-
-
-/* === JOKER UI PATCH 3: bigger suit choice after joker command === */
-.bid-panel:has(.bid-option[data-joker-lead-suit]) {
-  width: min(500px, 78%);
-  padding: 14px;
-}
-
-.bid-options:has(.bid-option[data-joker-lead-suit]) {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.bid-option[data-joker-lead-suit] {
-  min-height: 76px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(226, 231, 232, 0.98));
-  color: #111;
-  font-size: 46px;
-  line-height: 1;
-  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.34);
-}
-
-.bid-option[data-joker-lead-suit="hearts"],
-.bid-option[data-joker-lead-suit="diamonds"] {
-  color: #d71920;
-}
-
-.bid-option[data-joker-lead-suit="clubs"],
-.bid-option[data-joker-lead-suit="spades"] {
-  color: #111;
-}
-
-@media (max-width: 760px), (max-height: 430px) {
-  .bid-panel:has(.bid-option[data-joker-lead-suit]) {
-    width: min(430px, 88%);
-    bottom: 112px;
-  }
-
-  .bid-option[data-joker-lead-suit] {
-    min-height: 62px;
-    font-size: 38px;
   }
 }

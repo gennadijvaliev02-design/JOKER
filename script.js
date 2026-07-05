@@ -62,6 +62,7 @@ const state = {
   deck: [],
   hands: {},
   currentTrick: [],
+  collectingTrickWinnerSeat: null,
   playedCards: [],
   phase: "idle",
   leadPlayerId: "human",
@@ -99,6 +100,7 @@ const elements = {
   playerHand: document.querySelector("#player-hand"),
   playedCardSlot: document.querySelector("#played-card-slot"),
   tableNotice: document.querySelector("#table-notice"),
+  gameSummary: document.querySelector("#game-summary"),
   bidPanel: document.querySelector("#bid-panel"),
   bidTitle: document.querySelector(".bid-title"),
   bidOptions: document.querySelector("#bid-options"),
@@ -202,26 +204,30 @@ function startAceDeal() {
   const jumpText = state.devTarget ? ` Старт: пулька ${state.currentPulka}, игра ${state.currentGame}.` : "";
   showNotice(`Раздача на туза: первый туз у ${winner.name}. Порядок: ${orderText}.${jumpText}`);
   render();
+  playAceDealAnimation(aceDeal);
 
   scheduleGameTask(() => {
     startDeal();
     render();
     scheduleGameTask(hideNotice, getDelay(1400));
-  }, getDelay(1700));
+  }, getDelay(3400));
 }
 
 function dealUntilFirstAce() {
   const deck = shuffle(createJokerDeck());
   let dealIndex = 0;
+  const revealedCards = [];
 
   while (deck.length) {
     const player = state.players[dealIndex % state.players.length];
     const card = deck.pop();
+    revealedCards.push({ playerId: player.id, card });
 
     if (card.rank === "A") {
       return {
         winnerId: player.id,
         card,
+        revealedCards,
       };
     }
 
@@ -231,6 +237,7 @@ function dealUntilFirstAce() {
   return {
     winnerId: state.players.at(-1).id,
     card: null,
+    revealedCards,
   };
 }
 
@@ -447,13 +454,7 @@ function render() {
   renderScoreSheet();
 }
 
-let turnTimerActiveKey = null;
-
 function renderPlayers() {
-  const timerKey = state.activePlayerId && !state.busy ? `${state.activePlayerId}:${state.trickNumber}:${state.currentTrick.length}` : null;
-  const shouldRestartTimer = timerKey !== turnTimerActiveKey;
-  turnTimerActiveKey = timerKey;
-
   for (const player of state.players) {
     const playerElement = document.querySelector(`[data-seat="${player.seat}"]`)?.closest(".player");
     const name = document.querySelector(`[data-name="${player.seat}"]`);
@@ -465,10 +466,14 @@ function renderPlayers() {
     const stats = taken?.closest(".player-stats");
 
     name.textContent = player.seat === "bottom" ? "Ты" : player.name;
-    const avatarInitial = avatar.querySelector(".avatar-initial") || document.createElement("span");
+    const currentEmotion = avatar.querySelector(".avatar-emotion");
+    const avatarInitial = document.createElement("span");
     avatarInitial.className = "avatar-initial";
     avatarInitial.textContent = player.name.slice(0, 1).toUpperCase();
-    avatar.prepend(avatarInitial);
+    avatar.replaceChildren(avatarInitial);
+    if (currentEmotion) {
+      avatar.append(currentEmotion);
+    }
     orderBadge.textContent = String(player.order);
     order.textContent = String(player.order);
     bid.textContent = formatBid(player.bid);
@@ -476,39 +481,9 @@ function renderPlayers() {
     taken.textContent = String(player.tricks);
     taken.classList.toggle("is-danger", isBidBroken(player));
     stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
-
-    const isThisPlayerActive = player.id === state.activePlayerId && !state.busy;
-    playerElement?.classList.toggle("is-active", isThisPlayerActive);
-    updateTurnTimerRing(playerElement, isThisPlayerActive, shouldRestartTimer);
-  }
-}
-
-function updateTurnTimerRing(playerElement, isActive, shouldRestart) {
-  if (!playerElement) return;
-
-  let ring = playerElement.querySelector(".turn-timer-ring");
-
-  if (!isActive) {
-    ring?.remove();
-    return;
-  }
-
-  if (!ring) {
-    ring = document.createElement("svg");
-    ring.setAttribute("class", "turn-timer-ring");
-    ring.setAttribute("viewBox", "0 0 100 100");
-    ring.innerHTML = `
-      <circle class="turn-timer-ring-track" cx="50" cy="50" r="46"></circle>
-      <circle class="turn-timer-ring-progress" cx="50" cy="50" r="46"></circle>
-    `;
-    playerElement.querySelector(".avatar")?.appendChild(ring);
-  }
-
-  if (shouldRestart) {
-    const progressCircle = ring.querySelector(".turn-timer-ring-progress");
-    progressCircle.classList.remove("is-running");
-    void progressCircle.offsetWidth;
-    progressCircle.classList.add("is-running");
+    const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";
+    playerElement?.classList.toggle("is-active", isActivePlayer);
+    playerElement?.classList.toggle("is-thinking", isActivePlayer && state.busy && player.id !== "human");
   }
 }
 
@@ -625,10 +600,99 @@ function renderHand() {
   if (shouldAnimateDeal) {
     state.renderedDealAnimationKey = state.dealAnimationKey;
     elements.table?.classList.add("is-dealing");
+    playCardDealAnimation(hand.length);
     window.setTimeout(() => {
       elements.table?.classList.remove("is-dealing");
     }, getDelay(5600));
   }
+}
+
+function getSeatDealTarget(seat) {
+  const targets = {
+    bottom: { x: 0, y: 206, rotate: 1 },
+    left: { x: -178, y: -16, rotate: -92 },
+    top: { x: 46, y: -156, rotate: 3 },
+    right: { x: 178, y: -4, rotate: 92 },
+  };
+
+  return targets[seat] || targets.bottom;
+}
+
+function createDealLayer(className = "") {
+  if (!elements.table) return null;
+
+  const layer = document.createElement("div");
+  layer.className = `deal-flight-layer ${className}`.trim();
+  layer.setAttribute("aria-hidden", "true");
+  elements.table.append(layer);
+  return layer;
+}
+
+function createFlyingBack(target, delay, index) {
+  const card = document.createElement("span");
+  card.className = "flying-card-back";
+  card.style.setProperty("--flight-x", `${target.x}px`);
+  card.style.setProperty("--flight-y", `${target.y}px`);
+  card.style.setProperty("--flight-r", `${target.rotate + (index % 3 - 1) * 4}deg`);
+  card.style.setProperty("--flight-delay", `${delay}ms`);
+  return card;
+}
+
+function playCardDealAnimation(handCount) {
+  if (state.autoPlay || !elements.table) return;
+
+  const layer = createDealLayer("is-hand-deal");
+  if (!layer) return;
+
+  const cardsPerPlayer = Math.max(3, Math.min(handCount || 9, 9));
+  const playersInDealOrder = getPlayerOrderFrom(getGameLeaderId());
+  const cards = [];
+  let dealStep = 0;
+
+  for (let cardIndex = 0; cardIndex < cardsPerPlayer; cardIndex += 1) {
+    for (const playerId of playersInDealOrder) {
+      const player = getPlayerById(playerId);
+      if (!player) continue;
+
+      const target = getSeatDealTarget(player.seat);
+      const targetWithSpread = {
+        ...target,
+        x: target.x + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "top" || player.seat === "bottom" ? 9 : 2),
+        y: target.y + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),
+      };
+
+      cards.push(createFlyingBack(targetWithSpread, dealStep * 115, dealStep));
+      dealStep += 1;
+    }
+  }
+
+  layer.replaceChildren(...cards);
+  window.setTimeout(() => layer.remove(), getDelay(5200));
+}
+
+function playAceDealAnimation(aceDeal) {
+  if (state.autoPlay || !elements.table) return;
+
+  const layer = createDealLayer("is-ace-deal");
+  if (!layer) return;
+
+  const revealedCards = (aceDeal.revealedCards || []).slice(0, 16);
+  const cards = revealedCards.map((deal, index) => {
+    const player = getPlayerById(deal.playerId);
+    const target = getSeatDealTarget(player?.seat);
+    const card = createFlyingBack(target, index * 170, index);
+    card.classList.add("is-ace-probe");
+
+    if (deal.card?.rank === "A") {
+      card.classList.add("is-winning-ace");
+      card.textContent = `${deal.card.rank}${deal.card.symbol || ""}`;
+    }
+
+    return card;
+  });
+
+  layer.replaceChildren(...cards);
+  window.setTimeout(() => layer.remove(), getDelay(3300));
 }
 
 function createCardElement(card, options = {}) {
@@ -659,22 +723,23 @@ function createCardElement(card, options = {}) {
   if (card.type === "joker") {
     cardElement.innerHTML = `
       <span class="joker-word">JOKER</span>
-      <span class="joker-badge">
-        <span class="joker-diamonds">
-          <span style="top:14px;left:14px;"></span>
-          <span style="top:14px;right:14px;"></span>
-          <span style="bottom:14px;left:14px;"></span>
-          <span style="bottom:14px;right:14px;"></span>
-        </span>
-        <span class="joker-star card-center">★<span class="mini-rank">JOKER</span></span>
-      </span>
+      <span class="card-center">★<span class="mini-rank">JOKER</span></span>
       <span class="joker-word bottom">JOKER</span>
     `;
     return cardElement;
   }
 
-  cardElement.classList.add("card-image");
-  cardElement.innerHTML = `<img class="card-face" src="cards/${card.rank}_${card.suit}.png" alt="${card.rank} ${card.suit}" draggable="false" />`;
+  cardElement.innerHTML = `
+    <span class="card-corner top">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${card.symbol}</span>
+    </span>
+    <span class="card-center">${card.symbol}</span>
+    <span class="card-corner bottom">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${card.symbol}</span>
+    </span>
+  `;
 
   return cardElement;
 }
@@ -688,12 +753,21 @@ function markDealAnimation() {
 }
 
 function renderTrick() {
-  elements.playedCardSlot.className = "played-card-slot";
   elements.playedCardSlot.replaceChildren(
     ...state.currentTrick.map((play) => {
       const playedCard = document.createElement("div");
       playedCard.className = `played-card ${play.player.seat} ${play.jokerMode === "duck" ? "is-ducked" : ""}`;
+      playedCard.classList.toggle("is-joker-play", play.card.type === "joker");
+      playedCard.classList.toggle("is-joker-take", play.card.type === "joker" && play.jokerCommand === "take");
+      playedCard.classList.toggle("is-joker-high", play.card.type === "joker" && play.jokerCommand === "high");
+      playedCard.classList.toggle("is-joker-beat", play.card.type === "joker" && play.jokerMode === "beat");
+      playedCard.classList.toggle("is-joker-duck", play.card.type === "joker" && play.jokerMode === "duck");
       playedCard.classList.toggle("is-entering", play.order === state.currentTrick.length - 1);
+      playedCard.classList.toggle("is-collecting", Boolean(state.collectingTrickWinnerSeat));
+
+      if (state.collectingTrickWinnerSeat) {
+        playedCard.dataset.collectTo = state.collectingTrickWinnerSeat;
+      }
 
       const label = document.createElement("span");
       label.className = "played-label";
@@ -1688,47 +1762,30 @@ function finishTrickSoon() {
   scheduleGameTask(() => {
     const winnerPlay = getTrickWinner();
     const winner = winnerPlay.player;
-
-    markTrickWinnerCard(winnerPlay);
+    state.collectingTrickWinnerSeat = winner.seat;
+    render();
 
     scheduleGameTask(() => {
-      playCollectAnimation(winner.seat);
+      winner.tricks += 1;
+      playSound("trick");
+      state.leadPlayerId = winner.id;
+      state.activePlayerId = winner.id;
+      state.currentTrick = [];
+      state.collectingTrickWinnerSeat = null;
+      state.trickNumber += 1;
+      state.busy = false;
+      render();
 
-      scheduleGameTask(() => {
-        winner.tricks += 1;
-        playSound("trick");
-        state.leadPlayerId = winner.id;
-        state.activePlayerId = winner.id;
-        state.currentTrick = [];
-        state.trickNumber += 1;
-        state.busy = false;
-        render();
+      if (!hasCardsLeft()) {
+        finishGameSoon();
+        return;
+      }
 
-        if (!hasCardsLeft()) {
-          finishGameSoon();
-          return;
-        }
-
-        if (hasCardsLeft() && (state.autoPlay || state.activePlayerId !== "human")) {
-          continueBotTurns();
-        }
-      }, getDelay(420));
-    }, getDelay(450));
+      if (hasCardsLeft() && (state.autoPlay || state.activePlayerId !== "human")) {
+        continueBotTurns();
+      }
+    }, getDelay(520));
   }, getDelay(900));
-}
-
-function markTrickWinnerCard(winnerPlay) {
-  const playedCards = elements.playedCardSlot?.children;
-  if (!playedCards) return;
-
-  Array.from(playedCards).forEach((cardEl, index) => {
-    cardEl.classList.toggle("is-trick-winner", state.currentTrick[index] === winnerPlay);
-  });
-}
-
-function playCollectAnimation(winnerSeat) {
-  if (!elements.playedCardSlot) return;
-  elements.playedCardSlot.classList.add(`is-collecting-${winnerSeat}`);
 }
 
 function finishGameSoon() {
@@ -1738,7 +1795,9 @@ function finishGameSoon() {
 
   scheduleGameTask(() => {
     const finishedGame = state.currentGame;
+    const gameSummary = createGameSummary();
     writeCurrentGameScore();
+    showGameSummary(gameSummary);
 
     if (isFinalGame()) {
       finishMatch();
@@ -1777,6 +1836,79 @@ function writeCurrentGameScore() {
     const totalRow = state.scoreRows[pulkaOffset + 4];
     totalRow.deltas = state.players.map((player) => calculatePulkaTotal(player.id, pulkaOffset));
     totalRow.cells = state.players.map((player) => formatTotalScore(calculateMatchTotal(player.id)));
+  }
+}
+
+function createGameSummary() {
+  const scores = state.players.map((player) => {
+    const score = calculatePlayerScore(player);
+
+    return {
+      player,
+      score,
+      bidText: formatBid(player.bid),
+      tricks: player.tricks,
+    };
+  });
+  const orderedScores = [...scores].sort((first, second) => second.score.value - first.score.value);
+  const bestValue = orderedScores[0]?.score.value;
+
+  return {
+    pulka: state.currentPulka,
+    game: state.currentGame,
+    scores: orderedScores.map((item, index) => ({
+      ...item,
+      medal: item.score.value === bestValue ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "",
+    })),
+  };
+}
+
+function showGameSummary(summary) {
+  if (state.autoPlay || !elements.gameSummary) {
+    return;
+  }
+
+  const title = document.createElement("div");
+  title.className = "summary-title";
+  title.textContent = `Игра ${summary.game} · пулька ${summary.pulka}`;
+
+  const list = document.createElement("div");
+  list.className = "summary-list";
+  list.replaceChildren(...summary.scores.map(createGameSummaryRow));
+
+  elements.gameSummary.replaceChildren(title, list);
+  elements.gameSummary.hidden = false;
+
+  scheduleGameTask(hideGameSummary, 5000);
+}
+
+function createGameSummaryRow(item) {
+  const row = document.createElement("div");
+  row.className = `summary-row ${item.score.fulfilled ? "is-success" : "is-missed"}`;
+
+  const medal = document.createElement("span");
+  medal.className = "summary-medal";
+  medal.textContent = item.medal || " ";
+
+  const name = document.createElement("span");
+  name.className = "summary-name";
+  name.textContent = item.player.seat === "bottom" ? "Ты" : item.player.name;
+
+  const detail = document.createElement("span");
+  detail.className = "summary-detail";
+  detail.textContent = `${item.tricks}/${item.bidText}`;
+
+  const score = document.createElement("span");
+  score.className = "summary-score";
+  score.innerHTML = formatScoreCell(item.score.scoreLabel);
+
+  row.append(medal, name, detail, score);
+  return row;
+}
+
+function hideGameSummary() {
+  if (elements.gameSummary) {
+    elements.gameSummary.hidden = true;
   }
 }
 
@@ -1996,6 +2128,7 @@ function finishMatch() {
   state.activePlayerId = null;
   state.leadPlayerId = null;
   state.currentTrick = [];
+  state.collectingTrickWinnerSeat = null;
   state.winnerId = winner.id;
   showNotice(`Партия завершена. Победитель: ${winner.name}`);
   showEndGameDialog(winner);
@@ -2046,6 +2179,7 @@ function resetGameState() {
   elements.scoreSheet.hidden = true;
   elements.gameDialog.hidden = true;
   elements.gameDialogActions.replaceChildren();
+  hideGameSummary();
   hideNotice();
   render();
 }
