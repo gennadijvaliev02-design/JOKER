@@ -35,6 +35,22 @@
     return legalCards.length ? legalCards : hand;
   }
 
+  function getStandardCards(cards) {
+    return cards.filter((card) => card.type === "standard");
+  }
+
+  function getSuitGroupsFromCards(cards) {
+    const groups = new Map();
+
+    for (const card of getStandardCards(cards)) {
+      const suitCards = groups.get(card.suit) || [];
+      suitCards.push(card);
+      groups.set(card.suit, suitCards);
+    }
+
+    return groups;
+  }
+
   function isStrongNormalCard(card) {
     if (!card || card.type !== "standard") return false;
 
@@ -65,6 +81,94 @@
     if (strongCards.length) {
       return [...strongCards].sort(compareStrongNormalCards)[0];
     }
+
+    return null;
+  }
+
+  function getControlCardCount(playerId, candidates = getLegalCandidates(playerId)) {
+    const trumpSuit = getTrumpSuit();
+
+    return candidates.filter((card) => {
+      if (card.type === "joker") return true;
+      if (card.rank === "A") return true;
+      if (trumpSuit && card.suit === trumpSuit && RANK_POWER[card.rank] >= RANK_POWER.J) return true;
+      if (isLikelyHighCard(card)) return true;
+      return false;
+    }).length;
+  }
+
+  function canAffordSetupMove(playerId) {
+    const player = getPlayerById(playerId);
+    if (!player || player.bid === "pass" || isBotBroken(playerId)) return false;
+
+    const target = getBotTarget(player);
+    const neededTricks = target - player.tricks;
+    const remainingCards = state.hands[playerId]?.length || 0;
+
+    if (neededTricks <= 0) return false;
+
+    // Если нужно брать почти всё подряд, не устраиваем красивые тактики — просто спасаем заказ.
+    return remainingCards > neededTricks + 1;
+  }
+
+  function chooseSingletonVoidLead(playerId, candidates) {
+    const trumpSuit = getTrumpSuit();
+    if (!trumpSuit || !canAffordSetupMove(playerId)) return null;
+
+    const player = getPlayerById(playerId);
+    const neededTricks = getBotTarget(player) - player.tricks;
+    const trumpCards = getSuitCards(playerId, trumpSuit);
+    const controlCount = getControlCardCount(playerId, candidates);
+
+    if (neededTricks <= 0 || trumpCards.length < 2 || controlCount < 2) return null;
+
+    const singletons = [...getSuitGroupsFromCards(candidates).entries()]
+      .filter(([suit, cards]) => suit !== trumpSuit && cards.length === 1)
+      .map(([, cards]) => cards[0])
+      .filter((card) => RANK_POWER[card.rank] <= RANK_POWER.Q);
+
+    if (!singletons.length) return null;
+
+    return [...singletons].sort(compareBotCards)[0];
+  }
+
+  function chooseTrumpDrainLead(playerId, candidates) {
+    const trumpSuit = getTrumpSuit();
+    if (!trumpSuit || !canAffordSetupMove(playerId)) return null;
+
+    const player = getPlayerById(playerId);
+    const neededTricks = getBotTarget(player) - player.tricks;
+    const controlCount = getControlCardCount(playerId, candidates);
+
+    if (neededTricks <= 0 || controlCount < 3) return null;
+
+    const longWeakSuits = [...getSuitGroupsFromCards(candidates).entries()]
+      .filter(([suit, cards]) => suit !== trumpSuit && cards.length >= 3)
+      .map(([suit, cards]) => ({
+        suit,
+        cards: [...cards].sort(compareBotCards),
+        weakCount: cards.filter((card) => RANK_POWER[card.rank] <= RANK_POWER[10]).length,
+      }))
+      .filter((group) => group.weakCount >= 2)
+      .sort((first, second) => {
+        if (second.cards.length !== first.cards.length) return second.cards.length - first.cards.length;
+        return second.weakCount - first.weakCount;
+      });
+
+    if (!longWeakSuits.length) return null;
+
+    return longWeakSuits[0].cards[0];
+  }
+
+  function chooseSetupLeadCard(playerId, candidates) {
+    if (state.currentTrick.length) return null;
+    if (shouldPreserveJokerForFinalTrick(playerId)) return null;
+
+    const singletonVoidLead = chooseSingletonVoidLead(playerId, candidates);
+    if (singletonVoidLead) return singletonVoidLead;
+
+    const trumpDrainLead = chooseTrumpDrainLead(playerId, candidates);
+    if (trumpDrainLead) return trumpDrainLead;
 
     return null;
   }
@@ -123,6 +227,9 @@
         }
       }
     }
+
+    const setupLeadCard = chooseSetupLeadCard(playerId, candidates);
+    if (setupLeadCard) return setupLeadCard;
 
     return originalChooseBotCard(playerId);
   };
