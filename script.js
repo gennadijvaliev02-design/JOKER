@@ -2610,11 +2610,11 @@ function getSoundProfile(type) {
 }
 
 function getBotPlayDelay() {
-  return state.autoPlay ? 0 : getRandomDelay(1100, 1750);
+  return state.autoPlay ? 0 : getRandomDelay(420, 720);
 }
 
 function getBotDecisionDelay() {
-  return state.autoPlay ? 0 : getRandomDelay(1500, 2500);
+  return state.autoPlay ? 0 : getRandomDelay(700, 1100);
 }
 
 function getRandomDelay(min, max) {
