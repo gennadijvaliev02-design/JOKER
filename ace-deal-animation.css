@@ -1,0 +1,183 @@
+/* Opening animation: deal cards until the first ace is found */
+.ace-deal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.ace-deal-overlay.is-visible {
+  opacity: 1;
+}
+
+.ace-deal-stage {
+  position: relative;
+  width: min(430px, 74vw);
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  padding: 22px 26px 24px;
+  border: 2px solid rgba(255, 214, 41, 0.58);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255, 214, 41, 0.24), transparent 42%),
+    linear-gradient(145deg, rgba(2, 19, 16, 0.95), rgba(4, 30, 42, 0.94));
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.52),
+    0 0 26px rgba(255, 214, 41, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.ace-deal-title {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  color: #ffe889;
+  font-size: 18px;
+  font-weight: 950;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72);
+}
+
+.ace-deal-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.ace-mini-card {
+  width: 54px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #f5f1e7;
+  border-radius: 9px;
+  background:
+    linear-gradient(45deg, transparent 42%, rgba(255, 255, 255, 0.34) 43% 47%, transparent 48%),
+    linear-gradient(-45deg, transparent 42%, rgba(255, 255, 255, 0.34) 43% 47%, transparent 48%),
+    linear-gradient(135deg, #b01222, #e33745 48%, #8d0b18);
+  background-size: 11px 11px, 11px 11px, 100% 100%;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.34),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+  opacity: 0;
+  transform: translateY(22px) rotate(-10deg) scale(0.8);
+  animation: ace-mini-card-in 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.ace-mini-card:nth-child(2) {
+  animation-delay: 0.13s;
+}
+
+.ace-mini-card:nth-child(3) {
+  animation-delay: 0.26s;
+}
+
+.ace-mini-card:nth-child(4) {
+  animation-delay: 0.39s;
+}
+
+.ace-mini-card.is-ace {
+  background: linear-gradient(145deg, #fff, #f4f6f7);
+  color: #0b1520;
+  font-size: 26px;
+  font-weight: 950;
+  animation:
+    ace-mini-card-in 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+    ace-mini-card-glow 0.9s ease-in-out 0.52s infinite alternate;
+}
+
+.ace-mini-card.is-red {
+  color: #e21b2d;
+}
+
+.ace-deal-winner {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 950;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72);
+}
+
+.ace-deal-winner strong {
+  color: #ffe889;
+}
+
+@keyframes ace-mini-card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) rotate(-10deg) scale(0.8);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(-4px) rotate(3deg) scale(1.05);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+
+@keyframes ace-mini-card-glow {
+  from {
+    box-shadow:
+      0 10px 22px rgba(0, 0, 0, 0.34),
+      0 0 0 rgba(255, 214, 41, 0),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.76);
+  }
+
+  to {
+    box-shadow:
+      0 10px 22px rgba(0, 0, 0, 0.34),
+      0 0 24px rgba(255, 214, 41, 0.72),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+}
+
+@media (max-width: 760px), (max-height: 430px) {
+  .ace-deal-stage {
+    width: min(380px, 76vw);
+    min-height: 158px;
+    padding: 18px 20px 20px;
+    border-radius: 20px;
+  }
+
+  .ace-deal-title {
+    top: 11px;
+    font-size: 15px;
+  }
+
+  .ace-deal-cards {
+    gap: 9px;
+    margin-top: 19px;
+  }
+
+  .ace-mini-card {
+    width: 44px;
+    height: 62px;
+    border-radius: 8px;
+  }
+
+  .ace-mini-card.is-ace {
+    font-size: 22px;
+  }
+
+  .ace-deal-winner {
+    bottom: 12px;
+    font-size: 14px;
+  }
+}
