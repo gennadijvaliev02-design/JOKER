@@ -1,5 +1,6 @@
 (() => {
   let announcementElement = null;
+  let announcerSeat = null;
 
   function ensureJokerAnnouncementElement() {
     if (announcementElement) return announcementElement;
@@ -27,6 +28,20 @@
     };
   }
 
+  function setJokerAnnouncerHighlight(seat) {
+    clearJokerAnnouncerHighlight();
+    announcerSeat = seat;
+    const avatar = document.querySelector(`[data-seat="${seat}"]`);
+    avatar?.closest(".player")?.classList.add("is-joker-announcer");
+  }
+
+  function clearJokerAnnouncerHighlight() {
+    document.querySelectorAll(".player.is-joker-announcer").forEach((player) => {
+      player.classList.remove("is-joker-announcer");
+    });
+    announcerSeat = null;
+  }
+
   function showJokerAnnouncement(play) {
     if (!play || play.card?.type !== "joker" || play.jokerMode !== "lead" || !play.jokerCommand || !play.jokerSuit) {
       return;
@@ -35,9 +50,13 @@
     const element = ensureJokerAnnouncementElement();
     const text = getJokerAnnouncementText(play);
     const suitClass = text.suitColor === "red" ? "is-red" : "is-black";
+    const commandClass = play.jokerCommand === "take" ? "is-take" : "is-high";
 
+    element.classList.remove("is-take", "is-high", "is-visible");
+    void element.offsetWidth;
+    element.classList.add(commandClass);
     element.innerHTML = `
-      <span class="joker-announcement-player">🃏 ${text.playerName}</span>
+      <span class="joker-announcement-player">🃏 ${text.playerName} объявил</span>
       <span class="joker-announcement-action">
         <span>${text.commandText}</span>
         <span class="joker-announcement-suit ${suitClass}">${text.suitSymbol}</span>
@@ -45,12 +64,14 @@
     `;
     element.classList.add("is-visible");
     element.setAttribute("aria-hidden", "false");
+    setJokerAnnouncerHighlight(play.player.seat);
   }
 
   function hideJokerAnnouncement() {
     const element = ensureJokerAnnouncementElement();
     element.classList.remove("is-visible");
     element.setAttribute("aria-hidden", "true");
+    clearJokerAnnouncerHighlight();
   }
 
   const originalPlayCard = playCard;
@@ -68,6 +89,10 @@
   window.setInterval(() => {
     if (announcementElement?.classList.contains("is-visible") && state.currentTrick.length === 0) {
       hideJokerAnnouncement();
+    }
+
+    if (announcerSeat && state.currentTrick.length === 0) {
+      clearJokerAnnouncerHighlight();
     }
   }, 120);
 })();
