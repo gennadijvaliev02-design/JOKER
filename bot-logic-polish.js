@@ -117,6 +117,11 @@
     return getSafeExitCardsAfterJoker(playerId)[0]?.suit || chooseLeadJokerSuit(playerId);
   }
 
+  function chooseLooseProbeLead(playerId) {
+    const exits = getSafeExitCardsAfterJoker(playerId);
+    return exits[0] || null;
+  }
+
   function canAffordSetupMove(playerId) {
     const player = getPlayerById(playerId);
     if (!player || player.bid === "pass" || isBotBroken(playerId)) return false;
@@ -239,6 +244,9 @@
 
     if (shouldPreserveJokerForFinalTrick(playerId)) {
       if (!state.currentTrick.length) {
+        const looseProbeCard = chooseLooseProbeLead(playerId);
+        if (looseProbeCard) return looseProbeCard;
+
         const strongNormalCard = chooseStrongNormalBeforeJoker(playerId, standardCards);
         if (strongNormalCard) return strongNormalCard;
       } else {
@@ -273,7 +281,7 @@
         return false;
       }
 
-      if (!state.currentTrick.length && chooseStrongNormalBeforeJoker(playerId, standardCards)) {
+      if (!state.currentTrick.length) {
         return false;
       }
 
@@ -287,13 +295,7 @@
 
   shouldLeadHighTrumpJoker = function polishedShouldLeadHighTrumpJoker(playerId) {
     if (shouldPreserveJokerForFinalTrick(playerId)) {
-      const standardCards = getLegalCandidates(playerId).filter((card) => card.type !== "joker");
-
-      if (chooseStrongNormalBeforeJoker(playerId, standardCards)) {
-        return false;
-      }
-
-      return hasSafeExitAfterJoker(playerId);
+      return false;
     }
 
     return originalShouldLeadHighTrumpJoker(playerId);
@@ -304,16 +306,9 @@
     const target = getBotTarget(player);
 
     if (shouldPreserveJokerForFinalTrick(playerId)) {
-      if (!hasSafeExitAfterJoker(playerId)) {
-        return {
-          jokerCommand: "take",
-          jokerSuit: chooseSafeJokerSuit(playerId),
-        };
-      }
-
       return {
-        jokerCommand: "high",
-        jokerSuit: getTrumpSuit() || chooseSafeJokerSuit(playerId),
+        jokerCommand: "take",
+        jokerSuit: chooseSafeJokerSuit(playerId),
       };
     }
 
