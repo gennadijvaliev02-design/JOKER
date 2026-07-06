@@ -1,6 +1,7 @@
 (() => {
   const originalShouldSpendJokerNow = shouldSpendJokerNow;
   const originalShouldLeadHighTrumpJoker = shouldLeadHighTrumpJoker;
+  const originalChooseLeadJokerAction = chooseLeadJokerAction;
 
   function getPlayedJokerCount() {
     return state.playedCards.filter((play) => play.card?.type === "joker").length;
@@ -64,7 +65,7 @@
     }
 
     const trumpSuit = getTrumpSuit();
-    const trumpDanger = trumpSuit && card.suit === trumpSuit ? 28 : 0;
+    const trumpDanger = trumpSuit && card.suit === getTrumpSuit() ? 28 : 0;
     const rankDanger = RANK_POWER[card.rank] || 0;
     const memoryDanger = getUnseenHigherCardCount(card) === 0 ? 14 : 0;
 
@@ -115,6 +116,53 @@
       return getCardDangerScore(firstCard) - getCardDangerScore(secondCard);
     })[0] || null;
   }
+
+  function getPlayerJokerLeadsThisGame(playerId) {
+    return state.playedCards.filter((play) => {
+      return play.player?.id === playerId && play.card?.type === "joker" && play.jokerMode === "lead";
+    });
+  }
+
+  function getUnseenSuitCount(suit) {
+    const playedCount = getPlayedStandardCards(suit).length;
+    const ownCount = Object.values(state.hands || {})
+      .flat()
+      .filter((card) => card?.type === "standard" && card.suit === suit).length;
+
+    return Math.max(0, 9 - playedCount - ownCount);
+  }
+
+  function chooseDifferentJokerSuit(playerId) {
+    const previousSuits = new Set(
+      getPlayerJokerLeadsThisGame(playerId)
+        .map((play) => play.jokerSuit)
+        .filter(Boolean),
+    );
+    const trumpSuit = getTrumpSuit();
+
+    const suits = SUITS.map((suit) => suit.id)
+      .filter((suit) => !previousSuits.has(suit))
+      .sort((firstSuit, secondSuit) => {
+        if ((firstSuit === trumpSuit) !== (secondSuit === trumpSuit)) {
+          return firstSuit === trumpSuit ? 1 : -1;
+        }
+
+        return getUnseenSuitCount(secondSuit) - getUnseenSuitCount(firstSuit);
+      });
+
+    return suits[0] || SUITS.find((suit) => suit.id !== trumpSuit)?.id || chooseLeadJokerSuit(playerId);
+  }
+
+  chooseLeadJokerAction = function smarterChooseLeadJokerAction(playerId) {
+    if (!shouldPlayerTakeTrick(playerId)) {
+      return {
+        jokerCommand: "take",
+        jokerSuit: chooseDifferentJokerSuit(playerId),
+      };
+    }
+
+    return originalChooseLeadJokerAction(playerId);
+  };
 
   chooseBotCard = function smarterChooseBotCard(playerId) {
     const hand = state.hands[playerId] || [];
