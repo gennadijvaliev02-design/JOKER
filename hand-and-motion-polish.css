@@ -51,14 +51,14 @@
 }
 
 .played-card {
-  transform: var(--played-transform) !important;
+  transform: var(--played-transform);
 }
 
 .played-card.left,
 .played-card.top,
 .played-card.right,
 .played-card.bottom {
-  --played-transform: translate3d(0, 0, 0) rotate(0deg) !important;
+  --played-transform: translate3d(0, 0, 0) rotate(0deg);
 }
 
 .played-card.is-entering,
@@ -66,29 +66,29 @@
 .played-card.top.is-entering,
 .played-card.right.is-entering,
 .played-card.bottom.is-entering {
-  animation: played-card-slide-from-seat 220ms ease-out both !important;
+  animation: played-card-slide-from-seat 240ms ease-out both !important;
 }
 
 .played-card.left.is-entering {
-  --played-start-transform: translate3d(-74px, 8px, 0) scale(0.985) rotate(-3deg);
+  --played-start-transform: translate3d(-118px, 10px, 0) scale(0.94) rotate(-5deg);
 }
 
 .played-card.top.is-entering {
-  --played-start-transform: translate3d(0, -68px, 0) scale(0.985) rotate(1deg);
+  --played-start-transform: translate3d(0, -108px, 0) scale(0.94) rotate(2deg);
 }
 
 .played-card.right.is-entering {
-  --played-start-transform: translate3d(74px, 8px, 0) scale(0.985) rotate(3deg);
+  --played-start-transform: translate3d(118px, 10px, 0) scale(0.94) rotate(5deg);
 }
 
 .played-card.bottom.is-entering {
-  --played-start-transform: translate3d(0, 72px, 0) scale(0.985) rotate(0deg);
+  --played-start-transform: translate3d(0, 118px, 0) scale(0.94) rotate(0deg);
 }
 
 @keyframes played-card-slide-from-seat {
   0% {
-    opacity: 0.5;
-    transform: var(--played-start-transform, translate3d(0, 12px, 0) scale(0.985) rotate(0deg));
+    opacity: 0.35;
+    transform: var(--played-start-transform, translate3d(0, 20px, 0) scale(0.94) rotate(0deg));
   }
 
   72% {
@@ -144,19 +144,19 @@
   }
 
   .played-card.left.is-entering {
-    --played-start-transform: translate3d(-58px, 6px, 0) scale(0.985) rotate(-3deg);
+    --played-start-transform: translate3d(-86px, 8px, 0) scale(0.94) rotate(-5deg);
   }
 
   .played-card.top.is-entering {
-    --played-start-transform: translate3d(0, -52px, 0) scale(0.985) rotate(1deg);
+    --played-start-transform: translate3d(0, -78px, 0) scale(0.94) rotate(2deg);
   }
 
   .played-card.right.is-entering {
-    --played-start-transform: translate3d(58px, 6px, 0) scale(0.985) rotate(3deg);
+    --played-start-transform: translate3d(86px, 8px, 0) scale(0.94) rotate(5deg);
   }
 
   .played-card.bottom.is-entering {
-    --played-start-transform: translate3d(0, 56px, 0) scale(0.985) rotate(0deg);
+    --played-start-transform: translate3d(0, 88px, 0) scale(0.94) rotate(0deg);
   }
 }
 
