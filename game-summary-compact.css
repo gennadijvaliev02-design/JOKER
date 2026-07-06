@@ -1,0 +1,116 @@
+/* Compact game result: ordinary games should feel light, pulka summary stays premium */
+.game-summary:not(.is-pulka-summary) {
+  top: 42% !important;
+  width: min(265px, 66vw) !important;
+  padding: 9px 10px !important;
+  border: 1px solid rgba(255, 214, 41, 0.45) !important;
+  border-radius: 12px !important;
+  background: rgba(4, 14, 18, 0.86) !important;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.36) !important;
+  animation: compact-game-summary 4.6s ease both !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-title {
+  margin-bottom: 7px !important;
+  color: #fff3a6 !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  text-align: center !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65) !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-list {
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-row {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0, 1fr) 40px 42px !important;
+  align-items: center !important;
+  min-height: 27px !important;
+  gap: 5px !important;
+  padding: 4px 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-row.is-success {
+  border-color: rgba(21, 216, 101, 0.36) !important;
+  background: rgba(9, 72, 38, 0.2) !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-row.is-missed {
+  border-color: rgba(255, 78, 78, 0.28) !important;
+  background: rgba(92, 19, 19, 0.16) !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-medal {
+  font-size: 15px !important;
+  text-align: center !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-name {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-detail {
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-align: right !important;
+}
+
+.game-summary:not(.is-pulka-summary) .summary-score {
+  color: #ffe889 !important;
+  font-size: 13px !important;
+  text-align: right !important;
+}
+
+@keyframes compact-game-summary {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.95);
+  }
+
+  10%,
+  78% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.98);
+  }
+}
+
+@media (max-width: 700px), (max-height: 430px) {
+  .game-summary:not(.is-pulka-summary) {
+    top: 41% !important;
+    width: min(250px, 68vw) !important;
+    padding: 8px !important;
+  }
+
+  .game-summary:not(.is-pulka-summary) .summary-title {
+    font-size: 13px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .game-summary:not(.is-pulka-summary) .summary-row {
+    grid-template-columns: 20px minmax(0, 1fr) 34px 38px !important;
+    min-height: 24px !important;
+    gap: 4px !important;
+    padding: 3px 5px !important;
+    font-size: 11px !important;
+  }
+
+  .game-summary:not(.is-pulka-summary) .summary-score {
+    font-size: 12px !important;
+  }
+}
