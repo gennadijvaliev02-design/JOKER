@@ -58,7 +58,7 @@
 .played-card.top,
 .played-card.right,
 .played-card.bottom {
-  --played-transform: translateY(0) rotate(0deg) !important;
+  --played-transform: translate3d(0, 0, 0) rotate(0deg) !important;
 }
 
 .played-card.is-entering,
@@ -66,13 +66,33 @@
 .played-card.top.is-entering,
 .played-card.right.is-entering,
 .played-card.bottom.is-entering {
-  animation: played-card-soft-place 180ms ease-out both !important;
+  animation: played-card-slide-from-seat 220ms ease-out both !important;
 }
 
-@keyframes played-card-soft-place {
+.played-card.left.is-entering {
+  --played-start-transform: translate3d(-74px, 8px, 0) scale(0.985) rotate(-3deg);
+}
+
+.played-card.top.is-entering {
+  --played-start-transform: translate3d(0, -68px, 0) scale(0.985) rotate(1deg);
+}
+
+.played-card.right.is-entering {
+  --played-start-transform: translate3d(74px, 8px, 0) scale(0.985) rotate(3deg);
+}
+
+.played-card.bottom.is-entering {
+  --played-start-transform: translate3d(0, 72px, 0) scale(0.985) rotate(0deg);
+}
+
+@keyframes played-card-slide-from-seat {
   0% {
-    opacity: 0.55;
-    transform: translateY(10px) scale(0.985) rotate(0deg);
+    opacity: 0.5;
+    transform: var(--played-start-transform, translate3d(0, 12px, 0) scale(0.985) rotate(0deg));
+  }
+
+  72% {
+    opacity: 1;
   }
 
   100% {
@@ -121,6 +141,22 @@
 
   .hand .card + .card {
     margin-left: clamp(-25px, -5.05vw, -17px) !important;
+  }
+
+  .played-card.left.is-entering {
+    --played-start-transform: translate3d(-58px, 6px, 0) scale(0.985) rotate(-3deg);
+  }
+
+  .played-card.top.is-entering {
+    --played-start-transform: translate3d(0, -52px, 0) scale(0.985) rotate(1deg);
+  }
+
+  .played-card.right.is-entering {
+    --played-start-transform: translate3d(58px, 6px, 0) scale(0.985) rotate(3deg);
+  }
+
+  .played-card.bottom.is-entering {
+    --played-start-transform: translate3d(0, 56px, 0) scale(0.985) rotate(0deg);
   }
 }
 
