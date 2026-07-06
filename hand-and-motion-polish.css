@@ -1,7 +1,7 @@
 /* Restore clean hand cards and calmer table motion after animation experiments */
 
 .hand {
-  bottom: 0.7% !important;
+  bottom: 0.45% !important;
   gap: 0 !important;
   align-items: flex-end !important;
 }
@@ -13,10 +13,11 @@
   transform: translate3d(0, 0, 0) rotate(0deg) !important;
   transform-origin: 50% 100% !important;
   align-self: flex-end !important;
+  margin-bottom: 0 !important;
 }
 
 .hand .card + .card {
-  margin-left: clamp(-27px, -3.25vw, -18px) !important;
+  margin-left: clamp(-26px, -3.1vw, -17px) !important;
 }
 
 .hand .card:nth-child(n) {
@@ -25,7 +26,7 @@
 
 .hand .card:hover {
   z-index: 8;
-  transform: translate3d(0, -14px, 0) rotate(0deg) scale(1.045) !important;
+  transform: translate3d(0, -13px, 0) rotate(0deg) scale(1.042) !important;
 }
 
 .hand .card.is-disabled:hover {
@@ -33,14 +34,14 @@
 }
 
 .hand .card.is-dealt {
-  animation: hand-card-soft-deal 420ms ease-out both !important;
-  animation-delay: calc(var(--deal-delay, 0ms) * 0.1) !important;
+  animation: hand-card-soft-deal 360ms ease-out both !important;
+  animation-delay: calc(var(--deal-delay, 0ms) * 0.08) !important;
 }
 
 @keyframes hand-card-soft-deal {
   0% {
     opacity: 0;
-    transform: translate3d(0, -12px, 0) scale(0.98) rotate(0deg);
+    transform: translate3d(0, -8px, 0) scale(0.99) rotate(0deg);
   }
 
   100% {
@@ -119,7 +120,7 @@
   }
 
   .hand .card + .card {
-    margin-left: clamp(-26px, -5.25vw, -18px) !important;
+    margin-left: clamp(-25px, -5.05vw, -17px) !important;
   }
 }
 
@@ -130,6 +131,6 @@
   }
 
   .hand .card + .card {
-    margin-left: clamp(-25px, -6.6vw, -18px) !important;
+    margin-left: clamp(-24px, -6.35vw, -17px) !important;
   }
 }
