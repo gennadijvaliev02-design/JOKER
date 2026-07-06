@@ -3,16 +3,20 @@
   top: 42% !important;
   width: min(265px, 66vw) !important;
   padding: 9px 10px !important;
-  border: 1px solid rgba(255, 214, 41, 0.45) !important;
+  border: 1px solid rgba(78, 219, 255, 0.38) !important;
   border-radius: 12px !important;
-  background: rgba(4, 14, 18, 0.86) !important;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.36) !important;
+  background:
+    linear-gradient(145deg, rgba(4, 22, 35, 0.78), rgba(5, 12, 28, 0.82)) !important;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.36),
+    0 0 18px rgba(0, 198, 255, 0.12) !important;
+  backdrop-filter: blur(4px) !important;
   animation: compact-game-summary 4.6s ease both !important;
 }
 
 .game-summary:not(.is-pulka-summary) .summary-title {
   margin-bottom: 7px !important;
-  color: #fff3a6 !important;
+  color: #d9fbff !important;
   font-size: 14px !important;
   font-weight: 950 !important;
   text-align: center !important;
@@ -26,43 +30,39 @@
 
 .game-summary:not(.is-pulka-summary) .summary-row {
   display: grid !important;
-  grid-template-columns: 22px minmax(0, 1fr) 40px 42px !important;
+  grid-template-columns: minmax(0, 1fr) 40px 42px !important;
   align-items: center !important;
   min-height: 27px !important;
   gap: 5px !important;
-  padding: 4px 6px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 4px 7px !important;
+  border: 1px solid rgba(119, 225, 255, 0.16) !important;
   border-radius: 8px !important;
-  background: rgba(255, 255, 255, 0.055) !important;
-  color: #fff !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  color: #f6fdff !important;
   font-size: 12px !important;
   font-weight: 900 !important;
 }
 
-.game-summary:not(.is-pulka-summary) .summary-row.is-success {
-  border-color: rgba(21, 216, 101, 0.36) !important;
-  background: rgba(9, 72, 38, 0.2) !important;
-}
-
+.game-summary:not(.is-pulka-summary) .summary-row.is-success,
 .game-summary:not(.is-pulka-summary) .summary-row.is-missed {
-  border-color: rgba(255, 78, 78, 0.28) !important;
-  background: rgba(92, 19, 19, 0.16) !important;
+  border-color: rgba(119, 225, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.045) !important;
 }
 
 .game-summary:not(.is-pulka-summary) .summary-medal {
-  font-size: 15px !important;
-  text-align: center !important;
+  display: none !important;
 }
 
 .game-summary:not(.is-pulka-summary) .summary-name {
   min-width: 0 !important;
   overflow: hidden !important;
+  color: #f8ffff !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
 
 .game-summary:not(.is-pulka-summary) .summary-detail {
-  color: rgba(255, 255, 255, 0.78) !important;
+  color: rgba(217, 251, 255, 0.72) !important;
   text-align: right !important;
 }
 
@@ -103,10 +103,10 @@
   }
 
   .game-summary:not(.is-pulka-summary) .summary-row {
-    grid-template-columns: 20px minmax(0, 1fr) 34px 38px !important;
+    grid-template-columns: minmax(0, 1fr) 34px 38px !important;
     min-height: 24px !important;
     gap: 4px !important;
-    padding: 3px 5px !important;
+    padding: 3px 6px !important;
     font-size: 11px !important;
   }
 
