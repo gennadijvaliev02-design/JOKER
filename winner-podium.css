@@ -1,0 +1,213 @@
+/* Final winner scene: podium style end-game dialog */
+.game-dialog.is-winner-scene {
+  width: min(520px, 82%) !important;
+  padding: 20px 22px 18px !important;
+  border: 2px solid rgba(255, 226, 105, 0.82) !important;
+  border-radius: 24px !important;
+  background:
+    radial-gradient(circle at 50% -18%, rgba(255, 224, 88, 0.42), transparent 42%),
+    radial-gradient(circle at 18% 16%, rgba(0, 214, 255, 0.25), transparent 36%),
+    linear-gradient(145deg, rgba(9, 38, 63, 0.98), rgba(4, 13, 31, 0.99) 48%, rgba(27, 38, 88, 0.98)) !important;
+  box-shadow:
+    0 26px 60px rgba(0, 0, 0, 0.62),
+    0 0 28px rgba(255, 214, 41, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.17) !important;
+  animation: winner-scene-pop 260ms ease-out both;
+}
+
+.winner-scene {
+  display: grid;
+  gap: 14px;
+}
+
+.winner-kicker {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.winner-main {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.winner-crown {
+  font-size: 35px;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(255, 214, 41, 0.35));
+}
+
+.winner-avatar {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 3px solid rgba(255, 226, 105, 0.92);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 22%, rgba(255, 255, 255, 0.22), transparent 30%),
+    linear-gradient(145deg, rgba(0, 190, 255, 0.42), rgba(6, 31, 68, 0.98));
+  color: #fff6c7;
+  font-size: 36px;
+  font-weight: 950;
+  box-shadow:
+    0 0 0 6px rgba(255, 214, 41, 0.1),
+    0 0 24px rgba(255, 214, 41, 0.34),
+    0 16px 28px rgba(0, 0, 0, 0.42);
+}
+
+.winner-name {
+  color: #ffe889;
+  font-size: 26px;
+  font-weight: 950;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.72);
+}
+
+.winner-score {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.winner-podium {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  align-items: end;
+  margin-top: 2px;
+}
+
+.podium-player {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.podium-player.is-first {
+  padding-top: 11px;
+  border-color: rgba(255, 226, 105, 0.6);
+  background: rgba(255, 214, 41, 0.12);
+  transform: translateY(-8px);
+}
+
+.podium-medal {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.podium-avatar {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(0, 200, 255, 0.58);
+  border-radius: 50%;
+  background: rgba(4, 18, 37, 0.92);
+  color: #eaffff;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.podium-player.is-first .podium-avatar {
+  width: 46px;
+  height: 46px;
+  border-color: rgba(255, 226, 105, 0.88);
+  color: #fff4b5;
+  font-size: 24px;
+  box-shadow: 0 0 18px rgba(255, 214, 41, 0.28);
+}
+
+.podium-name {
+  max-width: 100%;
+  overflow: hidden;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium-score {
+  color: rgba(255, 232, 137, 0.92);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.game-dialog.is-winner-scene .dialog-actions {
+  margin-top: 2px;
+}
+
+@keyframes winner-scene-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (max-width: 700px), (max-height: 430px) {
+  .game-dialog.is-winner-scene {
+    width: min(500px, 88%) !important;
+    padding: 14px 16px 13px !important;
+    border-radius: 20px !important;
+  }
+
+  .winner-scene {
+    gap: 10px;
+  }
+
+  .winner-crown {
+    font-size: 28px;
+  }
+
+  .winner-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+
+  .winner-name {
+    font-size: 21px;
+  }
+
+  .winner-score {
+    font-size: 14px;
+  }
+
+  .winner-podium {
+    gap: 6px;
+  }
+
+  .podium-player {
+    padding: 6px 4px;
+  }
+
+  .podium-avatar {
+    width: 31px;
+    height: 31px;
+    font-size: 16px;
+  }
+
+  .podium-player.is-first .podium-avatar {
+    width: 37px;
+    height: 37px;
+    font-size: 19px;
+  }
+
+  .podium-name,
+  .podium-score {
+    font-size: 10.5px;
+  }
+}
