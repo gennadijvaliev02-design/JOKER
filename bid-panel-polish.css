@@ -1,7 +1,8 @@
 /* UI polish: premium bid selection panel */
 .bid-panel {
-  min-width: 310px;
-  padding: 18px 18px 19px;
+  width: min(442px, 86%) !important;
+  min-width: 400px;
+  padding: 18px 22px 20px;
   border: 2px solid rgba(255, 214, 41, 0.58);
   border-radius: 22px;
   background:
@@ -27,11 +28,11 @@
 }
 
 .bid-options {
-  gap: 11px;
+  gap: 12px;
 }
 
 .bid-option {
-  min-width: 62px;
+  min-width: 68px;
   min-height: 54px;
   padding: 9px 13px;
   border: 2px solid rgba(67, 190, 255, 0.86);
@@ -51,7 +52,7 @@
 }
 
 .bid-option[data-bid="pass"] {
-  min-width: 78px;
+  min-width: 90px;
   border-color: rgba(255, 89, 89, 0.82);
   background:
     linear-gradient(180deg, rgba(105, 33, 38, 0.96), rgba(34, 11, 18, 0.96));
@@ -80,8 +81,9 @@
 
 @media (max-width: 760px), (max-height: 430px) {
   .bid-panel {
-    min-width: 280px;
-    padding: 15px 15px 16px;
+    width: min(410px, 88%) !important;
+    min-width: 364px;
+    padding: 15px 18px 17px;
     border-radius: 19px;
   }
 
@@ -91,11 +93,11 @@
   }
 
   .bid-options {
-    gap: 9px;
+    gap: 10px;
   }
 
   .bid-option {
-    min-width: 56px;
+    min-width: 62px;
     min-height: 48px;
     padding: 8px 11px;
     border-radius: 13px;
@@ -103,25 +105,26 @@
   }
 
   .bid-option[data-bid="pass"] {
-    min-width: 68px;
+    min-width: 78px;
     font-size: 14px;
   }
 }
 
 @media (max-width: 420px) {
   .bid-panel {
-    min-width: 258px;
-    padding: 13px 13px 15px;
+    width: min(360px, 92%) !important;
+    min-width: 318px;
+    padding: 13px 15px 15px;
   }
 
   .bid-option {
-    min-width: 50px;
+    min-width: 54px;
     min-height: 44px;
     font-size: 17px;
   }
 
   .bid-option[data-bid="pass"] {
-    min-width: 60px;
+    min-width: 66px;
     font-size: 13px;
   }
 }
