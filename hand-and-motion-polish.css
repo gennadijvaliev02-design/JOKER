@@ -50,15 +50,37 @@
   }
 }
 
-.played-card {
-  transform: var(--played-transform);
+.played-card-slot {
+  top: 34% !important;
+  width: min(390px, 66vw) !important;
+  min-width: 0 !important;
+  height: 205px !important;
+  min-height: 0 !important;
+  display: block !important;
 }
 
-.played-card.left,
-.played-card.top,
-.played-card.right,
+.played-card {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: var(--played-transform);
+  transform-origin: center center !important;
+}
+
+.played-card.left {
+  --played-transform: translate3d(-142%, -22%, 0) rotate(-7deg);
+}
+
+.played-card.top {
+  --played-transform: translate3d(-50%, -86%, 0) rotate(2deg);
+}
+
+.played-card.right {
+  --played-transform: translate3d(42%, -22%, 0) rotate(7deg);
+}
+
 .played-card.bottom {
-  --played-transform: translate3d(0, 0, 0) rotate(0deg);
+  --played-transform: translate3d(-50%, 36%, 0) rotate(0deg);
 }
 
 .played-card.is-entering,
@@ -70,25 +92,25 @@
 }
 
 .played-card.left.is-entering {
-  --played-start-transform: translate3d(-118px, 10px, 0) scale(0.94) rotate(-5deg);
+  --played-start-transform: translate3d(-230%, -12%, 0) scale(0.94) rotate(-10deg);
 }
 
 .played-card.top.is-entering {
-  --played-start-transform: translate3d(0, -108px, 0) scale(0.94) rotate(2deg);
+  --played-start-transform: translate3d(-50%, -150%, 0) scale(0.94) rotate(2deg);
 }
 
 .played-card.right.is-entering {
-  --played-start-transform: translate3d(118px, 10px, 0) scale(0.94) rotate(5deg);
+  --played-start-transform: translate3d(130%, -12%, 0) scale(0.94) rotate(10deg);
 }
 
 .played-card.bottom.is-entering {
-  --played-start-transform: translate3d(0, 118px, 0) scale(0.94) rotate(0deg);
+  --played-start-transform: translate3d(-50%, 115%, 0) scale(0.94) rotate(0deg);
 }
 
 @keyframes played-card-slide-from-seat {
   0% {
     opacity: 0.35;
-    transform: var(--played-start-transform, translate3d(0, 20px, 0) scale(0.94) rotate(0deg));
+    transform: var(--played-start-transform, translate3d(-50%, 20px, 0) scale(0.94) rotate(0deg));
   }
 
   72% {
@@ -121,52 +143,54 @@
 }
 
 @keyframes played-card-winner-outline {
-  0%,
-  70% {
-    opacity: 1;
-    transform: var(--played-transform);
+  0% {
+    transform: var(--played-transform) scale(1);
+  }
+
+  38% {
+    transform: var(--played-transform) scale(1.08);
   }
 
   100% {
-    opacity: 0;
-    transform: var(--played-transform) scale(0.98);
+    transform: var(--played-transform) scale(1);
   }
 }
 
-@media (max-width: 760px), (max-height: 430px) {
-  .hand .card {
-    width: clamp(66px, 14.8vw, 88px) !important;
-    height: clamp(93px, 20.8vw, 124px) !important;
+@media (max-width: 700px), (max-height: 430px) {
+  .played-card-slot {
+    top: 33% !important;
+    width: min(340px, 70vw) !important;
+    height: 170px !important;
   }
 
-  .hand .card + .card {
-    margin-left: clamp(-25px, -5.05vw, -17px) !important;
+  .played-card.left {
+    --played-transform: translate3d(-132%, -20%, 0) rotate(-7deg);
   }
 
-  .played-card.left.is-entering {
-    --played-start-transform: translate3d(-86px, 8px, 0) scale(0.94) rotate(-5deg);
+  .played-card.top {
+    --played-transform: translate3d(-50%, -78%, 0) rotate(2deg);
   }
 
-  .played-card.top.is-entering {
-    --played-start-transform: translate3d(0, -78px, 0) scale(0.94) rotate(2deg);
+  .played-card.right {
+    --played-transform: translate3d(32%, -20%, 0) rotate(7deg);
   }
 
-  .played-card.right.is-entering {
-    --played-start-transform: translate3d(86px, 8px, 0) scale(0.94) rotate(5deg);
-  }
-
-  .played-card.bottom.is-entering {
-    --played-start-transform: translate3d(0, 88px, 0) scale(0.94) rotate(0deg);
+  .played-card.bottom {
+    --played-transform: translate3d(-50%, 28%, 0) rotate(0deg);
   }
 }
 
 @media (max-width: 420px) {
-  .hand .card {
-    width: clamp(61px, 17vw, 78px) !important;
-    height: clamp(86px, 23.8vw, 110px) !important;
+  .played-card-slot {
+    width: min(300px, 76vw) !important;
+    height: 150px !important;
   }
 
-  .hand .card + .card {
-    margin-left: clamp(-24px, -6.35vw, -17px) !important;
+  .played-card.left {
+    --played-transform: translate3d(-122%, -18%, 0) rotate(-6deg);
+  }
+
+  .played-card.right {
+    --played-transform: translate3d(22%, -18%, 0) rotate(6deg);
   }
 }
