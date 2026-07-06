@@ -1,53 +1,31 @@
-/* Score sheet polish: handwritten barrel/shanga mark */
+/* Score sheet polish: clean handwritten horizontal shanga mark */
 .barrel-mark {
   display: inline-block !important;
   position: relative !important;
-  width: 24px !important;
-  height: 17px !important;
+  width: 26px !important;
+  height: 13px !important;
   margin-left: 2px !important;
-  vertical-align: -3px !important;
+  vertical-align: -2px !important;
   transform: rotate(-2deg) !important;
   background:
-    linear-gradient(#172146, #172146) 3px 8px / 18px 2px no-repeat,
-    linear-gradient(#172146, #172146) 3px 4px / 2px 10px no-repeat,
-    linear-gradient(#172146, #172146) 20px 4px / 2px 10px no-repeat;
-  border-radius: 2px;
+    linear-gradient(#172146, #172146) 2px 6px / 22px 2px no-repeat,
+    linear-gradient(#172146, #172146) 2px 2px / 2px 10px no-repeat,
+    linear-gradient(#172146, #172146) 23px 2px / 2px 10px no-repeat;
+  border-radius: 999px;
 }
 
 .barrel-mark::before,
 .barrel-mark::after {
-  content: "" !important;
-  position: absolute !important;
-  width: 5px !important;
-  height: 5px !important;
-  border: 2px solid #172146 !important;
-  border-radius: 2px !important;
-  background: rgba(251, 251, 239, 0.18) !important;
-}
-
-.barrel-mark::before {
-  left: 0 !important;
-  top: 5px !important;
-}
-
-.barrel-mark::after {
-  right: 0 !important;
-  top: 5px !important;
+  content: none !important;
 }
 
 @media (max-width: 700px), (max-height: 340px) {
   .barrel-mark {
-    width: 22px !important;
-    height: 16px !important;
+    width: 24px !important;
+    height: 12px !important;
     background:
-      linear-gradient(#172146, #172146) 3px 8px / 16px 2px no-repeat,
-      linear-gradient(#172146, #172146) 3px 4px / 2px 10px no-repeat,
-      linear-gradient(#172146, #172146) 18px 4px / 2px 10px no-repeat;
-  }
-
-  .barrel-mark::before,
-  .barrel-mark::after {
-    width: 4px !important;
-    height: 4px !important;
+      linear-gradient(#172146, #172146) 2px 6px / 20px 2px no-repeat,
+      linear-gradient(#172146, #172146) 2px 2px / 2px 9px no-repeat,
+      linear-gradient(#172146, #172146) 21px 2px / 2px 9px no-repeat;
   }
 }
