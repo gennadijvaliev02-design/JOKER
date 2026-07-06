@@ -67,6 +67,10 @@
   transform-origin: center center !important;
 }
 
+.played-card .played-label {
+  display: none !important;
+}
+
 .played-card.left {
   --played-transform: translate3d(-142%, -22%, 0) rotate(-7deg);
 }
@@ -135,11 +139,6 @@
 .played-card.is-collecting {
   animation: played-card-winner-outline 620ms ease-out both !important;
   opacity: 1 !important;
-}
-
-.played-card.is-collecting .played-label {
-  opacity: 1 !important;
-  transform: none !important;
 }
 
 @keyframes played-card-winner-outline {
