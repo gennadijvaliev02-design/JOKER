@@ -1,31 +1,47 @@
-/* UI polish: wider and brighter bid selection panel */
+/* UI polish: premium casino bid selection panel */
 .bid-panel {
-  width: min(560px, 94%) !important;
+  width: min(570px, 94%) !important;
   min-width: 500px;
-  padding: 20px 26px 22px;
-  border: 2px solid rgba(255, 224, 88, 0.78);
-  border-radius: 24px;
+  padding: 21px 27px 23px;
+  border: 2px solid rgba(255, 226, 105, 0.86);
+  border-radius: 25px;
   background:
-    radial-gradient(circle at 50% -24%, rgba(255, 225, 91, 0.38), transparent 45%),
-    radial-gradient(circle at 12% 12%, rgba(0, 214, 255, 0.26), transparent 34%),
-    linear-gradient(145deg, rgba(17, 54, 78, 0.98), rgba(4, 15, 30, 0.98) 48%, rgba(31, 47, 94, 0.97));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 22%),
+    radial-gradient(circle at 50% -25%, rgba(255, 229, 99, 0.42), transparent 44%),
+    radial-gradient(circle at 11% 16%, rgba(0, 221, 255, 0.3), transparent 35%),
+    radial-gradient(circle at 90% 86%, rgba(31, 105, 255, 0.25), transparent 38%),
+    linear-gradient(145deg, rgba(16, 62, 88, 0.98), rgba(4, 13, 31, 0.99) 48%, rgba(27, 38, 88, 0.98));
   box-shadow:
-    0 22px 52px rgba(0, 0, 0, 0.56),
-    0 0 26px rgba(255, 214, 41, 0.24),
-    0 0 22px rgba(0, 178, 255, 0.2),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.11);
-  backdrop-filter: blur(10px);
+    0 24px 56px rgba(0, 0, 0, 0.58),
+    0 0 30px rgba(255, 214, 41, 0.27),
+    0 0 24px rgba(0, 186, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -18px 32px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(12px);
+  animation: bid-panel-pop 190ms ease-out both;
+}
+
+@keyframes bid-panel-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
 }
 
 .bid-title {
-  margin-bottom: 14px;
+  margin-bottom: 15px;
   color: #ffe889;
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 950;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.045em;
   text-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.75),
-    0 0 12px rgba(255, 214, 41, 0.34);
+    0 2px 4px rgba(0, 0, 0, 0.78),
+    0 0 14px rgba(255, 214, 41, 0.42);
 }
 
 .bid-options {
@@ -33,45 +49,63 @@
 }
 
 .bid-option {
-  min-width: 82px;
-  min-height: 58px;
+  min-width: 84px;
+  min-height: 60px;
   padding: 10px 15px;
-  border: 2px solid rgba(73, 204, 255, 0.94);
-  border-radius: 16px;
+  border: 2px solid rgba(84, 211, 255, 0.96);
+  border-radius: 17px;
   background:
-    linear-gradient(180deg, rgba(35, 91, 135, 0.96), rgba(7, 24, 47, 0.98));
+    linear-gradient(180deg, rgba(79, 159, 215, 0.28), transparent 35%),
+    linear-gradient(180deg, rgba(34, 98, 145, 0.98), rgba(7, 22, 49, 0.99));
   color: #fff;
   font-size: 22px;
   font-weight: 950;
   line-height: 1;
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.72);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.75);
   box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.36),
-    0 0 14px rgba(39, 171, 255, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -9px 17px rgba(0, 0, 0, 0.2);
+    0 12px 24px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(39, 185, 255, 0.28),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.24);
+  transition:
+    transform 120ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    filter 140ms ease;
 }
 
 .bid-option[data-bid="pass"] {
-  min-width: 104px;
-  border-color: rgba(255, 89, 89, 0.95);
+  min-width: 106px;
+  border-color: rgba(255, 94, 94, 0.98);
   background:
-    linear-gradient(180deg, rgba(135, 35, 45, 0.98), rgba(43, 11, 20, 0.98));
-  color: #ffe0e0;
+    linear-gradient(180deg, rgba(255, 125, 125, 0.18), transparent 35%),
+    linear-gradient(180deg, rgba(149, 38, 50, 0.99), rgba(45, 10, 21, 0.99));
+  color: #ffe4e4;
   font-size: 17px;
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(255, 73, 73, 0.22),
+    inset 0 2px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.25);
 }
 
 .bid-option:not(:disabled):hover {
-  border-color: rgba(255, 229, 93, 1);
+  border-color: rgba(255, 231, 104, 1);
+  filter: brightness(1.06);
   box-shadow:
-    0 11px 24px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(255, 214, 41, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -9px 17px rgba(0, 0, 0, 0.2);
+    0 13px 26px rgba(0, 0, 0, 0.42),
+    0 0 22px rgba(255, 214, 41, 0.34),
+    0 0 14px rgba(0, 195, 255, 0.22),
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.24);
 }
 
 .bid-option:not(:disabled):active {
-  transform: translateY(1px) scale(0.98);
+  transform: translateY(2px) scale(0.975);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.42),
+    0 0 13px rgba(255, 214, 41, 0.25),
+    inset 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .bid-option.is-forbidden,
@@ -82,15 +116,15 @@
 
 @media (max-width: 760px), (max-height: 430px) {
   .bid-panel {
-    width: min(500px, 94%) !important;
+    width: min(510px, 94%) !important;
     min-width: 430px;
-    padding: 16px 22px 18px;
-    border-radius: 21px;
+    padding: 17px 23px 19px;
+    border-radius: 22px;
   }
 
   .bid-title {
-    margin-bottom: 11px;
-    font-size: 18px;
+    margin-bottom: 12px;
+    font-size: 19px;
   }
 
   .bid-options {
@@ -98,24 +132,24 @@
   }
 
   .bid-option {
-    min-width: 72px;
-    min-height: 50px;
+    min-width: 73px;
+    min-height: 51px;
     padding: 8px 12px;
     border-radius: 14px;
     font-size: 19px;
   }
 
   .bid-option[data-bid="pass"] {
-    min-width: 88px;
+    min-width: 89px;
     font-size: 15px;
   }
 }
 
 @media (max-width: 420px) {
   .bid-panel {
-    width: min(390px, 94%) !important;
+    width: min(394px, 94%) !important;
     min-width: 340px;
-    padding: 13px 17px 15px;
+    padding: 14px 17px 16px;
   }
 
   .bid-options {
@@ -124,7 +158,7 @@
 
   .bid-option {
     min-width: 58px;
-    min-height: 44px;
+    min-height: 45px;
     font-size: 17px;
   }
 
