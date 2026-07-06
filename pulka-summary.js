@@ -62,7 +62,7 @@
     elements.gameSummary.replaceChildren(title, subtitle, list);
     elements.gameSummary.hidden = false;
 
-    scheduleGameTask(hideGameSummary, 5400);
+    scheduleGameTask(hideGameSummary, 4200);
   }
 
   const originalHideGameSummary = hideGameSummary;
@@ -86,12 +86,9 @@
       const gameSummary = createGameSummary();
 
       writeCurrentGameScore();
+      showGameSummary(gameSummary);
 
-      if (finishedGame === 4 && !isFinalGame()) {
-        showPulkaSummary(finishedPulka, pulkaOffset);
-      } else {
-        showGameSummary(gameSummary);
-      }
+      const shouldShowPulkaSummary = finishedGame === 4 && !isFinalGame();
 
       if (isFinalGame()) {
         finishMatch();
@@ -108,6 +105,10 @@
 
       showNotice(nextText);
       render();
+
+      if (shouldShowPulkaSummary) {
+        scheduleGameTask(() => showPulkaSummary(finishedPulka, pulkaOffset), getDelay(5100));
+      }
 
       scheduleGameTask(hideNotice, getDelay(1200));
     }, getDelay(1300));
