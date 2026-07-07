@@ -48,10 +48,14 @@
 }
 
 .game-hud {
-  left: 32% !important;
+  left: 24% !important;
   top: 2.1% !important;
   align-items: center !important;
   transform: translateX(-50%) !important;
+}
+
+.player-top {
+  left: 39.2% !important;
 }
 
 .player-left {
@@ -110,8 +114,12 @@
   }
 
   .game-hud {
-    left: 31% !important;
+    left: 23% !important;
     top: 1.8% !important;
+  }
+
+  .player-top {
+    left: 39.8% !important;
   }
 
   .player-left {
@@ -165,8 +173,12 @@
   }
 
   .game-hud {
-    left: 32% !important;
+    left: 24% !important;
     top: 2% !important;
+  }
+
+  .player-top {
+    left: 38.5% !important;
   }
 
   .player-left {
