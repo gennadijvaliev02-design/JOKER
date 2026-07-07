@@ -113,22 +113,18 @@
     state.hands = {};
     state.currentTrick = [];
     state.activePlayerId = null;
+    hideNotice();
     render();
 
     const aceDeal = dealUntilFirstAce();
     applyTableOrderFromAceWinner(aceDeal.winnerId);
     state.scoreRows = createEmptyScoreRows();
 
-    const winner = getPlayerById(aceDeal.winnerId);
-    const orderText = state.players.map((player) => player.name).join(" → ");
-
     if (state.devTarget) {
       state.currentPulka = state.devTarget.pulka;
       state.currentGame = state.devTarget.game;
     }
 
-    const jumpText = state.devTarget ? ` Старт: пулька ${state.currentPulka}, игра ${state.currentGame}.` : "";
-    showNotice(`Раздача на туза: первый туз у ${winner.name}. Порядок: ${orderText}.${jumpText}`);
     render();
     playAceDealAnimation(aceDeal);
 
@@ -137,7 +133,6 @@
     scheduleGameTask(() => {
       startDeal();
       render();
-      scheduleGameTask(hideNotice, getDelay(1400));
     }, getDelay(waitBeforeRealDeal));
   };
 
