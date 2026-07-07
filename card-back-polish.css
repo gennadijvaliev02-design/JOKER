@@ -27,7 +27,8 @@
 .right-stack span {
   width: 41px !important;
   height: 26px !important;
-  background-size: auto 150% !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
 }
 
 .top-stack span {
@@ -80,6 +81,7 @@
   .right-stack span {
     width: 39px !important;
     height: 25px !important;
+    background-size: 100% 100% !important;
   }
 
   .top-stack span {
