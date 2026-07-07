@@ -1,6 +1,5 @@
 (() => {
   const medals = ["🥇", "🥈", "🥉", "4"];
-  const PULKA_SUMMARY_DELAY = 5100;
   const PULKA_SUMMARY_HOLD = 9200;
 
   function getInitial(player) {
@@ -89,24 +88,26 @@
       const shouldShowPulkaSummary = finishedGame === 4 && !isFinalGame();
 
       writeCurrentGameScore();
-      showGameSummary(gameSummary);
 
       if (isFinalGame()) {
+        showGameSummary(gameSummary);
         finishMatch();
         return;
       }
 
       if (shouldShowPulkaSummary) {
         hideNotice();
-        scheduleGameTask(() => showPulkaSummary(finishedPulka, pulkaOffset, PULKA_SUMMARY_HOLD), getDelay(PULKA_SUMMARY_DELAY));
+        showPulkaSummary(finishedPulka, pulkaOffset, PULKA_SUMMARY_HOLD);
+
         scheduleGameTask(() => {
           advanceGame();
           startDeal();
           render();
-        }, getDelay(PULKA_SUMMARY_DELAY + PULKA_SUMMARY_HOLD));
+        }, getDelay(PULKA_SUMMARY_HOLD));
         return;
       }
 
+      showGameSummary(gameSummary);
       advanceGame();
       startDeal();
 
