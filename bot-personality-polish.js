@@ -65,6 +65,22 @@
     return legalCards.length ? legalCards : hand;
   }
 
+  function getForcedHighJokerCard(cards) {
+    const highLeadJokerPlay = getHighLeadJokerPlay();
+
+    if (!highLeadJokerPlay?.jokerSuit) {
+      return null;
+    }
+
+    const requestedSuitCards = cards.filter((card) => card.type === "standard" && card.suit === highLeadJokerPlay.jokerSuit);
+
+    if (!requestedSuitCards.length) {
+      return null;
+    }
+
+    return [...requestedSuitCards].sort((firstCard, secondCard) => RANK_POWER[secondCard.rank] - RANK_POWER[firstCard.rank])[0];
+  }
+
   function getAggressiveLeadCard(cards, allowJoker = false) {
     const candidates = allowJoker ? cards : cards.filter((card) => card.type !== "joker");
 
@@ -127,6 +143,11 @@
     const personality = getPersonality(playerId);
     const originalCard = originalChooseBotCard(playerId);
     const legalCards = getLegalCardsForPersonality(playerId);
+    const forcedHighJokerCard = getForcedHighJokerCard(legalCards);
+
+    if (forcedHighJokerCard) {
+      return forcedHighJokerCard;
+    }
 
     if (legalCards.length <= 1) {
       return originalCard;
