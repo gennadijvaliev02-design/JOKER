@@ -25,7 +25,7 @@
 
 .left-stack,
 .right-stack {
-  top: 27% !important;
+  top: 28% !important;
 }
 
 .left-stack span,
@@ -45,6 +45,10 @@
 
 .top-stack {
   gap: 4px !important;
+}
+
+.player-right {
+  right: 5.2% !important;
 }
 
 .table-menu {
@@ -85,7 +89,11 @@
 @media (min-width: 900px) and (min-height: 500px) {
   .left-stack,
   .right-stack {
-    top: 20% !important;
+    top: 23% !important;
+  }
+
+  .player-right {
+    right: 5.8% !important;
   }
 
   .hidden-cards span {
@@ -121,7 +129,11 @@
 @media (max-width: 700px), (max-height: 430px) {
   .left-stack,
   .right-stack {
-    top: 24% !important;
+    top: 25% !important;
+  }
+
+  .player-right {
+    right: 4.8% !important;
   }
 
   .hidden-cards span {
