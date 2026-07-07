@@ -123,34 +123,77 @@
     });
   }
 
-  function getUnseenSuitCount(suit) {
-    const playedCount = getPlayedStandardCards(suit).length;
-    const ownCount = Object.values(state.hands || {})
-      .flat()
-      .filter((card) => card?.type === "standard" && card.suit === suit).length;
-
-    return Math.max(0, 9 - playedCount - ownCount);
+  function getAllJokerLeadSuitsThisGame() {
+    return state.playedCards
+      .filter((play) => play.card?.type === "joker" && play.jokerMode === "lead" && play.jokerSuit)
+      .map((play) => play.jokerSuit);
   }
 
-  function chooseDifferentJokerSuit(playerId) {
-    const previousSuits = new Set(
+  function getTotalSuitCards(suit) {
+    return suit === "clubs" || suit === "spades" ? 8 : 9;
+  }
+
+  function getKnownOwnSuitCount(playerId, suit) {
+    return (state.hands[playerId] || []).filter((card) => card?.type === "standard" && card.suit === suit).length;
+  }
+
+  function getUnseenSuitCountForPlayer(playerId, suit) {
+    const playedCount = getPlayedStandardCards(suit).length;
+    const ownCount = getKnownOwnSuitCount(playerId, suit);
+
+    return Math.max(0, getTotalSuitCards(suit) - playedCount - ownCount);
+  }
+
+  function getSuitMemoryScore(playerId, suit, previousOwnSuits, previousAllSuits) {
+    const trumpSuit = getTrumpSuit();
+    const unseenCount = getUnseenSuitCountForPlayer(playerId, suit);
+    const playedCount = getPlayedStandardCards(suit).length;
+    const ownCount = getKnownOwnSuitCount(playerId, suit);
+    const repeatedBySelfPenalty = previousOwnSuits.has(suit) ? 36 : 0;
+    const repeatedByTablePenalty = previousAllSuits.includes(suit) ? 12 : 0;
+    const trumpPenalty = suit === trumpSuit ? 24 : 0;
+    const emptyPenalty = unseenCount <= 0 ? 50 : 0;
+    const tooKnownPenalty = ownCount >= 3 ? 8 : 0;
+
+    return unseenCount * 12 + playedCount * 2 - repeatedBySelfPenalty - repeatedByTablePenalty - trumpPenalty - emptyPenalty - tooKnownPenalty;
+  }
+
+  function chooseMemoryJokerSuit(playerId) {
+    const previousOwnSuits = new Set(
       getPlayerJokerLeadsThisGame(playerId)
         .map((play) => play.jokerSuit)
         .filter(Boolean),
     );
+    const previousAllSuits = getAllJokerLeadSuitsThisGame();
     const trumpSuit = getTrumpSuit();
+    const allSuits = FIXED_TRUMP_BY_GAME;
+    const smartChoice = Math.random() < 0.62;
+    const scoredSuits = allSuits
+      .map((suit) => ({
+        suit,
+        score: getSuitMemoryScore(playerId, suit, previousOwnSuits, previousAllSuits),
+      }))
+      .sort((first, second) => second.score - first.score);
 
-    const suits = SUITS.map((suit) => suit.id)
-      .filter((suit) => !previousSuits.has(suit))
-      .sort((firstSuit, secondSuit) => {
-        if ((firstSuit === trumpSuit) !== (secondSuit === trumpSuit)) {
-          return firstSuit === trumpSuit ? 1 : -1;
-        }
+    if (smartChoice) {
+      return scoredSuits[0]?.suit || allSuits[0];
+    }
 
-        return getUnseenSuitCount(secondSuit) - getUnseenSuitCount(firstSuit);
-      });
+    const humanLikePool = scoredSuits
+      .filter((item) => !previousOwnSuits.has(item.suit))
+      .filter((item) => item.suit !== trumpSuit || Math.random() < 0.28)
+      .slice(0, 3);
+    const fallbackPool = humanLikePool.length ? humanLikePool : scoredSuits.slice(0, 3);
 
-    return suits[0] || SUITS.find((suit) => suit.id !== trumpSuit)?.id || chooseLeadJokerSuit(playerId);
+    return fallbackPool[Math.floor(Math.random() * fallbackPool.length)]?.suit || scoredSuits[0]?.suit || allSuits[0];
+  }
+
+  chooseLeadJokerSuit = function smarterChooseLeadJokerSuit(playerId) {
+    return chooseMemoryJokerSuit(playerId);
+  };
+
+  function chooseDifferentJokerSuit(playerId) {
+    return chooseMemoryJokerSuit(playerId);
   }
 
   chooseLeadJokerAction = function smarterChooseLeadJokerAction(playerId) {
@@ -161,7 +204,16 @@
       };
     }
 
-    return originalChooseLeadJokerAction(playerId);
+    const baseAction = originalChooseLeadJokerAction(playerId);
+
+    if (baseAction.jokerCommand === "high" && shouldLeadHighTrumpJoker(playerId)) {
+      return baseAction;
+    }
+
+    return {
+      ...baseAction,
+      jokerSuit: chooseMemoryJokerSuit(playerId),
+    };
   };
 
   chooseBotCard = function smarterChooseBotCard(playerId) {
