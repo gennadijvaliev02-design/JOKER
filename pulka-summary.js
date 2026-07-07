@@ -1,11 +1,13 @@
 (() => {
   const medals = ["🥇", "🥈", "🥉", "4"];
+  const PULKA_SUMMARY_DELAY = 5100;
+  const PULKA_SUMMARY_HOLD = 9200;
 
   function getInitial(player) {
     return (player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";
   }
 
-  function showPulkaSummary(pulkaNumber, pulkaOffset) {
+  function showPulkaSummary(pulkaNumber, pulkaOffset, holdTime = 4200) {
     if (state.autoPlay || !elements.gameSummary) {
       return;
     }
@@ -62,7 +64,7 @@
     elements.gameSummary.replaceChildren(title, subtitle, list);
     elements.gameSummary.hidden = false;
 
-    scheduleGameTask(hideGameSummary, 4200);
+    scheduleGameTask(hideGameSummary, holdTime);
   }
 
   const originalHideGameSummary = hideGameSummary;
@@ -84,32 +86,34 @@
       const finishedPulka = state.currentPulka;
       const pulkaOffset = (state.currentPulka - 1) * 5;
       const gameSummary = createGameSummary();
+      const shouldShowPulkaSummary = finishedGame === 4 && !isFinalGame();
 
       writeCurrentGameScore();
       showGameSummary(gameSummary);
-
-      const shouldShowPulkaSummary = finishedGame === 4 && !isFinalGame();
 
       if (isFinalGame()) {
         finishMatch();
         return;
       }
 
+      if (shouldShowPulkaSummary) {
+        hideNotice();
+        scheduleGameTask(() => showPulkaSummary(finishedPulka, pulkaOffset, PULKA_SUMMARY_HOLD), getDelay(PULKA_SUMMARY_DELAY));
+        scheduleGameTask(() => {
+          advanceGame();
+          startDeal();
+          render();
+        }, getDelay(PULKA_SUMMARY_DELAY + PULKA_SUMMARY_HOLD));
+        return;
+      }
+
       advanceGame();
       startDeal();
 
-      const nextText =
-        finishedGame === 4 && state.currentPulka !== finishedPulka
-          ? `Пулька ${state.currentPulka}. Игра ${state.currentGame}. Новая раздача`
-          : `Игра ${state.currentGame}. Новая раздача`;
+      const nextText = `Игра ${state.currentGame}. Новая раздача`;
 
       showNotice(nextText);
       render();
-
-      if (shouldShowPulkaSummary) {
-        scheduleGameTask(() => showPulkaSummary(finishedPulka, pulkaOffset), getDelay(5100));
-      }
-
       scheduleGameTask(hideNotice, getDelay(1200));
     }, getDelay(1300));
   };
