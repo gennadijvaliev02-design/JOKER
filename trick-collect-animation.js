@@ -57,7 +57,39 @@
     return wrapper;
   }
 
-  function playTrickCollectAnimation(winnerSeat, trickCards) {
+  function createJokerBubbleTrail(center, target, jokerColor) {
+    const trail = document.createElement("div");
+    const bubbleCount = 16;
+    const distanceX = target.x - center.x;
+    const distanceY = target.y - center.y;
+    const normalLength = Math.max(1, Math.hypot(distanceX, distanceY));
+    const normalX = -distanceY / normalLength;
+    const normalY = distanceX / normalLength;
+
+    trail.className = `joker-bubble-trail is-${jokerColor === "red" ? "red" : "black"}`;
+
+    for (let index = 0; index < bubbleCount; index += 1) {
+      const bubble = document.createElement("i");
+      const progress = (index + 1) / (bubbleCount + 1);
+      const wave = Math.sin(index * 1.7) * (5 + (index % 3) * 2);
+      const jitter = (Math.random() - 0.5) * 7;
+      const size = 4 + (index % 5) * 1.55;
+      const x = center.x + distanceX * progress + normalX * (wave + jitter);
+      const y = center.y + distanceY * progress + normalY * (wave - jitter);
+
+      bubble.style.setProperty("--bubble-x", `${x}px`);
+      bubble.style.setProperty("--bubble-y", `${y}px`);
+      bubble.style.setProperty("--bubble-size", `${size}px`);
+      bubble.style.setProperty("--bubble-delay", `${120 + index * 34}ms`);
+      bubble.style.setProperty("--bubble-float-x", `${normalX * (10 + (index % 4) * 3)}px`);
+      bubble.style.setProperty("--bubble-float-y", `${normalY * (8 + (index % 3) * 4) - 12}px`);
+      trail.append(bubble);
+    }
+
+    return trail;
+  }
+
+  function playTrickCollectAnimation(winnerSeat, trickCards, winnerPlay) {
     if (state.autoPlay || !elements.table || !elements.playedCardSlot) {
       return;
     }
@@ -71,19 +103,19 @@
     const layer = document.createElement("div");
     const center = getCenterInsideTable(elements.playedCardSlot);
     const target = getWinnerTarget(winnerSeat);
-    const hasJoker = trickCards.some((play) => play.card?.type === "joker");
+    const winnerJokerCard = winnerPlay?.card?.type === "joker" ? winnerPlay.card : null;
 
-    layer.className = `trick-collect-layer ${hasJoker ? "is-magic" : ""}`.trim();
-    layer.style.setProperty("--magic-left", `${center.x}px`);
-    layer.style.setProperty("--magic-top", `${center.y}px`);
-    layer.style.setProperty("--spark-x", `${Math.round((target.x - center.x) * 0.22)}px`);
-    layer.style.setProperty("--spark-y", `${Math.round((target.y - center.y) * 0.22)}px`);
+    layer.className = `trick-collect-layer ${winnerJokerCard ? `is-joker-magic is-${winnerJokerCard.color}` : ""}`.trim();
 
     const flyingCards = trickCards.map((play, index) => {
       return createCollectedCard(play, renderedCards[index] || renderedCards.at(-1), index, center, target);
     });
 
-    layer.replaceChildren(...flyingCards);
+    if (winnerJokerCard) {
+      layer.append(createJokerBubbleTrail(center, target, winnerJokerCard.color));
+    }
+
+    layer.append(...flyingCards);
     elements.table.append(layer);
     elements.table.classList.add("is-trick-collecting");
 
@@ -103,7 +135,7 @@
       const collectedTrick = [...state.currentTrick];
       state.collectingTrickWinnerSeat = winner.seat;
       render();
-      playTrickCollectAnimation(winner.seat, collectedTrick);
+      playTrickCollectAnimation(winner.seat, collectedTrick, winnerPlay);
 
       scheduleGameTask(() => {
         winner.tricks += 1;
