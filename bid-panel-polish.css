@@ -115,6 +115,11 @@
 }
 
 /* Trump choice should match the polished Joker suit buttons */
+.bid-panel:has(.bid-option[data-trump]) {
+  width: min(720px, 96%) !important;
+  min-width: 650px;
+}
+
 .bid-options:has(.bid-option[data-trump]) {
   grid-template-columns: repeat(5, minmax(96px, 1fr)) !important;
   gap: 17px !important;
@@ -181,6 +186,11 @@
     border-radius: 22px;
   }
 
+  .bid-panel:has(.bid-option[data-trump]) {
+    width: min(610px, 96%) !important;
+    min-width: 545px;
+  }
+
   .bid-title {
     margin-bottom: 12px;
     font-size: 19px;
@@ -229,6 +239,11 @@
     width: min(394px, 94%) !important;
     min-width: 340px;
     padding: 14px 17px 16px;
+  }
+
+  .bid-panel:has(.bid-option[data-trump]) {
+    width: min(410px, 96%) !important;
+    min-width: 360px;
   }
 
   .bid-options {
