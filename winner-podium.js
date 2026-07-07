@@ -1,5 +1,6 @@
 (() => {
   const medalByPlace = ["🥇", "🥈", "🥉", "4"];
+  const placeClassByIndex = ["is-first", "is-second", "is-third", "is-fourth"];
 
   function getInitial(player) {
     return (player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";
@@ -24,7 +25,7 @@
 
   function createPodiumPlayer(item, index) {
     const card = document.createElement("div");
-    card.className = `podium-player ${index === 0 ? "is-first" : ""}`.trim();
+    card.className = `podium-player ${placeClassByIndex[index] || ""}`.trim();
 
     const medal = document.createElement("div");
     medal.className = "podium-medal";
