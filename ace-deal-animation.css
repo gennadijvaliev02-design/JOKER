@@ -16,6 +16,10 @@
   transform: none !important;
 }
 
+.deal-flight-layer.is-dealer-seat-deal .flying-card-back {
+  animation-name: flying-card-from-dealer !important;
+}
+
 .ace-open-title {
   position: absolute;
   left: 50%;
@@ -120,6 +124,27 @@
     0 0 24px rgba(255, 221, 87, 0.52),
     0 16px 28px rgba(0, 0, 0, 0.42) !important;
   animation: ace-open-ace-pulse 900ms ease-in-out calc(var(--ace-delay, 0ms) + 430ms) infinite alternate;
+}
+
+@keyframes flying-card-from-dealer {
+  0% {
+    opacity: 0;
+    transform: translate(var(--flight-start-x), var(--flight-start-y)) scale(0.55) rotate(var(--flight-start-r));
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(calc(var(--flight-x) * 0.92 + var(--flight-start-x) * 0.08), calc(var(--flight-y) * 0.92 + var(--flight-start-y) * 0.08)) scale(1.03) rotate(calc(var(--flight-r) + 5deg));
+  }
+
+  100% {
+    opacity: 0.96;
+    transform: translate(var(--flight-x), var(--flight-y)) scale(0.92) rotate(var(--flight-r));
+  }
 }
 
 @keyframes ace-open-card-in {
