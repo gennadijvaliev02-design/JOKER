@@ -1,6 +1,5 @@
 (() => {
   let lastAceDeal = null;
-  let overlayElement = null;
 
   const originalDealUntilFirstAce = dealUntilFirstAce;
   dealUntilFirstAce = function patchedDealUntilFirstAce() {
@@ -9,57 +8,61 @@
     return result;
   };
 
-  function ensureAceDealOverlay() {
-    if (overlayElement) return overlayElement;
-
-    overlayElement = document.createElement("div");
-    overlayElement.className = "ace-deal-overlay";
-    overlayElement.setAttribute("aria-hidden", "true");
-
-    const table = document.querySelector(".table");
-    table?.append(overlayElement);
-    return overlayElement;
+  function getPlayerDisplayName(player) {
+    return player?.seat === "bottom" ? "Ты" : player?.name || "Игрок";
   }
 
-  function getAceSuitSymbol(card) {
-    if (!card?.suit) return "A";
-    const suit = SUITS.find((item) => item.id === card.suit);
-    return `A${suit?.symbol || ""}`;
+  function createOpenAceDealCard(deal, index, seatPileCount) {
+    const player = getPlayerById(deal.playerId);
+    const seat = player?.seat || "bottom";
+    const pileIndex = seatPileCount[seat] || 0;
+    seatPileCount[seat] = pileIndex + 1;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `ace-open-played-card ${seat}`;
+    wrapper.classList.toggle("is-winning-ace", deal.card?.rank === "A");
+    wrapper.style.setProperty("--ace-delay", `${index * 430}ms`);
+    wrapper.style.setProperty("--pile-x", `${pileIndex * 5}px`);
+    wrapper.style.setProperty("--pile-y", `${pileIndex * 3}px`);
+    wrapper.style.setProperty("--pile-r", `${(pileIndex % 3 - 1) * 3}deg`);
+
+    const label = document.createElement("div");
+    label.className = "ace-open-label";
+    label.textContent = getPlayerDisplayName(player);
+
+    const cardElement = createCardElement(deal.card);
+    cardElement.disabled = true;
+
+    wrapper.append(label, cardElement);
+    return wrapper;
   }
 
-  function showAceDealAnimation() {
-    if (state.autoPlay || !lastAceDeal) return;
+  function playOpenAceDealAnimation(aceDeal) {
+    if (state.autoPlay || !elements.table) return;
 
-    const overlay = ensureAceDealOverlay();
-    const winner = getPlayerById(lastAceDeal.winnerId);
-    const winnerName = winner?.seat === "bottom" ? "Ты" : winner?.name || "Игрок";
-    const aceIsRed = lastAceDeal.card?.color === "red";
+    const layer = createDealLayer("is-ace-open-deal");
+    if (!layer) return;
 
-    overlay.innerHTML = `
-      <div class="ace-deal-stage">
-        <div class="ace-deal-title">Раздача на туза</div>
-        <div class="ace-deal-cards" aria-hidden="true">
-          <span class="ace-mini-card"></span>
-          <span class="ace-mini-card"></span>
-          <span class="ace-mini-card"></span>
-          <span class="ace-mini-card is-ace ${aceIsRed ? "is-red" : ""}">${getAceSuitSymbol(lastAceDeal.card)}</span>
-        </div>
-        <div class="ace-deal-winner">Первый туз у <strong>${winnerName}</strong></div>
-      </div>
-    `;
+    const revealedCards = (aceDeal?.revealedCards || lastAceDeal?.revealedCards || []).slice(0, 24);
+    const winner = getPlayerById(aceDeal?.winnerId || lastAceDeal?.winnerId);
+    const seatPileCount = {};
 
-    overlay.classList.add("is-visible");
-    overlay.setAttribute("aria-hidden", "false");
+    const title = document.createElement("div");
+    title.className = "ace-open-title";
+    title.textContent = "Раздача на туза";
 
-    window.setTimeout(() => {
-      overlay.classList.remove("is-visible");
-      overlay.setAttribute("aria-hidden", "true");
-    }, 1500);
+    const winnerText = document.createElement("div");
+    winnerText.className = "ace-open-winner";
+    winnerText.textContent = `Первый туз у ${getPlayerDisplayName(winner)}`;
+    winnerText.style.setProperty("--winner-delay", `${Math.max(1, revealedCards.length) * 430 + 180}ms`);
+
+    const cards = revealedCards.map((deal, index) => createOpenAceDealCard(deal, index, seatPileCount));
+
+    layer.replaceChildren(title, ...cards, winnerText);
+    window.setTimeout(() => layer.remove(), getDelay(Math.max(3600, revealedCards.length * 430 + 1700)));
   }
 
-  const originalStartAceDeal = startAceDeal;
-  startAceDeal = function patchedStartAceDeal() {
-    originalStartAceDeal();
-    showAceDealAnimation();
+  playAceDealAnimation = function patchedPlayAceDealAnimation(aceDeal) {
+    playOpenAceDealAnimation(aceDeal);
   };
 })();
