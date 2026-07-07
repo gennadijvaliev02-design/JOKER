@@ -1,183 +1,198 @@
-/* Opening animation: deal cards until the first ace is found */
+/* Opening animation: deal cards openly until the first ace is found */
 .ace-deal-overlay {
+  display: none !important;
+}
+
+.deal-flight-layer.is-ace-open-deal {
   position: absolute;
   inset: 0;
   z-index: 18;
-  display: grid;
-  place-items: center;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.18s ease;
 }
 
-.ace-deal-overlay.is-visible {
-  opacity: 1;
-}
-
-.ace-deal-stage {
-  position: relative;
-  width: min(430px, 74vw);
-  min-height: 190px;
-  display: grid;
-  place-items: center;
-  padding: 22px 26px 24px;
-  border: 2px solid rgba(255, 214, 41, 0.58);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 50% -10%, rgba(255, 214, 41, 0.24), transparent 42%),
-    linear-gradient(145deg, rgba(2, 19, 16, 0.95), rgba(4, 30, 42, 0.94));
-  box-shadow:
-    0 24px 52px rgba(0, 0, 0, 0.52),
-    0 0 26px rgba(255, 214, 41, 0.16),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-
-.ace-deal-title {
+.ace-open-title {
   position: absolute;
-  top: 14px;
-  left: 18px;
-  right: 18px;
+  left: 50%;
+  top: 13%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 232, 137, 0.54);
+  border-radius: 999px;
+  background: rgba(3, 14, 28, 0.74);
   color: #ffe889;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 950;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72);
-}
-
-.ace-deal-cards {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 22px;
-}
-
-.ace-mini-card {
-  width: 54px;
-  height: 76px;
-  display: grid;
-  place-items: center;
-  border: 2px solid #f5f1e7;
-  border-radius: 9px;
-  background:
-    linear-gradient(45deg, transparent 42%, rgba(255, 255, 255, 0.34) 43% 47%, transparent 48%),
-    linear-gradient(-45deg, transparent 42%, rgba(255, 255, 255, 0.34) 43% 47%, transparent 48%),
-    linear-gradient(135deg, #b01222, #e33745 48%, #8d0b18);
-  background-size: 11px 11px, 11px 11px, 100% 100%;
   box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.34),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.14);
-  opacity: 0;
-  transform: translateY(22px) rotate(-10deg) scale(0.8);
-  animation: ace-mini-card-in 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    0 12px 28px rgba(0, 0, 0, 0.38),
+    0 0 18px rgba(255, 214, 41, 0.18);
 }
 
-.ace-mini-card:nth-child(2) {
-  animation-delay: 0.13s;
-}
-
-.ace-mini-card:nth-child(3) {
-  animation-delay: 0.26s;
-}
-
-.ace-mini-card:nth-child(4) {
-  animation-delay: 0.39s;
-}
-
-.ace-mini-card.is-ace {
-  background: linear-gradient(145deg, #fff, #f4f6f7);
-  color: #0b1520;
-  font-size: 26px;
-  font-weight: 950;
-  animation:
-    ace-mini-card-in 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
-    ace-mini-card-glow 0.9s ease-in-out 0.52s infinite alternate;
-}
-
-.ace-mini-card.is-red {
-  color: #e21b2d;
-}
-
-.ace-deal-winner {
+.ace-open-winner {
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 16px;
-  color: #fff;
-  font-size: 17px;
+  left: 50%;
+  top: 72%;
+  width: max-content;
+  max-width: min(340px, 72vw);
+  padding: 9px 15px;
+  border: 1px solid rgba(255, 232, 137, 0.66);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 232, 137, 0.24), transparent 46%),
+    rgba(3, 14, 28, 0.84);
+  color: #fff4b5;
+  font-size: 16px;
   font-weight: 950;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.44),
+    0 0 22px rgba(255, 214, 41, 0.22);
+  opacity: 0;
+  transform: translate(-50%, 12px) scale(0.94);
+  animation: ace-open-winner-pop 520ms ease-out var(--winner-delay, 1600ms) both;
 }
 
-.ace-deal-winner strong {
-  color: #ffe889;
+.ace-open-played-card {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  opacity: 0;
+  transform: var(--ace-start-transform) scale(0.82);
+  animation: ace-open-card-in 420ms ease-out var(--ace-delay, 0ms) both;
 }
 
-@keyframes ace-mini-card-in {
+.ace-open-played-card.left {
+  --ace-final-transform: translate3d(calc(-142% + var(--pile-x)), calc(-22% + var(--pile-y)), 0) rotate(calc(-7deg + var(--pile-r)));
+  --ace-start-transform: translate3d(-235%, -12%, 0) rotate(-12deg);
+}
+
+.ace-open-played-card.top {
+  --ace-final-transform: translate3d(calc(-50% + var(--pile-x)), calc(-88% + var(--pile-y)), 0) rotate(calc(2deg + var(--pile-r)));
+  --ace-start-transform: translate3d(-50%, -160%, 0) rotate(2deg);
+}
+
+.ace-open-played-card.right {
+  --ace-final-transform: translate3d(calc(42% + var(--pile-x)), calc(-22% + var(--pile-y)), 0) rotate(calc(7deg + var(--pile-r)));
+  --ace-start-transform: translate3d(140%, -12%, 0) rotate(12deg);
+}
+
+.ace-open-played-card.bottom {
+  --ace-final-transform: translate3d(calc(-50% + var(--pile-x)), calc(38% + var(--pile-y)), 0) rotate(var(--pile-r));
+  --ace-start-transform: translate3d(-50%, 130%, 0) rotate(0deg);
+}
+
+.ace-open-label {
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 232, 137, 0.38);
+  border-radius: 999px;
+  background: rgba(3, 14, 28, 0.68);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.72);
+}
+
+.ace-open-played-card .card {
+  width: clamp(58px, 7.2vw, 76px) !important;
+  height: clamp(82px, 10.1vw, 107px) !important;
+  pointer-events: none !important;
+}
+
+.ace-open-played-card.is-winning-ace {
+  z-index: 2;
+}
+
+.ace-open-played-card.is-winning-ace .card {
+  box-shadow:
+    0 0 0 3px rgba(255, 221, 87, 0.98),
+    0 0 24px rgba(255, 221, 87, 0.52),
+    0 16px 28px rgba(0, 0, 0, 0.42) !important;
+  animation: ace-open-ace-pulse 900ms ease-in-out calc(var(--ace-delay, 0ms) + 460ms) infinite alternate;
+}
+
+@keyframes ace-open-card-in {
   0% {
     opacity: 0;
-    transform: translateY(22px) rotate(-10deg) scale(0.8);
+    transform: var(--ace-start-transform) scale(0.82);
   }
 
-  70% {
+  72% {
     opacity: 1;
-    transform: translateY(-4px) rotate(3deg) scale(1.05);
+    transform: var(--ace-final-transform) scale(1.06);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0) rotate(0) scale(1);
+    transform: var(--ace-final-transform) scale(1);
   }
 }
 
-@keyframes ace-mini-card-glow {
+@keyframes ace-open-ace-pulse {
   from {
-    box-shadow:
-      0 10px 22px rgba(0, 0, 0, 0.34),
-      0 0 0 rgba(255, 214, 41, 0),
-      inset 0 0 0 2px rgba(255, 255, 255, 0.76);
+    filter: brightness(1);
   }
 
   to {
-    box-shadow:
-      0 10px 22px rgba(0, 0, 0, 0.34),
-      0 0 24px rgba(255, 214, 41, 0.72),
-      inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes ace-open-winner-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.94);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -3px) scale(1.04);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
   }
 }
 
 @media (max-width: 760px), (max-height: 430px) {
-  .ace-deal-stage {
-    width: min(380px, 76vw);
-    min-height: 158px;
-    padding: 18px 20px 20px;
-    border-radius: 20px;
+  .ace-open-title {
+    top: 10%;
+    padding: 6px 13px;
+    font-size: 13px;
   }
 
-  .ace-deal-title {
-    top: 11px;
-    font-size: 15px;
+  .ace-open-played-card {
+    top: 37%;
   }
 
-  .ace-deal-cards {
-    gap: 9px;
-    margin-top: 19px;
+  .ace-open-played-card .card {
+    width: clamp(48px, 7vw, 62px) !important;
+    height: clamp(68px, 9.8vw, 87px) !important;
   }
 
-  .ace-mini-card {
-    width: 44px;
-    height: 62px;
-    border-radius: 8px;
+  .ace-open-label {
+    font-size: 9px;
   }
 
-  .ace-mini-card.is-ace {
-    font-size: 22px;
+  .ace-open-winner {
+    top: 73%;
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 420px) {
+  .ace-open-played-card.left {
+    --ace-final-transform: translate3d(calc(-126% + var(--pile-x)), calc(-18% + var(--pile-y)), 0) rotate(calc(-6deg + var(--pile-r)));
   }
 
-  .ace-deal-winner {
-    bottom: 12px;
-    font-size: 14px;
+  .ace-open-played-card.right {
+    --ace-final-transform: translate3d(calc(25% + var(--pile-x)), calc(-18% + var(--pile-y)), 0) rotate(calc(6deg + var(--pile-r)));
   }
 }
