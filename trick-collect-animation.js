@@ -101,8 +101,8 @@
     });
   }
 
-  function createJokerSparkTrail(center, target, jokerColor) {
-    return createTrailBase(center, target, `joker-spark-trail is-${jokerColor === "red" ? "red" : "black"}`, 18, ({
+  function createJokerStarBurst(center, target, jokerColor) {
+    return createTrailBase(center, target, `joker-star-burst is-${jokerColor === "red" ? "red" : "black"}`, 14, ({
       index,
       itemCount,
       distanceX,
@@ -110,21 +110,24 @@
       normalX,
       normalY,
     }) => {
-      const spark = document.createElement("i");
-      const progress = (index + 1) / (itemCount + 1);
-      const blast = (index % 2 === 0 ? 1 : -1) * (7 + (index % 4) * 3);
-      const jitter = (Math.random() - 0.5) * 6;
-      const x = center.x + distanceX * progress + normalX * (blast + jitter);
-      const y = center.y + distanceY * progress + normalY * (blast - jitter);
-      const angle = Math.atan2(distanceY, distanceX) * (180 / Math.PI) + (index % 2 === 0 ? 18 : -18);
+      const star = document.createElement("i");
+      const progress = 0.18 + (index / Math.max(1, itemCount - 1)) * 0.44;
+      const side = index % 2 === 0 ? 1 : -1;
+      const burst = side * (10 + (index % 5) * 4);
+      const jitter = (Math.random() - 0.5) * 10;
+      const x = center.x + distanceX * progress + normalX * (burst + jitter);
+      const y = center.y + distanceY * progress + normalY * (burst - jitter);
+      const size = 12 + (index % 4) * 3;
 
-      spark.style.setProperty("--spark-x", `${x}px`);
-      spark.style.setProperty("--spark-y", `${y}px`);
-      spark.style.setProperty("--spark-delay", `${95 + index * 28}ms`);
-      spark.style.setProperty("--spark-r", `${angle}deg`);
-      spark.style.setProperty("--spark-fly-x", `${normalX * blast * 1.7}px`);
-      spark.style.setProperty("--spark-fly-y", `${normalY * blast * 1.7 - 8}px`);
-      return spark;
+      star.textContent = index % 3 === 0 ? "✦" : "★";
+      star.style.setProperty("--star-x", `${x}px`);
+      star.style.setProperty("--star-y", `${y}px`);
+      star.style.setProperty("--star-size", `${size}px`);
+      star.style.setProperty("--star-delay", `${90 + index * 32}ms`);
+      star.style.setProperty("--star-fly-x", `${normalX * burst * 1.7}px`);
+      star.style.setProperty("--star-fly-y", `${normalY * burst * 1.7 - 10}px`);
+      star.style.setProperty("--star-r", `${index * 31}deg`);
+      return star;
     });
   }
 
@@ -160,7 +163,7 @@
     });
 
     if (winnerJokerCard) {
-      layer.append(isJokerDuel ? createJokerSparkTrail(center, target, winnerJokerCard.color) : createJokerBubbleTrail(center, target, winnerJokerCard.color));
+      layer.append(isJokerDuel ? createJokerStarBurst(center, target, winnerJokerCard.color) : createJokerBubbleTrail(center, target, winnerJokerCard.color));
     }
 
     layer.append(...flyingCards);
