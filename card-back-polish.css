@@ -27,14 +27,15 @@
 .right-stack span {
   width: 41px !important;
   height: 26px !important;
-  background-size: 100% 100% !important;
+  background-size: 165% 165% !important;
   background-position: center !important;
 }
 
 .top-stack span {
   width: 28px !important;
   height: 41px !important;
-  background-size: 138% auto !important;
+  background-size: 170% auto !important;
+  background-position: center !important;
 }
 
 .top-stack {
@@ -71,6 +72,32 @@
   background-image: none !important;
 }
 
+@media (min-width: 900px) and (min-height: 500px) {
+  .hidden-cards span {
+    width: 44px !important;
+    height: 62px !important;
+    border-width: 1px !important;
+    border-radius: 7px !important;
+  }
+
+  .left-stack span,
+  .right-stack span {
+    width: 53px !important;
+    height: 34px !important;
+    background-size: 175% 175% !important;
+  }
+
+  .top-stack span {
+    width: 36px !important;
+    height: 53px !important;
+    background-size: 182% auto !important;
+  }
+
+  .top-stack {
+    gap: 5px !important;
+  }
+}
+
 @media (max-width: 700px), (max-height: 430px) {
   .hidden-cards span {
     width: 32px !important;
@@ -81,12 +108,13 @@
   .right-stack span {
     width: 39px !important;
     height: 25px !important;
-    background-size: 100% 100% !important;
+    background-size: 165% 165% !important;
   }
 
   .top-stack span {
     width: 27px !important;
     height: 39px !important;
+    background-size: 170% auto !important;
   }
 
   .deal-deck,
