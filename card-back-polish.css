@@ -47,6 +47,10 @@
   gap: 4px !important;
 }
 
+.player-left {
+  top: 4.8% !important;
+}
+
 .player-right {
   right: 5.2% !important;
 }
@@ -92,6 +96,10 @@
     top: 23% !important;
   }
 
+  .player-left {
+    top: 3.2% !important;
+  }
+
   .player-right {
     right: 5.8% !important;
   }
@@ -130,6 +138,10 @@
   .left-stack,
   .right-stack {
     top: 25% !important;
+  }
+
+  .player-left {
+    top: 5.8% !important;
   }
 
   .player-right {
