@@ -48,7 +48,7 @@
 }
 
 .game-hud {
-  left: 44% !important;
+  left: 32% !important;
   top: 2.1% !important;
   align-items: center !important;
   transform: translateX(-50%) !important;
@@ -110,7 +110,7 @@
   }
 
   .game-hud {
-    left: 43% !important;
+    left: 31% !important;
     top: 1.8% !important;
   }
 
@@ -165,7 +165,7 @@
   }
 
   .game-hud {
-    left: 44% !important;
+    left: 32% !important;
     top: 2% !important;
   }
 
