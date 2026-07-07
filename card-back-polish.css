@@ -47,8 +47,21 @@
   gap: 4px !important;
 }
 
+.game-hud {
+  left: 50% !important;
+  top: 2.1% !important;
+  align-items: center !important;
+  transform: translateX(-50%) !important;
+}
+
 .player-left {
-  top: 4.8% !important;
+  top: 7.5% !important;
+}
+
+.player-left .player-stats {
+  top: 8px !important;
+  right: -55px !important;
+  left: auto !important;
 }
 
 .player-right {
@@ -96,8 +109,19 @@
     top: 23% !important;
   }
 
+  .game-hud {
+    left: 50% !important;
+    top: 1.8% !important;
+  }
+
   .player-left {
-    top: 3.2% !important;
+    top: 7.5% !important;
+  }
+
+  .player-left .player-stats {
+    top: 8px !important;
+    right: -55px !important;
+    left: auto !important;
   }
 
   .player-right {
@@ -140,8 +164,19 @@
     top: 25% !important;
   }
 
+  .game-hud {
+    left: 50% !important;
+    top: 2% !important;
+  }
+
   .player-left {
-    top: 5.8% !important;
+    top: 7.5% !important;
+  }
+
+  .player-left .player-stats {
+    top: 8px !important;
+    right: -55px !important;
+    left: auto !important;
   }
 
   .player-right {
