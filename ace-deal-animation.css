@@ -4,10 +4,16 @@
 }
 
 .deal-flight-layer.is-ace-open-deal {
-  position: absolute;
-  inset: 0;
-  z-index: 18;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 18 !important;
   pointer-events: none;
+  transform: none !important;
 }
 
 .ace-open-title {
@@ -57,13 +63,13 @@
 .ace-open-played-card {
   position: absolute;
   left: 50%;
-  top: 38%;
+  top: 35%;
   display: grid;
   justify-items: center;
   gap: 3px;
   opacity: 0;
   transform: var(--ace-start-transform) scale(0.82);
-  animation: ace-open-card-in 420ms ease-out var(--ace-delay, 0ms) both;
+  animation: ace-open-card-in 400ms ease-out var(--ace-delay, 0ms) both;
 }
 
 .ace-open-played-card.left {
@@ -99,8 +105,8 @@
 }
 
 .ace-open-played-card .card {
-  width: clamp(58px, 7.2vw, 76px) !important;
-  height: clamp(82px, 10.1vw, 107px) !important;
+  width: clamp(54px, 6.8vw, 70px) !important;
+  height: clamp(76px, 9.6vw, 98px) !important;
   pointer-events: none !important;
 }
 
@@ -113,7 +119,7 @@
     0 0 0 3px rgba(255, 221, 87, 0.98),
     0 0 24px rgba(255, 221, 87, 0.52),
     0 16px 28px rgba(0, 0, 0, 0.42) !important;
-  animation: ace-open-ace-pulse 900ms ease-in-out calc(var(--ace-delay, 0ms) + 460ms) infinite alternate;
+  animation: ace-open-ace-pulse 900ms ease-in-out calc(var(--ace-delay, 0ms) + 430ms) infinite alternate;
 }
 
 @keyframes ace-open-card-in {
@@ -168,12 +174,12 @@
   }
 
   .ace-open-played-card {
-    top: 37%;
+    top: 34%;
   }
 
   .ace-open-played-card .card {
-    width: clamp(48px, 7vw, 62px) !important;
-    height: clamp(68px, 9.8vw, 87px) !important;
+    width: clamp(46px, 6.6vw, 58px) !important;
+    height: clamp(65px, 9.3vw, 82px) !important;
   }
 
   .ace-open-label {
