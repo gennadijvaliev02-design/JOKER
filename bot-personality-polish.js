@@ -25,13 +25,14 @@
     },
     "bot-3": {
       name: "Qwen",
-      bidShift: 0.1,
-      bidNoise: 1.25,
-      greedChance: 0.22,
-      cautionChance: 0.1,
-      chaosChance: 0.25,
-      aggressionChance: 0.55,
-      spoilerChance: 0.36,
+      bidShift: 0,
+      bidNoise: 0.35,
+      greedChance: 0.08,
+      cautionChance: 0.04,
+      chaosChance: 0.06,
+      aggressionChance: 0.72,
+      spoilerChance: 0.08,
+      noReserveBid: true,
     },
   };
 
@@ -49,6 +50,14 @@
 
   function bidFromNumber(value) {
     return value <= 0 ? "pass" : clamp(Math.round(value), 1, 8);
+  }
+
+  function estimateNoReserveBid(playerId) {
+    const hand = state.hands[playerId] || [];
+    const rawScore = hand.reduce((sum, card) => sum + getBidCardValue(card), 0);
+    const estimated = clamp(Math.round(rawScore), 0, 8);
+
+    return estimated === 0 ? "pass" : estimated;
   }
 
   function pickAllowedBidNear(targetBid) {
@@ -120,8 +129,8 @@
   }
 
   chooseBotBid = function personalityChooseBotBid(playerId) {
-    const baseBid = originalChooseBotBid(playerId);
     const personality = getPersonality(playerId);
+    const baseBid = personality.noReserveBid ? estimateNoReserveBid(playerId) : originalChooseBotBid(playerId);
     let target = numericBid(baseBid) + personality.bidShift;
 
     if (randomChance(personality.greedChance)) {
