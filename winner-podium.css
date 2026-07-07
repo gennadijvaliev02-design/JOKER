@@ -38,6 +38,7 @@
   font-size: 35px;
   line-height: 1;
   filter: drop-shadow(0 0 10px rgba(255, 214, 41, 0.35));
+  animation: winner-cup-bounce 980ms cubic-bezier(0.2, 0.9, 0.25, 1.25) 120ms both;
 }
 
 .winner-avatar {
@@ -57,6 +58,7 @@
     0 0 0 6px rgba(255, 214, 41, 0.1),
     0 0 24px rgba(255, 214, 41, 0.34),
     0 16px 28px rgba(0, 0, 0, 0.42);
+  animation: winner-avatar-glow 900ms ease-out 220ms both;
 }
 
 .winner-name {
@@ -89,13 +91,48 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  transform: translateY(13px) scale(0.94);
+  animation: podium-card-rise 520ms ease-out both;
 }
 
 .podium-player.is-first {
   padding-top: 11px;
-  border-color: rgba(255, 226, 105, 0.6);
-  background: rgba(255, 214, 41, 0.12);
-  transform: translateY(-8px);
+  border-color: rgba(255, 226, 105, 0.78);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 244, 178, 0.24), transparent 46%),
+    linear-gradient(145deg, rgba(139, 102, 17, 0.74), rgba(31, 24, 7, 0.82)) !important;
+  box-shadow:
+    0 0 22px rgba(255, 214, 41, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translateY(-8px) scale(0.94);
+  animation-delay: 340ms;
+}
+
+.podium-player.is-second {
+  border-color: rgba(220, 244, 255, 0.7);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.32), transparent 46%),
+    linear-gradient(145deg, rgba(154, 184, 202, 0.58), rgba(19, 44, 70, 0.86)) !important;
+  box-shadow:
+    0 0 18px rgba(190, 232, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  animation-delay: 620ms;
+}
+
+.podium-player.is-third {
+  border-color: rgba(255, 183, 111, 0.64);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 190, 116, 0.24), transparent 46%),
+    linear-gradient(145deg, rgba(143, 76, 28, 0.58), rgba(37, 21, 15, 0.86)) !important;
+  box-shadow:
+    0 0 18px rgba(255, 145, 67, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  animation-delay: 880ms;
+}
+
+.podium-player.is-fourth {
+  animation-delay: 1080ms;
 }
 
 .podium-medal {
@@ -123,6 +160,18 @@
   color: #fff4b5;
   font-size: 24px;
   box-shadow: 0 0 18px rgba(255, 214, 41, 0.28);
+}
+
+.podium-player.is-second .podium-avatar {
+  border-color: rgba(226, 248, 255, 0.86);
+  color: #f2fbff;
+  box-shadow: 0 0 14px rgba(210, 242, 255, 0.2);
+}
+
+.podium-player.is-third .podium-avatar {
+  border-color: rgba(255, 184, 110, 0.8);
+  color: #ffd8a6;
+  box-shadow: 0 0 14px rgba(255, 145, 67, 0.17);
 }
 
 .podium-name {
@@ -154,6 +203,91 @@
   100% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes winner-cup-bounce {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.72) rotate(-8deg);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.16) rotate(5deg);
+  }
+
+  68% {
+    transform: translateY(2px) scale(0.96) rotate(-2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes winner-avatar-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+    box-shadow: 0 0 0 rgba(255, 214, 41, 0);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 10px rgba(255, 214, 41, 0.12),
+      0 0 30px rgba(255, 214, 41, 0.42),
+      0 16px 28px rgba(0, 0, 0, 0.42);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes podium-card-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(13px) scale(0.94);
+    filter: brightness(0.78);
+  }
+
+  72% {
+    opacity: 1;
+    filter: brightness(1.12);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+.podium-player.is-first {
+  animation-name: podium-first-rise;
+}
+
+@keyframes podium-first-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(13px) scale(0.94);
+    filter: brightness(0.78);
+  }
+
+  72% {
+    opacity: 1;
+    filter: brightness(1.16);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1);
+    filter: brightness(1);
   }
 }
 
