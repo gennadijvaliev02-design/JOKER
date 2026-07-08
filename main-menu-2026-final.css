@@ -13,7 +13,7 @@
 
 .menu-subtitle {
   margin-top: clamp(44px, 6.4vh, 70px) !important;
-  transform: translateY(34px) !important;
+  transform: translateY(112px) !important;
 }
 
 .menu-card-fan {
@@ -67,7 +67,7 @@
 
   .menu-subtitle {
     margin-top: 34px !important;
-    transform: translateY(24px) !important;
+    transform: translateY(72px) !important;
   }
 
   .menu-card-fan {
