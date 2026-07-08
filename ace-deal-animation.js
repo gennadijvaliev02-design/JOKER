@@ -52,6 +52,10 @@
     return player?.seat === "bottom" ? "Ты" : player?.name || "Игрок";
   }
 
+  function scheduleDealSound(delay, loud = false) {
+    window.setTimeout(() => playSound(loud ? "trump" : "deal"), getDelay(delay));
+  }
+
   function createOpenAceDealCard(deal, index, seatPileCount) {
     const player = getPlayerById(deal.playerId);
     const seat = player?.seat || "bottom";
@@ -96,7 +100,10 @@
     winnerText.textContent = `Первый туз у ${getPlayerDisplayName(winner)}`;
     winnerText.style.setProperty("--winner-delay", `${Math.max(1, revealedCards.length) * ACE_CARD_DELAY + 180}ms`);
 
-    const cards = revealedCards.map((deal, index) => createOpenAceDealCard(deal, index, seatPileCount));
+    const cards = revealedCards.map((deal, index) => {
+      scheduleDealSound(index * ACE_CARD_DELAY + 45, deal.card?.rank === "A");
+      return createOpenAceDealCard(deal, index, seatPileCount);
+    });
 
     layer.replaceChildren(title, ...cards, winnerText);
     window.setTimeout(() => layer.remove(), getDelay(getAceDealDuration(aceDeal)));
@@ -176,11 +183,13 @@
           y: target.y + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),
         };
 
-        const card = createFlyingBack(targetWithSpread, dealStep * 115, dealStep);
+        const delay = dealStep * 115;
+        const card = createFlyingBack(targetWithSpread, delay, dealStep);
         card.style.setProperty("--flight-start-x", `${dealerTarget.x}px`);
         card.style.setProperty("--flight-start-y", `${dealerTarget.y}px`);
         card.style.setProperty("--flight-start-r", `${dealerTarget.rotate || 0}deg`);
         cards.push(card);
+        scheduleDealSound(delay + 30);
         dealStep += 1;
       }
     }
