@@ -95,9 +95,24 @@
 
   function playTrump(ctx) {
     const now = ctx.currentTime;
-    playNoise(ctx, now, { duration: 0.06, volume: 0.038, filter: 3200 });
-    playTone(ctx, now, { frequency: 440, endFrequency: 554, duration: 0.09, type: "sine", volume: 0.012 });
-    playTone(ctx, now + 0.04, { frequency: 554, endFrequency: 440, duration: 0.09, type: "triangle", volume: 0.008 });
+    playNoise(ctx, now, { duration: 0.075, volume: 0.058, filter: 3600, q: 1.5 });
+    playTone(ctx, now, { frequency: 392, endFrequency: 523, duration: 0.08, type: "triangle", volume: 0.012 });
+    playTone(ctx, now + 0.035, { frequency: 523, endFrequency: 659, duration: 0.09, type: "sine", volume: 0.01 });
+  }
+
+  function playBidSelect(ctx) {
+    const now = ctx.currentTime;
+    playNoise(ctx, now, { duration: 0.045, volume: 0.072, filter: 2400, q: 1.7 });
+    playTone(ctx, now, { frequency: 196, endFrequency: 124, duration: 0.055, type: "triangle", volume: 0.014 });
+    playTone(ctx, now + 0.028, { frequency: 587, endFrequency: 740, duration: 0.06, type: "sine", volume: 0.009 });
+  }
+
+  function playTrumpSelect(ctx) {
+    const now = ctx.currentTime;
+    playNoise(ctx, now, { duration: 0.075, volume: 0.088, filter: 2850, q: 2.1 });
+    playTone(ctx, now, { frequency: 110, endFrequency: 82, duration: 0.09, type: "sawtooth", volume: 0.02 });
+    playTone(ctx, now + 0.026, { frequency: 440, endFrequency: 660, duration: 0.11, type: "triangle", volume: 0.015 });
+    playTone(ctx, now + 0.095, { frequency: 660, endFrequency: 880, duration: 0.08, type: "sine", volume: 0.01 });
   }
 
   function playJoker(ctx) {
@@ -149,6 +164,8 @@
       card: playCard,
       trick: playTrick,
       trump: playTrump,
+      bidSelect: playBidSelect,
+      trumpSelect: playTrumpSelect,
       joker: playJoker,
       jokerCollect: playJokerCollect,
     };
