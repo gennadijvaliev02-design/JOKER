@@ -75,28 +75,4 @@
 
     return cardElement;
   };
-
-  const seatApplyBeforeCardPatch = applyVisualSeatsFromPlayerOrder;
-
-  function getMixedBotSeats() {
-    const seats = ["left", "top", "right"];
-
-    for (let index = seats.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1));
-      [seats[index], seats[swapIndex]] = [seats[swapIndex], seats[index]];
-    }
-
-    return seats;
-  }
-
-  applyVisualSeatsFromPlayerOrder = function finalRandomBotSeats() {
-    seatApplyBeforeCardPatch?.();
-    const seats = getMixedBotSeats();
-    let botIndex = 0;
-
-    state.players = state.players.map((player) => ({
-      ...player,
-      seat: player.id === "human" ? "bottom" : seats[botIndex++],
-    }));
-  };
 })();
