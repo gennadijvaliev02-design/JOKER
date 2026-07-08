@@ -1,0 +1,52 @@
+/* Small final override: move title higher, cards lower, and add repeat card motion */
+.menu-hero {
+  align-content: start !important;
+  padding-top: clamp(24px, 5vh, 54px) !important;
+}
+
+.menu-card-fan {
+  left: clamp(22px, 3.2vw, 46px) !important;
+  bottom: clamp(4px, 1.6vh, 18px) !important;
+  z-index: 1 !important;
+  animation: menu-cards-glow-loop 4.6s ease-in-out 1.4s infinite !important;
+}
+
+.menu-fan-card {
+  animation:
+    menu-card-drop 760ms cubic-bezier(0.16, 0.88, 0.22, 1.12) both,
+    menu-card-hop-loop 4.6s ease-in-out 1.4s infinite !important;
+}
+
+.menu-fan-card:nth-child(1) {
+  animation-delay: 220ms, 1.4s !important;
+}
+
+.menu-fan-card:nth-child(2) {
+  animation-delay: 330ms, 1.52s !important;
+}
+
+.menu-fan-card:nth-child(3) {
+  animation-delay: 440ms, 1.64s !important;
+}
+
+@keyframes menu-card-hop-loop {
+  0%, 66%, 100% { translate: 0 0; }
+  74% { translate: 0 -10px; }
+  82% { translate: 0 2px; }
+  90% { translate: 0 -3px; }
+}
+
+@keyframes menu-cards-glow-loop {
+  0%, 66%, 100% { filter: drop-shadow(0 0 0 rgba(255, 212, 84, 0)); }
+  76% { filter: drop-shadow(0 0 18px rgba(255, 212, 84, 0.18)); }
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .menu-hero {
+    padding-top: 16px !important;
+  }
+
+  .menu-card-fan {
+    bottom: -4px !important;
+  }
+}
