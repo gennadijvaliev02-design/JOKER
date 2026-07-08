@@ -1,6 +1,6 @@
 (() => {
-  const MASTER_VOLUME = 0.42;
-  const SFX_VOLUME = 0.72;
+  const MASTER_VOLUME = 0.82;
+  const SFX_VOLUME = 1.18;
 
   function getContext() {
     if (state.audioContext) {
@@ -67,27 +67,27 @@
 
     for (let index = 0; index < 9; index += 1) {
       const time = now + index * 0.038;
-      playNoise(ctx, time, { duration: 0.055, volume: 0.038, filter: 1600 + index * 120 });
-      playTone(ctx, time, { frequency: 150 + index * 7, endFrequency: 90, duration: 0.045, volume: 0.009 });
+      playNoise(ctx, time, { duration: 0.058, volume: 0.072, filter: 1600 + index * 120 });
+      playTone(ctx, time, { frequency: 150 + index * 7, endFrequency: 90, duration: 0.045, volume: 0.014 });
     }
   }
 
   function playDeal(ctx) {
     const now = ctx.currentTime;
-    playNoise(ctx, now, { duration: 0.052, volume: 0.052, filter: 2300 });
-    playTone(ctx, now, { frequency: 320, endFrequency: 160, duration: 0.05, volume: 0.008 });
+    playNoise(ctx, now, { duration: 0.055, volume: 0.096, filter: 2300 });
+    playTone(ctx, now, { frequency: 320, endFrequency: 160, duration: 0.05, volume: 0.013 });
   }
 
   function playCard(ctx) {
     const now = ctx.currentTime;
-    playNoise(ctx, now, { duration: 0.062, volume: 0.058, filter: 2750 });
-    playTone(ctx, now, { frequency: 220, endFrequency: 115, duration: 0.055, volume: 0.007 });
+    playNoise(ctx, now, { duration: 0.065, volume: 0.105, filter: 2750 });
+    playTone(ctx, now, { frequency: 220, endFrequency: 115, duration: 0.055, volume: 0.011 });
   }
 
   function playTrick(ctx) {
     const now = ctx.currentTime;
-    playNoise(ctx, now, { duration: 0.11, volume: 0.055, filter: 1900 });
-    playTone(ctx, now, { frequency: 180, endFrequency: 98, duration: 0.10, volume: 0.008 });
+    playNoise(ctx, now, { duration: 0.12, volume: 0.105, filter: 1900 });
+    playTone(ctx, now, { frequency: 180, endFrequency: 98, duration: 0.10, volume: 0.014 });
   }
 
   const originalPlaySound = playSound;
