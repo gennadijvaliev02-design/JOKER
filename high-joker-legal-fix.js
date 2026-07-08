@@ -44,24 +44,27 @@
     return originalGetIllegalMoveReason(playerId, card);
   };
 
-  function shuffleBotSeats() {
-    const seats = ["left", "top", "right"];
+  const originalBuildPlayers = buildPlayers;
 
-    for (let index = seats.length - 1; index > 0; index -= 1) {
+  function shuffleBotNames() {
+    const names = ["Клод", "GPT", "Qwen"];
+
+    for (let index = names.length - 1; index > 0; index -= 1) {
       const swapIndex = Math.floor(Math.random() * (index + 1));
-      [seats[index], seats[swapIndex]] = [seats[swapIndex], seats[index]];
+      [names[index], names[swapIndex]] = [names[swapIndex], names[index]];
     }
 
-    return seats;
+    return names;
   }
 
-  applyVisualSeatsFromPlayerOrder = function applyRandomBotSeatsFromPlayerOrder() {
-    const botSeats = shuffleBotSeats();
-    let botSeatIndex = 0;
+  buildPlayers = function buildPlayersWithRandomBotNames(playerName) {
+    const players = originalBuildPlayers(playerName);
+    const names = shuffleBotNames();
+    let botNameIndex = 0;
 
-    state.players = state.players.map((player) => ({
+    return players.map((player) => ({
       ...player,
-      seat: player.id === "human" ? "bottom" : botSeats[botSeatIndex++],
+      name: player.id === "human" ? player.name : names[botNameIndex++],
     }));
   };
 
