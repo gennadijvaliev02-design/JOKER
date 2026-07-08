@@ -1,4 +1,8 @@
-/* Web table polish: score button and higher played cards */
+/* Web table polish: larger table frame, score button and higher played cards */
+.table-wrap {
+  padding: 0.8% 0.9% !important;
+}
+
 .score {
   width: 62px !important;
   height: 86px !important;
@@ -15,6 +19,10 @@
 }
 
 @media (max-width: 760px), (max-height: 520px) {
+  .table-wrap {
+    padding: 0.6% 0.7% !important;
+  }
+
   .score {
     width: 54px !important;
     height: 74px !important;
