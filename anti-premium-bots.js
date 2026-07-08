@@ -1,6 +1,5 @@
 (() => {
   const originalChooseBotCard = chooseBotCard;
-  const originalChooseJokerMode = chooseJokerMode;
   const originalChooseLeadJokerAction = chooseLeadJokerAction;
 
   function getPlayerIndex(playerId) {
@@ -118,12 +117,20 @@
     return [...cards].sort((first, second) => getAttackPower(second) - getAttackPower(first));
   }
 
+  function safeWouldWin(playerId, card) {
+    if (card.type === "joker") {
+      return true;
+    }
+
+    return wouldCardWinCurrentTrick(playerId, card);
+  }
+
   function getWinningCards(playerId, cards) {
-    return cards.filter((card) => wouldCardWinCurrentTrick(playerId, card));
+    return cards.filter((card) => card.type !== "joker" && safeWouldWin(playerId, card));
   }
 
   function getLosingCards(playerId, cards) {
-    return cards.filter((card) => !wouldCardWinCurrentTrick(playerId, card));
+    return cards.filter((card) => card.type !== "joker" && !safeWouldWin(playerId, card));
   }
 
   function isTargetWinning(threat) {
@@ -134,24 +141,6 @@
     return state.currentTrick.some((play) => play.player.id === threat.playerId);
   }
 
-  function wouldHelpBreakTarget(playerId, card, threat) {
-    if (!state.currentTrick.length) {
-      return false;
-    }
-
-    const wins = wouldCardWinCurrentTrick(playerId, card);
-
-    if (threat.mustStillTake) {
-      return isTargetWinning(threat) && wins;
-    }
-
-    if (threat.shouldAvoidTaking) {
-      return isTargetWinning(threat) && !wins;
-    }
-
-    return false;
-  }
-
   function chooseAntiPremiumFollowCard(playerId, legalCards, threat) {
     const standardCards = legalCards.filter((card) => card.type !== "joker");
     const jokerCards = legalCards.filter((card) => card.type === "joker");
@@ -160,14 +149,12 @@
 
     if (threat.mustStillTake) {
       if (isTargetWinning(threat)) {
-        const winningStandard = winningCards.filter((card) => card.type !== "joker");
-
-        if (winningStandard.length) {
-          return sortLow(winningStandard)[0];
+        if (winningCards.length) {
+          return sortLow(winningCards)[0];
         }
 
-        if (threat.urgent && jokerCards.some((card) => wouldCardWinCurrentTrick(playerId, card))) {
-          return sortLow(jokerCards.filter((card) => wouldCardWinCurrentTrick(playerId, card)))[0];
+        if (threat.urgent && jokerCards.length) {
+          return jokerCards[0];
         }
       }
 
@@ -179,10 +166,8 @@
 
     if (threat.shouldAvoidTaking) {
       if (isTargetWinning(threat)) {
-        const losingStandard = losingCards.filter((card) => card.type !== "joker");
-
-        if (losingStandard.length) {
-          return sortHigh(losingStandard)[0];
+        if (losingCards.length) {
+          return sortHigh(losingCards)[0];
         }
 
         if (standardCards.length) {
@@ -271,34 +256,6 @@
       : chooseAntiPremiumLeadCard(playerId, legalCards, threat);
 
     return antiCard || originalCard;
-  };
-
-  chooseJokerMode = function antiPremiumChooseJokerMode(playerId, card) {
-    const threat = getAntiPremiumThreat();
-
-    if (
-      threat &&
-      playerId?.startsWith?.("bot-") &&
-      card?.type === "joker" &&
-      state.currentTrick.length > 0 &&
-      threat.mustStillTake &&
-      isTargetWinning(threat) &&
-      wouldCardWinCurrentTrick(playerId, card)
-    ) {
-      return "beat";
-    }
-
-    if (
-      threat &&
-      playerId?.startsWith?.("bot-") &&
-      card?.type === "joker" &&
-      state.currentTrick.length > 0 &&
-      threat.shouldAvoidTaking
-    ) {
-      return "duck";
-    }
-
-    return originalChooseJokerMode(playerId, card);
   };
 
   chooseLeadJokerAction = function antiPremiumLeadJokerAction(playerId) {
