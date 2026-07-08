@@ -1,0 +1,29 @@
+/* Web table polish: bigger score button and higher played cards */
+.score {
+  width: 92px !important;
+  height: 128px !important;
+  right: 6.2% !important;
+  bottom: 8.5% !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 9px !important;
+}
+
+.played-card-slot {
+  top: 21% !important;
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .score {
+    width: 76px !important;
+    height: 104px !important;
+    right: 5.8% !important;
+    bottom: 8.2% !important;
+    font-size: 15px !important;
+  }
+
+  .played-card-slot {
+    top: 22% !important;
+  }
+}
