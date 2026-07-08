@@ -22,7 +22,7 @@
   }
 
   function totalStandardSuitCards(suitId) {
-    return DECK_RANKS.length - (suitId === "spades" || suitId === "clubs" ? 1 : 0);
+    return RANKS.length - (suitId === "spades" || suitId === "clubs" ? 1 : 0);
   }
 
   function remainingSuitCount(suitId) {
