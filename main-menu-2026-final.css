@@ -1,7 +1,11 @@
 /* Small final override: move title higher, cards lower, and add repeat card motion */
 .menu-hero {
   align-content: start !important;
-  padding-top: clamp(24px, 5vh, 54px) !important;
+  padding-top: clamp(0px, 1.4vh, 14px) !important;
+}
+
+.menu-subtitle {
+  margin-top: clamp(44px, 6.4vh, 70px) !important;
 }
 
 .menu-card-fan {
@@ -43,7 +47,11 @@
 
 @media (max-width: 760px), (max-height: 520px) {
   .menu-hero {
-    padding-top: 16px !important;
+    padding-top: 4px !important;
+  }
+
+  .menu-subtitle {
+    margin-top: 34px !important;
   }
 
   .menu-card-fan {
