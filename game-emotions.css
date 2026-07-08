@@ -1,5 +1,6 @@
 /* Custom in-game emotions: no system emoji, so old devices do not show squares */
 .smile {
+  right: 19.5% !important;
   font-size: 0 !important;
 }
 
@@ -9,6 +10,7 @@
 }
 
 .emotion-panel {
+  right: 13.5% !important;
   grid-template-columns: repeat(4, 44px) !important;
   gap: 8px !important;
   padding: 10px !important;
@@ -245,38 +247,6 @@
   content: "OK";
 }
 
-.game-emote.is-joker {
-  border-radius: 10px;
-  background:
-    linear-gradient(135deg, #fffdf2, #f5e9c9 62%, #d1b87b);
-  border-color: #f3d05d;
-  transform: rotate(-5deg);
-}
-
-.game-emote.is-joker .mark {
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  color: #151313;
-  font-size: 24px;
-  font-weight: 1000;
-  font-family: Georgia, serif;
-}
-
-.game-emote.is-joker .mark::before {
-  content: "J";
-}
-
-.game-emote.is-joker::after {
-  right: 12%;
-  bottom: 12%;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #e22524;
-  box-shadow: -16px -16px 0 #171717;
-}
-
 .game-emote.is-fire {
   border-radius: 46% 54% 44% 56% / 65% 65% 35% 35%;
   background:
@@ -329,5 +299,15 @@
   100% {
     opacity: 0;
     transform: translateX(-50%) translateY(-22px) scale(0.72) rotate(7deg);
+  }
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .smile {
+    right: 18.8% !important;
+  }
+
+  .emotion-panel {
+    right: 12.8% !important;
   }
 }
