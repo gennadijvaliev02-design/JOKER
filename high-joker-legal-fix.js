@@ -44,8 +44,6 @@
     return originalGetIllegalMoveReason(playerId, card);
   };
 
-  const originalBuildPlayers = buildPlayers;
-
   function shuffleBotSeats() {
     const seats = ["left", "top", "right"];
 
@@ -57,15 +55,26 @@
     return seats;
   }
 
-  buildPlayers = function buildPlayersWithRandomBotSeats(playerName) {
-    const players = originalBuildPlayers(playerName);
+  applyVisualSeatsFromPlayerOrder = function applyRandomBotSeatsFromPlayerOrder() {
     const botSeats = shuffleBotSeats();
-    const bots = players.filter((player) => player.id !== "human");
+    let botSeatIndex = 0;
 
-    bots.forEach((bot, index) => {
-      bot.seat = botSeats[index];
+    state.players = state.players.map((player) => ({
+      ...player,
+      seat: player.id === "human" ? "bottom" : botSeats[botSeatIndex++],
+    }));
+  };
+
+  const originalRender = render;
+
+  render = function renderWithAceOrderBadgeFix(...args) {
+    const result = originalRender.apply(this, args);
+    const shouldShowOrder = state.phase !== "ace-deal";
+
+    document.querySelectorAll("[data-order-badge]").forEach((badge) => {
+      badge.style.visibility = shouldShowOrder ? "visible" : "hidden";
     });
 
-    return players;
+    return result;
   };
 })();
