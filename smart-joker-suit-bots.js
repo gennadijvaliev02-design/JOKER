@@ -21,6 +21,35 @@
     return (state.playedCards || []).filter((play) => play.card?.type === "standard" && play.card.suit === suitId).length;
   }
 
+  function totalStandardSuitCards(suitId) {
+    return DECK_RANKS.length - (suitId === "spades" || suitId === "clubs" ? 1 : 0);
+  }
+
+  function remainingSuitCount(suitId) {
+    const inHands = state.players.reduce((sum, player) => sum + suitCards(player.id, suitId).length, 0);
+    return Math.max(inHands, totalStandardSuitCards(suitId) - playedSuitCount(suitId));
+  }
+
+  function remainingTrumpCount() {
+    const trumpSuit = getTrumpSuit();
+    return trumpSuit ? remainingSuitCount(trumpSuit) : 0;
+  }
+
+  function isTrumpStillDangerous() {
+    const trumpSuit = getTrumpSuit();
+
+    if (!trumpSuit) {
+      return false;
+    }
+
+    return remainingTrumpCount() >= 3;
+  }
+
+  function botHasAnyTrump(playerId) {
+    const trumpSuit = getTrumpSuit();
+    return Boolean(trumpSuit && suitCards(playerId, trumpSuit).length);
+  }
+
   function suitScore(playerId, suitId, wantsTrick) {
     const trumpSuit = getTrumpSuit();
     const cards = suitCards(playerId, suitId);
@@ -34,15 +63,16 @@
     let score = count * 10 + suitPower(cards) * 1.1;
 
     if (isTrump) {
-      score += wantsTrick ? 60 : 18;
+      score += wantsTrick ? 90 : 22;
     }
 
     if (wantsTrick && trumpSuit && suitId !== trumpSuit) {
-      score -= 12 + Math.max(0, playedSuitCount(suitId) - 4) * 2;
+      const aliveTrumps = remainingTrumpCount();
+      score -= 28 + aliveTrumps * 9 + Math.max(0, playedSuitCount(suitId) - 4) * 3;
     }
 
     if (count === 1 && !isTrump) {
-      score -= wantsTrick ? 8 : 2;
+      score -= wantsTrick ? 10 : 2;
     }
 
     return score;
@@ -52,7 +82,11 @@
     const trumpSuit = getTrumpSuit();
     const ownedSuits = [...new Set(standardHand(playerId).map((card) => card.suit))];
 
-    if (wantsTrick && trumpSuit && suitCards(playerId, trumpSuit).length) {
+    if (wantsTrick && trumpSuit && isTrumpStillDangerous()) {
+      return trumpSuit;
+    }
+
+    if (wantsTrick && trumpSuit && botHasAnyTrump(playerId)) {
       return trumpSuit;
     }
 
@@ -75,7 +109,7 @@
     return {
       ...action,
       jokerCommand: wantsTrick || action.jokerCommand === "high" ? "high" : action.jokerCommand,
-      jokerSuit: wantsTrick && trumpSuit && suitCards(playerId, trumpSuit).length ? trumpSuit : chosenSuit,
+      jokerSuit: wantsTrick && trumpSuit && (isTrumpStillDangerous() || botHasAnyTrump(playerId)) ? trumpSuit : chosenSuit,
     };
   };
 })();
