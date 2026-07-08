@@ -4,8 +4,16 @@
   padding-top: clamp(0px, 1.4vh, 14px) !important;
 }
 
+.menu-kicker,
+.start-logo,
+.start-panel h1,
+.brand-line {
+  transform: translateY(-42px) !important;
+}
+
 .menu-subtitle {
   margin-top: clamp(44px, 6.4vh, 70px) !important;
+  transform: translateY(34px) !important;
 }
 
 .menu-card-fan {
@@ -50,8 +58,16 @@
     padding-top: 4px !important;
   }
 
+  .menu-kicker,
+  .start-logo,
+  .start-panel h1,
+  .brand-line {
+    transform: translateY(-24px) !important;
+  }
+
   .menu-subtitle {
     margin-top: 34px !important;
+    transform: translateY(24px) !important;
   }
 
   .menu-card-fan {
