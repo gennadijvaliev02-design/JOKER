@@ -1,0 +1,127 @@
+/* Final polish for the premium Joker main menu */
+.start-panel {
+  width: min(1080px, 94vw) !important;
+  min-height: min(640px, 88vh) !important;
+  grid-template-columns: minmax(390px, 1.15fr) minmax(300px, 360px) !important;
+  gap: clamp(34px, 5vw, 72px) !important;
+}
+
+.menu-hero {
+  min-height: 430px;
+  display: grid;
+  align-content: center;
+  padding-left: clamp(8px, 1.8vw, 24px);
+}
+
+.start-panel h1,
+.brand-line,
+.menu-subtitle {
+  position: relative;
+  z-index: 3;
+}
+
+.start-panel h1 {
+  font-size: clamp(72px, 9.4vw, 126px) !important;
+}
+
+.brand-line {
+  margin-top: 16px !important;
+  padding-left: 3px;
+  color: rgba(255, 238, 178, 0.96) !important;
+  text-shadow: 0 0 16px rgba(255, 205, 71, 0.22);
+}
+
+.menu-card-fan {
+  left: clamp(14px, 2vw, 28px) !important;
+  right: auto !important;
+  bottom: clamp(26px, 6vh, 68px) !important;
+  width: 150px !important;
+  height: 132px !important;
+  opacity: 0.82 !important;
+  z-index: 1 !important;
+  transform: translateY(16px);
+}
+
+.menu-fan-card {
+  left: 34px !important;
+  top: 22px !important;
+  width: 66px !important;
+  height: 94px !important;
+  opacity: 0;
+  transform-origin: 50% 92%;
+  animation: menu-card-drop 760ms cubic-bezier(0.16, 0.88, 0.22, 1.12) both;
+}
+
+.menu-fan-card:nth-child(1) {
+  animation-delay: 220ms;
+  transform: rotate(-23deg) translate(-22px, 18px);
+}
+
+.menu-fan-card:nth-child(2) {
+  animation-delay: 330ms;
+  transform: rotate(-5deg) translate(4px, 2px);
+}
+
+.menu-fan-card:nth-child(3) {
+  animation-delay: 440ms;
+  transform: rotate(17deg) translate(30px, 18px);
+}
+
+@keyframes menu-card-drop {
+  0% {
+    opacity: 0;
+    translate: 0 -72px;
+    scale: 0.92;
+    filter: blur(2px);
+  }
+
+  70% {
+    opacity: 1;
+    translate: 0 4px;
+    scale: 1.03;
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .start-panel {
+    width: min(760px, 95vw) !important;
+    min-height: min(430px, 88vh) !important;
+    grid-template-columns: minmax(260px, 1fr) minmax(250px, 310px) !important;
+    gap: 20px !important;
+  }
+
+  .menu-hero {
+    min-height: 330px;
+  }
+
+  .menu-card-fan {
+    left: 10px !important;
+    bottom: 12px !important;
+    width: 118px !important;
+    height: 104px !important;
+    opacity: 0.72 !important;
+  }
+
+  .menu-fan-card {
+    width: 52px !important;
+    height: 74px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .menu-card-fan {
+    display: none !important;
+  }
+
+  .menu-hero {
+    min-height: auto;
+    padding-left: 0;
+  }
+}
