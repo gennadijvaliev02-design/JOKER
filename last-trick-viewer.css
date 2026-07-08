@@ -1,0 +1,137 @@
+/* Last trick viewer */
+.last-trick-button {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(112px, 17vh, 154px);
+  z-index: 18;
+  min-width: 118px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 232, 148, 0.28);
+  border-radius: 999px;
+  background: rgba(3, 18, 15, 0.72);
+  color: rgba(255, 239, 181, 0.92);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.last-trick-button:disabled {
+  opacity: 0.36;
+  cursor: default;
+}
+
+.last-trick-button:not(:disabled):active,
+.last-trick-button.is-active {
+  transform: translateX(-50%) translateY(1px) scale(0.98);
+  background: rgba(24, 66, 45, 0.78);
+  color: #fff6c8;
+}
+
+.last-trick-viewer {
+  position: absolute;
+  inset: 0;
+  z-index: 34;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(4, 18, 13, 0.55), rgba(0, 0, 0, 0.14) 46%, transparent 72%);
+  opacity: 0;
+  transition: opacity 110ms ease;
+}
+
+.last-trick-viewer.is-visible {
+  opacity: 1;
+}
+
+.last-trick-panel {
+  min-width: min(520px, 74vw);
+  padding: 14px 18px 18px;
+  border: 1px solid rgba(255, 229, 134, 0.28);
+  border-radius: 24px;
+  background: rgba(2, 15, 13, 0.86);
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.last-trick-title {
+  margin-bottom: 12px;
+  color: rgba(255, 238, 174, 0.95);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.last-trick-cards {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(8px, 1.7vw, 14px);
+}
+
+.last-trick-card-item {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.last-trick-card-item .card {
+  width: clamp(54px, 7vw, 74px) !important;
+  height: clamp(76px, 9.8vw, 104px) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.38);
+}
+
+.last-trick-card-item.is-winner .card {
+  outline: 2px solid rgba(255, 218, 92, 0.9);
+  box-shadow:
+    0 0 0 4px rgba(255, 195, 52, 0.12),
+    0 0 22px rgba(255, 196, 52, 0.34),
+    0 14px 24px rgba(0, 0, 0, 0.42);
+}
+
+.last-trick-card-name {
+  max-width: 80px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 10px;
+  font-weight: 850;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.last-trick-card-item.is-winner .last-trick-card-name {
+  color: #ffe27b;
+}
+
+@media (max-width: 760px), (max-height: 520px) {
+  .last-trick-button {
+    bottom: clamp(88px, 15vh, 124px);
+    height: 30px;
+    min-width: 104px;
+    font-size: 10px;
+  }
+
+  .last-trick-panel {
+    min-width: min(440px, 78vw);
+    padding: 12px 14px 15px;
+  }
+}
