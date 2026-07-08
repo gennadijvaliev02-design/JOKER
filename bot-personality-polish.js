@@ -62,7 +62,7 @@
 
   function pickAllowedBidNear(targetBid) {
     const rankedBids = [...BID_OPTIONS].sort((firstBid, secondBid) => {
-      return Math.abs(numericBid(firstBid) - numericBid(targetBid)) - Math.abs(numericBid(secondBid) - numericBid(targetBid));
+      return Math.abs(numericBid(firstBid) - Math.abs(numericBid(targetBid))) - Math.abs(numericBid(secondBid) - Math.abs(numericBid(targetBid)));
     });
 
     return rankedBids.find((bid) => isBidAllowedForCurrentTurn(bid)) ?? "pass";
@@ -247,6 +247,18 @@
     const winningCards = getWinningCards(playerId, legalCards);
     const losingCards = getLosingCards(playerId, legalCards);
 
+    if (!wantsTrick) {
+      const losingStandardCards = losingCards.filter((card) => card.type !== "joker");
+
+      if (losingStandardCards.length) {
+        return getLowDumpCard(losingStandardCards) || originalCard;
+      }
+
+      if (standardCards.length) {
+        return getLowDumpCard(standardCards) || originalCard;
+      }
+    }
+
     if (shouldSpendJokerEarly && winningCards.length) {
       const jokerWinner = getBestJoker(winningCards);
 
@@ -276,15 +288,18 @@
     }
 
     if (randomChance(personality.chaosChance)) {
-      if (losingCards.length && Math.random() < 0.55) {
-        return getRandomNearGoodCard(losingCards, compareBotCards, 4) || originalCard;
+      const losingStandardCards = losingCards.filter((card) => card.type !== "joker");
+
+      if (losingStandardCards.length && Math.random() < 0.55) {
+        return getRandomNearGoodCard(losingStandardCards, compareBotCards, 4) || originalCard;
       }
 
       if (winningCards.length) {
-        return getRandomNearGoodCard(winningCards, compareBotCards, 4) || originalCard;
+        const winningStandardCards = winningCards.filter((card) => card.type !== "joker");
+        return getRandomNearGoodCard(winningStandardCards.length ? winningStandardCards : winningCards, compareBotCards, 4) || originalCard;
       }
 
-      return getLowDumpCard(legalCards) || originalCard;
+      return getLowDumpCard(standardCards.length ? standardCards : legalCards) || originalCard;
     }
 
     return originalCard;
