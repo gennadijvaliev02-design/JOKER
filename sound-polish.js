@@ -1,6 +1,6 @@
 (() => {
-  const MASTER_VOLUME = 0.82;
-  const SFX_VOLUME = 1.18;
+  const MASTER_VOLUME = 0.84;
+  const SFX_VOLUME = 1.22;
 
   function getContext() {
     if (state.audioContext) {
@@ -37,7 +37,7 @@
     oscillator.stop(time + duration + 0.02);
   }
 
-  function playNoise(ctx, time, { duration, volume = 0.04, filter = 2600, destination }) {
+  function playNoise(ctx, time, { duration, volume = 0.04, filter = 2600, q = 1.1, type = "bandpass", destination }) {
     const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
     const data = buffer.getChannelData(0);
 
@@ -50,9 +50,9 @@
     const gain = ctx.createGain();
     const biquad = ctx.createBiquadFilter();
     source.buffer = buffer;
-    biquad.type = "bandpass";
+    biquad.type = type;
     biquad.frequency.setValueAtTime(filter, time);
-    biquad.Q.value = 1.1;
+    biquad.Q.value = q;
     gain.gain.setValueAtTime(volume * MASTER_VOLUME * SFX_VOLUME, time);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
     source.connect(biquad);
@@ -77,12 +77,8 @@
 
   function playDeal(ctx) {
     const now = ctx.currentTime;
-
-    for (let index = 0; index < 4; index += 1) {
-      const time = now + index * 0.048;
-      playNoise(ctx, time, { duration: 0.045, volume: 0.085, filter: 2100 + index * 180 });
-      playTone(ctx, time, { frequency: 290 + index * 18, endFrequency: 145, duration: 0.042, volume: 0.01 });
-    }
+    playNoise(ctx, now, { duration: 0.038, volume: 0.072, filter: 2300, q: 0.9 });
+    playTone(ctx, now, { frequency: 255, endFrequency: 118, duration: 0.034, volume: 0.0075 });
   }
 
   function playCard(ctx) {
@@ -106,10 +102,18 @@
 
   function playJoker(ctx) {
     const now = ctx.currentTime;
-    playNoise(ctx, now, { duration: 0.08, volume: 0.032, filter: 4200 });
-    playTone(ctx, now, { frequency: 659, endFrequency: 987, duration: 0.12, type: "sine", volume: 0.017 });
-    playTone(ctx, now + 0.05, { frequency: 880, endFrequency: 1320, duration: 0.14, type: "triangle", volume: 0.012 });
-    playTone(ctx, now + 0.12, { frequency: 1174, endFrequency: 784, duration: 0.10, type: "sine", volume: 0.007 });
+    playNoise(ctx, now, { duration: 0.055, volume: 0.105, filter: 5200, q: 2.4, type: "highpass" });
+    playTone(ctx, now, { frequency: 196, endFrequency: 98, duration: 0.06, type: "sawtooth", volume: 0.018 });
+    playTone(ctx, now + 0.018, { frequency: 740, endFrequency: 1480, duration: 0.075, type: "square", volume: 0.018 });
+    playTone(ctx, now + 0.052, { frequency: 1480, endFrequency: 988, duration: 0.065, type: "triangle", volume: 0.012 });
+  }
+
+  function playJokerCollect(ctx) {
+    const now = ctx.currentTime;
+    playNoise(ctx, now, { duration: 0.09, volume: 0.12, filter: 6100, q: 2.8, type: "highpass" });
+    playTone(ctx, now, { frequency: 110, endFrequency: 74, duration: 0.12, type: "sawtooth", volume: 0.025 });
+    playTone(ctx, now + 0.025, { frequency: 880, endFrequency: 1760, duration: 0.12, type: "square", volume: 0.022 });
+    playTone(ctx, now + 0.10, { frequency: 1320, endFrequency: 660, duration: 0.10, type: "triangle", volume: 0.014 });
   }
 
   const originalPlaySound = playSound;
@@ -132,6 +136,7 @@
       trick: playTrick,
       trump: playTrump,
       joker: playJoker,
+      jokerCollect: playJokerCollect,
     };
 
     const sound = sounds[type];
@@ -152,9 +157,6 @@
   const originalStartDeal = startDeal;
   startDeal = function polishedStartDeal(...args) {
     playSound("shuffle");
-    window.setTimeout(() => playSound("deal"), 220);
-    window.setTimeout(() => playSound("deal"), 520);
-    window.setTimeout(() => playSound("deal"), 820);
     return originalStartDeal.apply(this, args);
   };
 })();
