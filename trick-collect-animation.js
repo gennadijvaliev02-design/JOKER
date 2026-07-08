@@ -163,6 +163,7 @@
     });
 
     if (winnerJokerCard) {
+      playSound("jokerCollect");
       layer.append(isJokerDuel ? createJokerStarBurst(center, target, winnerJokerCard.color) : createJokerBubbleTrail(center, target, winnerJokerCard.color));
     }
 
@@ -190,7 +191,7 @@
 
       scheduleGameTask(() => {
         winner.tricks += 1;
-        playSound("trick");
+        playSound(winnerPlay?.card?.type === "joker" ? "jokerCollect" : "trick");
         state.leadPlayerId = winner.id;
         state.activePlayerId = winner.id;
         state.currentTrick = [];
