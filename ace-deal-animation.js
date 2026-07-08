@@ -141,6 +141,16 @@
     return state.players.find((player) => player.order === dealerOrder) || getPlayerById(getGameLeaderId()) || state.players[0];
   }
 
+  function getDealerFlightStart(seat) {
+    const target = getSeatDealTarget(seat);
+
+    if (seat === "top") {
+      return { x: -108, y: -128, rotate: 4 };
+    }
+
+    return target;
+  }
+
   playCardDealAnimation = function dealerSeatCardDealAnimation(handCount) {
     if (state.autoPlay || !elements.table) return;
 
@@ -148,7 +158,7 @@
     if (!layer) return;
 
     const dealer = getDealerForCurrentGame();
-    const dealerTarget = getSeatDealTarget(dealer?.seat || "bottom");
+    const dealerTarget = getDealerFlightStart(dealer?.seat || "bottom");
     const cardsPerPlayer = Math.max(3, Math.min(handCount || 9, 9));
     const playersInDealOrder = getPlayerOrderFrom(dealer?.id || getGameLeaderId());
     const cards = [];
