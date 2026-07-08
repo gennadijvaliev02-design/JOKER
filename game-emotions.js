@@ -2,7 +2,7 @@
   const GAME_EMOTIONS = [
     { id: "laugh", label: "Смех" },
     { id: "cool", label: "Красава" },
-    { id: "joker", label: "Джокер" },
+    { id: "ok", label: "Окей" },
     { id: "fire", label: "Огонь" },
     { id: "mad", label: "Злюсь" },
     { id: "thinking", label: "Думаю" },
@@ -15,7 +15,7 @@
     icon.className = `game-emote is-${id}`;
     icon.setAttribute("aria-hidden", "true");
 
-    if (!["joker", "fire", "barrel", "ok"].includes(id)) {
+    if (!["fire", "barrel", "ok"].includes(id)) {
       const leftEye = document.createElement("span");
       leftEye.className = "eye-left";
       const rightEye = document.createElement("span");
@@ -81,7 +81,7 @@
 
   if (elements.emotionButton) {
     elements.emotionButton.innerHTML = "";
-    elements.emotionButton.append(createGameEmotionIcon("joker"));
+    elements.emotionButton.append(createGameEmotionIcon("ok"));
     elements.emotionButton.setAttribute("aria-label", "Эмоции");
   }
 
