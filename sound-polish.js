@@ -110,10 +110,24 @@
 
   function playJokerCollect(ctx) {
     const now = ctx.currentTime;
-    playNoise(ctx, now, { duration: 0.09, volume: 0.12, filter: 6100, q: 2.8, type: "highpass" });
-    playTone(ctx, now, { frequency: 110, endFrequency: 74, duration: 0.12, type: "sawtooth", volume: 0.025 });
-    playTone(ctx, now + 0.025, { frequency: 880, endFrequency: 1760, duration: 0.12, type: "square", volume: 0.022 });
-    playTone(ctx, now + 0.10, { frequency: 1320, endFrequency: 660, duration: 0.10, type: "triangle", volume: 0.014 });
+
+    playNoise(ctx, now, { duration: 0.34, volume: 0.155, filter: 7600, q: 3.2, type: "highpass" });
+    playNoise(ctx, now + 0.045, { duration: 0.22, volume: 0.085, filter: 11800, q: 4.6, type: "bandpass" });
+
+    for (let index = 0; index < 18; index += 1) {
+      const time = now + 0.018 + index * 0.014;
+      const frequency = 1450 + Math.random() * 4200;
+      playTone(ctx, time, {
+        frequency,
+        endFrequency: frequency * (1.35 + Math.random() * 0.65),
+        duration: 0.026 + Math.random() * 0.018,
+        type: index % 3 === 0 ? "square" : "triangle",
+        volume: 0.0065 + Math.random() * 0.007,
+      });
+    }
+
+    playTone(ctx, now + 0.035, { frequency: 880, endFrequency: 1760, duration: 0.13, type: "triangle", volume: 0.013 });
+    playTone(ctx, now + 0.12, { frequency: 1760, endFrequency: 988, duration: 0.17, type: "sine", volume: 0.009 });
   }
 
   const originalPlaySound = playSound;
