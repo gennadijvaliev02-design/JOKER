@@ -6,6 +6,12 @@
     return (player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";
   }
 
+  function refreshScoreSheetNow() {
+    if (typeof renderScoreSheet === "function") {
+      renderScoreSheet();
+    }
+  }
+
   function showPulkaSummary(pulkaNumber, pulkaOffset, holdTime = 4200) {
     if (state.autoPlay || !elements.gameSummary) {
       return;
@@ -88,6 +94,7 @@
       const shouldShowPulkaSummary = finishedGame === 4 && !isFinalGame();
 
       writeCurrentGameScore();
+      refreshScoreSheetNow();
 
       if (isFinalGame()) {
         showGameSummary(gameSummary);
