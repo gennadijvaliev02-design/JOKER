@@ -1,4 +1,4 @@
-/* Web table polish: larger table frame, score button and higher played cards */
+/* Web table polish: larger table frame, score button and played cards */
 .table-wrap {
   padding: 0.8% 0.9% !important;
 }
@@ -15,7 +15,7 @@
 }
 
 .played-card-slot {
-  top: 21% !important;
+  top: 26% !important;
 }
 
 @media (max-width: 760px), (max-height: 520px) {
@@ -32,6 +32,6 @@
   }
 
   .played-card-slot {
-    top: 22% !important;
+    top: 27% !important;
   }
 }
