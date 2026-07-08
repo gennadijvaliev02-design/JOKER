@@ -115,6 +115,61 @@
     return cards.filter((card) => !wouldCardWinCurrentTrick(playerId, card));
   }
 
+  function getTargetTricks(player) {
+    if (!player || player.bid === "pass") {
+      return 0;
+    }
+
+    return isFourHundredPulka() ? 3 : Number(player.bid || 0);
+  }
+
+  function getTricksStillNeeded(playerId) {
+    const player = getPlayerById(playerId);
+    const target = getTargetTricks(player);
+
+    return Math.max(0, target - (player?.tricks || 0));
+  }
+
+  function getCardsLeft(playerId) {
+    return (state.hands[playerId] || []).length;
+  }
+
+  function isBehindSchedule(playerId) {
+    const needed = getTricksStillNeeded(playerId);
+    const cardsLeft = getCardsLeft(playerId);
+
+    if (needed <= 0) {
+      return false;
+    }
+
+    return needed >= Math.max(1, cardsLeft - 2);
+  }
+
+  function shouldUseJokerBeforeTooLate(playerId, jokerCount) {
+    const needed = getTricksStillNeeded(playerId);
+    const cardsLeft = getCardsLeft(playerId);
+
+    if (!jokerCount || needed <= 0) {
+      return false;
+    }
+
+    if (jokerCount >= 2 && needed >= 2 && cardsLeft <= 5) {
+      return true;
+    }
+
+    if (jokerCount >= 1 && needed >= Math.max(1, cardsLeft - 2)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function getBestJoker(cards) {
+    const jokers = cards.filter((card) => card.type === "joker");
+
+    return jokers.find((card) => card.color === "red") || jokers[0] || null;
+  }
+
   function shouldAnnoyTable(playerId, personality) {
     const player = getPlayerById(playerId);
 
@@ -166,8 +221,14 @@
     const standardCards = legalCards.filter((card) => card.type !== "joker");
     const wantsTrick = shouldPlayerTakeTrick(playerId);
     const canSpendJoker = jokerCards.length && shouldSpendJokerNow(playerId);
+    const shouldSaveOrderNow = wantsTrick && isBehindSchedule(playerId);
+    const shouldSpendJokerEarly = wantsTrick && shouldUseJokerBeforeTooLate(playerId, jokerCards.length);
 
     if (!state.currentTrick.length) {
+      if (shouldSaveOrderNow && jokerCards.length && getTricksStillNeeded(playerId) >= getCardsLeft(playerId) - 1) {
+        return getBestJoker(jokerCards) || originalCard;
+      }
+
       if (wantsTrick && randomChance(personality.aggressionChance)) {
         return getRandomNearGoodCard(standardCards.length ? standardCards : legalCards, compareBotLeadHighCards, 2) || originalCard;
       }
@@ -185,6 +246,21 @@
 
     const winningCards = getWinningCards(playerId, legalCards);
     const losingCards = getLosingCards(playerId, legalCards);
+
+    if (shouldSpendJokerEarly && winningCards.length) {
+      const jokerWinner = getBestJoker(winningCards);
+
+      if (jokerWinner) {
+        return jokerWinner;
+      }
+    }
+
+    if (shouldSaveOrderNow && winningCards.length) {
+      const winningStandardCards = winningCards.filter((card) => card.type !== "joker");
+      const pool = winningStandardCards.length ? winningStandardCards : winningCards;
+
+      return getRandomNearGoodCard(pool, compareBotCards, 2) || originalCard;
+    }
 
     if (wantsTrick && winningCards.length && randomChance(personality.aggressionChance)) {
       const winningStandardCards = winningCards.filter((card) => card.type !== "joker");
