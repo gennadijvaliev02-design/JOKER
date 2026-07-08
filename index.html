@@ -19,19 +19,40 @@
     <link rel="stylesheet" href="pulka-summary.css?v=1" />
     <link rel="stylesheet" href="game-summary-compact.css?v=5" />
     <link rel="stylesheet" href="trick-collect-animation.css?v=4" />
+    <link rel="stylesheet" href="main-menu-2026.css?v=1" />
   </head>
   <body>
     <main class="phone-screen" aria-label="Joker card table">
-      <section class="start-screen" id="start-screen" aria-label="Старт игры">
+      <section class="start-screen" id="start-screen" aria-label="Главное меню Joker">
         <div class="start-panel">
-          <div class="start-logo" aria-hidden="true">🃏</div>
-          <h1>Joker</h1>
-          <label class="name-field">
-            <span>Твоё имя</span>
-            <input id="player-name" type="text" value="Кодекс" maxlength="14" autocomplete="off" />
-          </label>
-          <button class="primary-action" id="start-game" type="button">Играть с ботами</button>
-          <button class="ghost-action" id="rules-toggle" type="button">Правила</button>
+          <div class="menu-hero">
+            <div class="menu-kicker">2026 · Tskhinval Rules</div>
+            <div class="start-logo" aria-hidden="true">🃏</div>
+            <h1>Joker</h1>
+            <div class="brand-line">by Valiev Company</div>
+            <p class="menu-subtitle">Современный карточный стол с честными ботами, живыми анимациями и цхинвальскими правилами.</p>
+            <div class="menu-card-fan" aria-hidden="true">
+              <span class="menu-fan-card"></span>
+              <span class="menu-fan-card"></span>
+              <span class="menu-fan-card"></span>
+            </div>
+          </div>
+
+          <div class="menu-actions">
+            <label class="name-field">
+              <span>Твоё имя</span>
+              <input id="player-name" type="text" value="Кодекс" maxlength="14" autocomplete="off" />
+            </label>
+            <button class="primary-action" id="start-game" type="button">▶ Играть с ботами</button>
+            <button class="menu-action is-disabled" id="online-button" type="button">🌍 Онлайн <small>скоро</small></button>
+            <button class="ghost-action" id="rules-toggle" type="button">📖 Правила</button>
+            <button class="menu-action" id="settings-button" type="button">⚙ Настройки <small>скоро</small></button>
+            <div class="menu-footer">
+              <span>v1.0 alpha</span>
+              <button class="language-toggle" id="language-toggle" type="button" aria-label="Переключить язык">EN</button>
+            </div>
+          </div>
+
           <div class="rules-card" id="rules-card" hidden>
             <ol>
               <li>В партии 5 пулек по 4 игры.</li>
@@ -153,5 +174,6 @@
     <script src="bot-personality-polish.js?v=3"></script>
     <script src="pulka-pause-polish.js?v=2"></script>
     <script src="trick-collect-animation.js?v=4"></script>
+    <script src="main-menu-2026.js?v=1"></script>
   </body>
 </html>
