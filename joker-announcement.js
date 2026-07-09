@@ -2,6 +2,16 @@
   let announcementElement = null;
   let announcerSeat = null;
 
+  function getLang() {
+    return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
+  }
+
+  function getCopy() {
+    return getLang() === "en"
+      ? { you: "You", declared: "declared", take: "Take", high: "High" }
+      : { you: "Ты", declared: "объявил", take: "Берёт", high: "Высший" };
+  }
+
   function ensureJokerAnnouncementElement() {
     if (announcementElement) return announcementElement;
 
@@ -16,12 +26,14 @@
   }
 
   function getJokerAnnouncementText(play) {
+    const copy = getCopy();
     const suit = SUITS.find((item) => item.id === play.jokerSuit);
-    const playerName = play.player.seat === "bottom" ? "Ты" : play.player.name;
-    const commandText = play.jokerCommand === "take" ? "Берёт" : "Высший";
+    const playerName = play.player.seat === "bottom" ? copy.you : play.player.name;
+    const commandText = play.jokerCommand === "take" ? copy.take : copy.high;
 
     return {
       playerName,
+      declaredText: copy.declared,
       commandText,
       suitSymbol: suit?.symbol || "",
       suitColor: suit?.color || "black",
@@ -56,7 +68,7 @@
     void element.offsetWidth;
     element.classList.add(commandClass);
     element.innerHTML = `
-      <span class="joker-announcement-player">🃏 ${text.playerName} объявил</span>
+      <span class="joker-announcement-player">🃏 ${text.playerName} ${text.declaredText}</span>
       <span class="joker-announcement-action">
         <span>${text.commandText}</span>
         <span class="joker-announcement-suit ${suitClass}">${text.suitSymbol}</span>
