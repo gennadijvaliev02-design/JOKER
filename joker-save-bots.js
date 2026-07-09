@@ -30,10 +30,6 @@
       return false;
     }
 
-    if (shouldPlayerTakeTrick(playerId) || shouldSpendJokerNow(playerId)) {
-      return false;
-    }
-
     const jokerMode = chooseJokerMode(playerId, chosenCard);
 
     if (jokerMode !== "duck") {
