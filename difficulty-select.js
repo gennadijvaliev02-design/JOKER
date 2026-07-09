@@ -43,15 +43,15 @@
         <button class="difficulty-option is-easy" type="button" data-ai-difficulty-choice="easy">
           <span class="difficulty-icon" aria-hidden="true">⊘</span>
           <span class="difficulty-copy">
-            <span class="difficulty-name">Лёгкие боты</span>
-            <span class="difficulty-desc">Спокойная игра для новичков.</span>
+            <span class="difficulty-name" data-difficulty-easy-name>Лёгкие боты</span>
+            <span class="difficulty-desc" data-difficulty-easy-desc>Спокойная игра для новичков.</span>
           </span>
         </button>
         <button class="difficulty-option is-medium" type="button" data-ai-difficulty-choice="medium">
           <span class="difficulty-icon" aria-hidden="true">♛</span>
           <span class="difficulty-copy">
-            <span class="difficulty-name">Средние боты</span>
-            <span class="difficulty-desc">Умнее, агрессивнее, считают козыри.</span>
+            <span class="difficulty-name" data-difficulty-medium-name>Средние боты</span>
+            <span class="difficulty-desc" data-difficulty-medium-desc>Умнее, агрессивнее, считают козыри.</span>
           </span>
         </button>
       </div>
@@ -65,6 +65,34 @@
   const modal = overlay.querySelector(".difficulty-modal");
   const choices = [...overlay.querySelectorAll("[data-ai-difficulty-choice]")];
   const backButton = overlay.querySelector("[data-difficulty-back]");
+  const title = overlay.querySelector("#difficulty-title");
+  const easyName = overlay.querySelector("[data-difficulty-easy-name]");
+  const easyDesc = overlay.querySelector("[data-difficulty-easy-desc]");
+  const mediumName = overlay.querySelector("[data-difficulty-medium-name]");
+  const mediumDesc = overlay.querySelector("[data-difficulty-medium-desc]");
+
+  function getTexts() {
+    return window.JokerI18n?.getTexts?.() || {
+      difficultyTitle: "Выбери сложность",
+      easyName: "Лёгкие боты",
+      easyDesc: "Спокойная игра для новичков.",
+      mediumName: "Средние боты",
+      mediumDesc: "Умнее, агрессивнее, считают козыри.",
+      back: "← Назад",
+      play: "▶ Играть с ботами",
+    };
+  }
+
+  function applyLanguage() {
+    const t = getTexts();
+    title.textContent = t.difficultyTitle;
+    easyName.textContent = t.easyName;
+    easyDesc.textContent = t.easyDesc;
+    mediumName.textContent = t.mediumName;
+    mediumDesc.textContent = t.mediumDesc;
+    backButton.textContent = t.back;
+    startButton.textContent = t.play;
+  }
 
   function updateSelectedState() {
     const current = getCurrentDifficulty();
@@ -74,6 +102,7 @@
   }
 
   function openDifficultyDialog() {
+    applyLanguage();
     updateSelectedState();
     overlay.hidden = false;
     requestAnimationFrame(() => overlay.classList.add("is-visible"));
@@ -127,6 +156,9 @@
       closeDifficultyDialog();
     }
   });
+
+  window.addEventListener("joker-language-change", applyLanguage);
+  applyLanguage();
 
   window.JokerDifficultySelect = {
     open: openDifficultyDialog,
