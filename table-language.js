@@ -9,6 +9,7 @@
       scoreCap: "Счёт",
       you: "Ты",
       thinking: "думает",
+      bidThinking: "думает над заказом...",
       push: "пихается",
       take: "отнимается",
       game: "Игра",
@@ -17,6 +18,17 @@
       finished: "Партия завершена",
       chooseTrump: "Выбери козырь",
       thinksTrump: "думает над козырем...",
+      yourBid: "Твой заказ",
+      jokerCommand: "Команда джокера",
+      jokerQuestion: "Как сыграть джокером?",
+      joker: "Джокер",
+      takeButton: "Берет",
+      highButton: "Высший",
+      takeSuit: "Берет масть",
+      duckButton: "Подсунуть",
+      beatButton: "Перебить",
+      noTrump: "Безка",
+      pass: "Пас",
       mustFollowSuit: "Нужно ходить в масть",
       mustThrowTrump: "Масти нет — нужно кинуть козырь",
       completed: "завершена",
@@ -37,6 +49,7 @@
       scoreCap: "Score",
       you: "You",
       thinking: "is thinking",
+      bidThinking: "is thinking about the bid...",
       push: "push",
       take: "take away",
       game: "Game",
@@ -45,6 +58,17 @@
       finished: "Match finished",
       chooseTrump: "Choose trump",
       thinksTrump: "is choosing trump...",
+      yourBid: "Your bid",
+      jokerCommand: "Joker command",
+      jokerQuestion: "How to play the Joker?",
+      joker: "Joker",
+      takeButton: "Take",
+      highButton: "High",
+      takeSuit: "Take suit",
+      duckButton: "Duck",
+      beatButton: "Beat",
+      noTrump: "No trump",
+      pass: "Pass",
       mustFollowSuit: "You must follow suit",
       mustThrowTrump: "No suit — you must play trump",
       completed: "finished",
@@ -77,8 +101,16 @@
     return text
       .replace(/^Выбери козырь$/i, copy.chooseTrump)
       .replace(/^Choose trump$/i, copy.chooseTrump)
+      .replace(/^Твой заказ$/i, copy.yourBid)
+      .replace(/^Your bid$/i, copy.yourBid)
+      .replace(/^Команда джокера$/i, copy.jokerCommand)
+      .replace(/^Joker command$/i, copy.jokerCommand)
+      .replace(/^Как сыграть джокером\?$/i, copy.jokerQuestion)
+      .replace(/^How to play the Joker\?$/i, copy.jokerQuestion)
       .replace(/^(.+) думает над козырем\.\.\.$/i, `$1 ${copy.thinksTrump}`)
       .replace(/^(.+) is choosing trump\.\.\.$/i, `$1 ${copy.thinksTrump}`)
+      .replace(/^(.+) думает над заказом\.\.\.$/i, `$1 ${copy.bidThinking}`)
+      .replace(/^(.+) is thinking about the bid\.\.\.$/i, `$1 ${copy.bidThinking}`)
       .replace(/^(.+) думает$/i, `$1 ${copy.thinking}`)
       .replace(/^(.+) is thinking$/i, `$1 ${copy.thinking}`)
       .replace(/^Нужно ходить в масть$/i, copy.mustFollowSuit)
@@ -97,6 +129,30 @@
       .replace(/^Leave the match\?$/i, copy.exitQuestion)
       .replace(/^Победитель:\s+(.+)$/i, `${copy.winner}: $1`)
       .replace(/^Winner:\s+(.+)$/i, `${copy.winner}: $1`);
+  }
+
+  function translatePanelText(text, copy) {
+    return translateMessage(text, copy)
+      .replace(/^Заказ$/i, copy.bid)
+      .replace(/^Bid$/i, copy.bid)
+      .replace(/^Козырь$/i, copy.trump)
+      .replace(/^Trump$/i, copy.trump)
+      .replace(/^Джокер$/i, copy.joker)
+      .replace(/^Joker$/i, copy.joker)
+      .replace(/^Безка$/i, copy.noTrump)
+      .replace(/^No trump$/i, copy.noTrump)
+      .replace(/^Пас$/i, copy.pass)
+      .replace(/^Pass$/i, copy.pass)
+      .replace(/^Берет$/i, copy.takeButton)
+      .replace(/^Take$/i, copy.takeButton)
+      .replace(/^Высший$/i, copy.highButton)
+      .replace(/^High$/i, copy.highButton)
+      .replace(/^Берет масть$/i, copy.takeSuit)
+      .replace(/^Take suit$/i, copy.takeSuit)
+      .replace(/^Подсунуть$/i, copy.duckButton)
+      .replace(/^Duck$/i, copy.duckButton)
+      .replace(/^Перебить$/i, copy.beatButton)
+      .replace(/^Beat$/i, copy.beatButton);
   }
 
   function translatePlayerNames(copy) {
@@ -127,6 +183,17 @@
     if (firstText) {
       firstText.textContent = copy.trump;
     }
+  }
+
+  function translateBidPanel(copy) {
+    const title = document.querySelector(".bid-title");
+    if (title) {
+      title.textContent = translatePanelText(title.textContent, copy);
+    }
+
+    document.querySelectorAll(".bid-option").forEach((button) => {
+      button.textContent = translatePanelText(button.textContent, copy);
+    });
   }
 
   function translateRoundBalance(copy) {
@@ -187,7 +254,6 @@
     const copy = t();
 
     setText(".turn-pill", copy.yourTurn);
-    setText(".bid-title", copy.bid);
     setText("#score-button", copy.score);
 
     const notice = document.getElementById("table-notice");
@@ -198,6 +264,7 @@
     translatePlayerNames(copy);
     translateThinkingBadges(copy);
     translateTrumpLabel(copy);
+    translateBidPanel(copy);
     translateRoundBalance(copy);
     translatePlayedLabels(copy);
     translateSummary(copy);
@@ -225,7 +292,7 @@
   if (typeof originalCreateDialogButton === "function") {
     window.createDialogButton = function translatedCreateDialogButton(text, variant, onClick) {
       const copy = t();
-      const translated = translateMessage(text, copy)
+      const translated = translatePanelText(text, copy)
         .replace(/^Продолжить$/i, copy.continue)
         .replace(/^В меню$/i, copy.toMenu)
         .replace(/^Главное меню$/i, copy.mainMenu)
