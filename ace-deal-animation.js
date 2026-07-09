@@ -3,6 +3,16 @@
   const ACE_CARD_DELAY = 390;
   const ACE_END_PAUSE = 1700;
 
+  function getLang() {
+    return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
+  }
+
+  function getAceCopy() {
+    return getLang() === "en"
+      ? { you: "You", player: "Player", title: "Deal for the first ace", firstAce: "First ace goes to" }
+      : { you: "Ты", player: "Игрок", title: "Раздача на туза", firstAce: "Первый туз у" };
+  }
+
   function getAceDealDuration(aceDeal) {
     const cardCount = Math.max(1, aceDeal?.revealedCards?.length || 1);
     return Math.max(3600, cardCount * ACE_CARD_DELAY + ACE_END_PAUSE);
@@ -49,7 +59,8 @@
   };
 
   function getPlayerDisplayName(player) {
-    return player?.seat === "bottom" ? "Ты" : player?.name || "Игрок";
+    const copy = getAceCopy();
+    return player?.seat === "bottom" ? copy.you : player?.name || copy.player;
   }
 
   function scheduleDealSound(delay, loud = false) {
@@ -84,6 +95,7 @@
   function playOpenAceDealAnimation(aceDeal) {
     if (state.autoPlay || !elements.table) return;
 
+    const copy = getAceCopy();
     const layer = createDealLayer("is-ace-open-deal");
     if (!layer) return;
 
@@ -93,11 +105,11 @@
 
     const title = document.createElement("div");
     title.className = "ace-open-title";
-    title.textContent = "Раздача на туза";
+    title.textContent = copy.title;
 
     const winnerText = document.createElement("div");
     winnerText.className = "ace-open-winner";
-    winnerText.textContent = `Первый туз у ${getPlayerDisplayName(winner)}`;
+    winnerText.textContent = `${copy.firstAce} ${getPlayerDisplayName(winner)}`;
     winnerText.style.setProperty("--winner-delay", `${Math.max(1, revealedCards.length) * ACE_CARD_DELAY + 180}ms`);
 
     const cards = revealedCards.map((deal, index) => {
