@@ -1,6 +1,7 @@
 (() => {
   const originalChooseBotCard = chooseBotCard;
   const originalChooseJokerMode = chooseJokerMode;
+  let isBidBalanceChecking = false;
 
   function isMediumAi() {
     return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
@@ -80,7 +81,32 @@
   }
 
   function getCurrentWinner() {
-    return getCurrentWinningPlay()?.player || null;
+    try {
+      return getCurrentWinningPlay()?.player || null;
+    } catch (error) {
+      console.warn("medium bid balance winner check skipped", error);
+      return null;
+    }
+  }
+
+  function safelyWouldWin(playerId, card) {
+    if (!card || isBidBalanceChecking) {
+      return false;
+    }
+
+    if (card.type === "joker") {
+      return true;
+    }
+
+    try {
+      isBidBalanceChecking = true;
+      return wouldCardWinCurrentTrick(playerId, card);
+    } catch (error) {
+      console.warn("medium bid balance win check skipped", error);
+      return false;
+    } finally {
+      isBidBalanceChecking = false;
+    }
   }
 
   function findPushTarget(botId) {
@@ -139,24 +165,32 @@
   }
 
   function choosePushFollow(botId, legalCards, target) {
+    if (!target) {
+      return null;
+    }
+
     const currentWinner = getCurrentWinner();
 
     if (!currentWinner || currentWinner.id !== target.id || getGoal(botId).desperate) {
       return null;
     }
 
-    const losing = getStandardCards(legalCards).filter((card) => !wouldCardWinCurrentTrick(botId, card));
+    const losing = getStandardCards(legalCards).filter((card) => !safelyWouldWin(botId, card));
     return losing.length ? sortHigh(losing)[0] : null;
   }
 
   function chooseTakeAwayFollow(botId, legalCards, target) {
+    if (!target) {
+      return null;
+    }
+
     const currentWinner = getCurrentWinner();
 
     if (!currentWinner || currentWinner.id !== target.id) {
       return null;
     }
 
-    const winners = getStandardCards(legalCards).filter((card) => wouldCardWinCurrentTrick(botId, card));
+    const winners = getStandardCards(legalCards).filter((card) => safelyWouldWin(botId, card));
 
     if (winners.length) {
       return sortLow(winners)[0];
@@ -210,6 +244,10 @@
   }
 
   chooseJokerMode = function mediumBidBalanceWarJokerMode(playerId, card) {
+    if (isBidBalanceChecking) {
+      return originalChooseJokerMode(playerId, card);
+    }
+
     if (isMediumAi() && isBotId(playerId) && card?.type === "joker" && state.currentTrick.length > 0 && getBalance() > 0) {
       const target = findTakeAwayTarget(playerId);
 
@@ -224,32 +262,37 @@
   chooseBotCard = function mediumBidBalanceWarChooseBotCard(playerId) {
     const originalCard = originalChooseBotCard(playerId);
 
-    if (!isMediumAi() || !isBotId(playerId) || !originalCard || state.phase !== "playing") {
+    if (!isMediumAi() || !isBotId(playerId) || !originalCard || state.phase !== "playing" || isBidBalanceChecking) {
       return originalCard;
     }
 
-    const balance = getBalance();
+    try {
+      const balance = getBalance();
 
-    if (!balance) {
+      if (!balance) {
+        return originalCard;
+      }
+
+      const legalCards = getLegalCards(playerId);
+
+      if (!legalCards.length) {
+        return originalCard;
+      }
+
+      if (state.currentTrick.length === 0) {
+        return chooseBalanceLead(playerId, legalCards, balance) || originalCard;
+      }
+
+      if (balance > 0) {
+        const target = findTakeAwayTarget(playerId);
+        return chooseTakeAwayFollow(playerId, legalCards, target) || originalCard;
+      }
+
+      const target = findPushTarget(playerId);
+      return choosePushFollow(playerId, legalCards, target) || originalCard;
+    } catch (error) {
+      console.warn("medium bid balance fallback", error);
       return originalCard;
     }
-
-    const legalCards = getLegalCards(playerId);
-
-    if (!legalCards.length) {
-      return originalCard;
-    }
-
-    if (state.currentTrick.length === 0) {
-      return chooseBalanceLead(playerId, legalCards, balance) || originalCard;
-    }
-
-    if (balance > 0) {
-      const target = findTakeAwayTarget(playerId);
-      return chooseTakeAwayFollow(playerId, legalCards, target) || originalCard;
-    }
-
-    const target = findPushTarget(playerId);
-    return choosePushFollow(playerId, legalCards, target) || originalCard;
   };
 })();
