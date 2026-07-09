@@ -1,18 +1,40 @@
 (() => {
+  function getLang() {
+    return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
+  }
+
+  function getCopy() {
+    return getLang() === "en"
+      ? { you: "You", button: "last trick", title: "Last trick" }
+      : { you: "Ты", button: "последняя взятка", title: "Последняя взятка" };
+  }
+
   function getDisplayName(player) {
-    return player?.seat === "bottom" ? "Ты" : player?.name || "?";
+    return player?.seat === "bottom" ? getCopy().you : player?.name || "?";
+  }
+
+  function applyLastTrickLanguage() {
+    const copy = getCopy();
+    const button = document.getElementById("last-trick-button");
+    const title = document.querySelector(".last-trick-title");
+
+    if (button) button.textContent = copy.button;
+    if (title) title.textContent = copy.title;
   }
 
   function ensureLastTrickUi() {
     if (!elements.table || document.getElementById("last-trick-button")) {
+      applyLastTrickLanguage();
       return;
     }
+
+    const copy = getCopy();
 
     const button = document.createElement("button");
     button.id = "last-trick-button";
     button.className = "last-trick-button";
     button.type = "button";
-    button.textContent = "последняя взятка";
+    button.textContent = copy.button;
     button.disabled = true;
 
     const viewer = document.createElement("div");
@@ -25,7 +47,7 @@
 
     const title = document.createElement("div");
     title.className = "last-trick-title";
-    title.textContent = "Последняя взятка";
+    title.textContent = copy.title;
 
     const cards = document.createElement("div");
     cards.className = "last-trick-cards";
@@ -69,6 +91,7 @@
     }
 
     button.disabled = !state.lastTrick?.cards?.length;
+    applyLastTrickLanguage();
   }
 
   function renderLastTrickCards(container) {
@@ -106,6 +129,7 @@
       return;
     }
 
+    applyLastTrickLanguage();
     renderLastTrickCards(cards);
     viewer.hidden = false;
     button?.classList.add("is-active");
@@ -160,6 +184,7 @@
     return originalStartDeal.apply(this, args);
   };
 
+  window.addEventListener("joker-language-change", applyLastTrickLanguage);
   ensureLastTrickUi();
   updateLastTrickButton();
 })();
