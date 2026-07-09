@@ -34,10 +34,14 @@
     const highJokerPlay = getHighLeadJokerPlayForRules();
 
     if (highJokerPlay) {
+      if (card?.type === "joker") {
+        return "";
+      }
+
       const highestSuitCard = getHighestSuitCard(playerId, highJokerPlay.jokerSuit);
 
       if (highestSuitCard && card.id !== highestSuitCard.id) {
-        return `Нужно кинуть высшую ${getSuitSymbol(highJokerPlay.jokerSuit)}`;
+        return `Нужно кинуть высшую ${getSuitSymbol(highJokerPlay.jokerSuit)} или джокер`;
       }
     }
 
