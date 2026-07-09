@@ -1,0 +1,228 @@
+.difficulty-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(44, 255, 180, 0.16), transparent 36%),
+    linear-gradient(120deg, rgba(2, 12, 18, 0.34), rgba(3, 7, 12, 0.72));
+  opacity: 0;
+  pointer-events: none;
+  backdrop-filter: blur(0px);
+  transition: opacity 180ms ease, backdrop-filter 180ms ease;
+}
+
+.difficulty-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
+}
+
+.difficulty-modal {
+  width: min(460px, 92vw);
+  position: relative;
+  padding: 28px 30px 24px;
+  border-radius: 28px;
+  color: #f8f3df;
+  border: 1px solid rgba(223, 244, 255, 0.34);
+  background:
+    linear-gradient(145deg, rgba(4, 43, 42, 0.88), rgba(8, 20, 32, 0.88)),
+    radial-gradient(circle at 20% 0%, rgba(65, 255, 186, 0.22), transparent 38%),
+    radial-gradient(circle at 100% 100%, rgba(255, 205, 58, 0.12), transparent 38%);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.54),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 30px rgba(57, 255, 189, 0.08);
+  transform: translateY(18px) scale(0.96);
+  transition: transform 220ms cubic-bezier(.2, .88, .22, 1.18);
+  overflow: hidden;
+}
+
+.difficulty-overlay.is-visible .difficulty-modal {
+  transform: translateY(0) scale(1);
+}
+
+.difficulty-modal::before {
+  content: "";
+  position: absolute;
+  inset: -35% -10% auto;
+  height: 150px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.11), transparent);
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.difficulty-title {
+  margin: 0 0 22px;
+  text-align: center;
+  font-size: clamp(22px, 3vw, 29px);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-shadow: 0 3px 18px rgba(255, 236, 178, 0.28);
+}
+
+.difficulty-options {
+  display: grid;
+  gap: 16px;
+}
+
+.difficulty-option {
+  width: 100%;
+  min-height: 116px;
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 18px 22px;
+  border-radius: 20px;
+  text-align: left;
+  color: #f8f4df;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(3, 35, 34, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 28px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transform: translateZ(0);
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.difficulty-option:hover,
+.difficulty-option:focus-visible {
+  transform: translateY(-2px) scale(1.012);
+  outline: none;
+}
+
+.difficulty-option.is-easy {
+  border-color: rgba(75, 255, 155, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(75, 255, 155, 0.18),
+    0 0 26px rgba(75, 255, 155, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.difficulty-option.is-medium {
+  border-color: rgba(255, 220, 58, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(255, 220, 58, 0.18),
+    0 0 30px rgba(255, 178, 32, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.difficulty-option.is-selected {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035)),
+    rgba(6, 51, 48, 0.74);
+}
+
+.difficulty-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 30px;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.18);
+  border: 2px solid currentColor;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.difficulty-option.is-easy .difficulty-icon,
+.difficulty-option.is-easy .difficulty-name {
+  color: #65ffab;
+}
+
+.difficulty-option.is-medium .difficulty-icon,
+.difficulty-option.is-medium .difficulty-name {
+  color: #ffe14b;
+}
+
+.difficulty-copy {
+  display: grid;
+  gap: 7px;
+}
+
+.difficulty-name {
+  font-size: clamp(20px, 2.4vw, 25px);
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.difficulty-desc {
+  font-size: clamp(13px, 1.4vw, 15px);
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
+}
+
+.difficulty-separator {
+  height: 1px;
+  margin: 26px 0 16px;
+  background: linear-gradient(90deg, transparent, rgba(228, 242, 255, 0.42), transparent);
+}
+
+.difficulty-back {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: rgba(245, 248, 255, 0.8);
+  font: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.difficulty-back:hover,
+.difficulty-back:focus-visible {
+  color: #fff4cf;
+  outline: none;
+  transform: translateX(-2px);
+}
+
+@media (max-height: 560px) {
+  .difficulty-modal {
+    width: min(500px, 92vw);
+    padding: 20px 24px 18px;
+  }
+
+  .difficulty-title {
+    margin-bottom: 14px;
+    font-size: 21px;
+  }
+
+  .difficulty-options {
+    gap: 12px;
+  }
+
+  .difficulty-option {
+    min-height: 88px;
+    grid-template-columns: 54px 1fr;
+    padding: 12px 18px;
+  }
+
+  .difficulty-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+  }
+
+  .difficulty-separator {
+    margin: 16px 0 8px;
+  }
+
+  .difficulty-back {
+    font-size: 17px;
+  }
+}
