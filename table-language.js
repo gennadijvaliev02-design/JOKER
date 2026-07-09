@@ -6,7 +6,9 @@
       trumpWaiting: "Козырь: ждём раздачу",
       bid: "Заказ",
       score: "счет",
+      scoreCap: "Счёт",
       you: "Ты",
+      thinking: "думает",
       push: "пихается",
       take: "отнимается",
       game: "Игра",
@@ -32,7 +34,9 @@
       trumpWaiting: "Trump: waiting for deal",
       bid: "Bid",
       score: "score",
+      scoreCap: "Score",
       you: "You",
+      thinking: "is thinking",
       push: "push",
       take: "take away",
       game: "Game",
@@ -75,6 +79,8 @@
       .replace(/^Choose trump$/i, copy.chooseTrump)
       .replace(/^(.+) думает над козырем\.\.\.$/i, `$1 ${copy.thinksTrump}`)
       .replace(/^(.+) is choosing trump\.\.\.$/i, `$1 ${copy.thinksTrump}`)
+      .replace(/^(.+) думает$/i, `$1 ${copy.thinking}`)
+      .replace(/^(.+) is thinking$/i, `$1 ${copy.thinking}`)
       .replace(/^Нужно ходить в масть$/i, copy.mustFollowSuit)
       .replace(/^You must follow suit$/i, copy.mustFollowSuit)
       .replace(/^Масти нет — нужно кинуть козырь$/i, copy.mustThrowTrump)
@@ -91,6 +97,21 @@
       .replace(/^Leave the match\?$/i, copy.exitQuestion)
       .replace(/^Победитель:\s+(.+)$/i, `${copy.winner}: $1`)
       .replace(/^Winner:\s+(.+)$/i, `${copy.winner}: $1`);
+  }
+
+  function translatePlayerNames(copy) {
+    document.querySelectorAll("[data-name]").forEach((name) => {
+      if (name.dataset.name === "bottom" || name.textContent === "Ты" || name.textContent === "You") {
+        name.textContent = copy.you;
+      }
+    });
+  }
+
+  function translateThinkingBadges(copy) {
+    document.querySelectorAll(".player.is-thinking .name").forEach((name) => {
+      const base = name.dataset.name === "bottom" ? copy.you : name.textContent.replace(/\s+(думает|is thinking)$/i, "");
+      name.textContent = `${base} ${copy.thinking}`;
+    });
   }
 
   function translateTrumpLabel(copy) {
@@ -158,6 +179,10 @@
     });
   }
 
+  function translateScoreSheet(copy) {
+    setText(".sheet-title", copy.scoreCap);
+  }
+
   function applyTableLanguage() {
     const copy = t();
 
@@ -170,11 +195,14 @@
       notice.textContent = translateMessage(notice.textContent, copy);
     }
 
+    translatePlayerNames(copy);
+    translateThinkingBadges(copy);
     translateTrumpLabel(copy);
     translateRoundBalance(copy);
     translatePlayedLabels(copy);
     translateSummary(copy);
     translateDialog(copy);
+    translateScoreSheet(copy);
   }
 
   const originalRender = window.render;
