@@ -2,6 +2,29 @@
   const medalByPlace = ["🥇", "🥈", "🥉", "4"];
   const placeClassByIndex = ["is-first", "is-second", "is-third", "is-fourth"];
 
+  const translations = {
+    ru: {
+      matchFinished: "Партия завершена",
+      score: "Счёт",
+      newGame: "Новая партия",
+      mainMenu: "Главное меню",
+    },
+    en: {
+      matchFinished: "Match finished",
+      score: "Score",
+      newGame: "New game",
+      mainMenu: "Main menu",
+    },
+  };
+
+  function getLang() {
+    return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
+  }
+
+  function t() {
+    return translations[getLang()] || translations.ru;
+  }
+
   function getInitial(player) {
     return (player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";
   }
@@ -48,6 +71,7 @@
   }
 
   function createWinnerScene(winner) {
+    const copy = t();
     const ranking = getRanking();
     const winnerTotal = calculateMatchTotal(winner.id);
 
@@ -56,7 +80,7 @@
 
     const kicker = document.createElement("div");
     kicker.className = "winner-kicker";
-    kicker.textContent = "Партия завершена";
+    kicker.textContent = copy.matchFinished;
 
     const main = document.createElement("div");
     main.className = "winner-main";
@@ -75,7 +99,7 @@
 
     const score = document.createElement("div");
     score.className = "winner-score";
-    score.textContent = `Счёт: ${formatWinnerScore(winnerTotal)}`;
+    score.textContent = `${copy.score}: ${formatWinnerScore(winnerTotal)}`;
 
     main.append(crown, avatar, name, score);
 
@@ -88,11 +112,12 @@
   }
 
   showEndGameDialog = function patchedShowEndGameDialog(winner) {
+    const copy = t();
     elements.gameDialog.classList.add("is-winner-scene");
     elements.gameDialogTitle.replaceChildren(createWinnerScene(winner));
     elements.gameDialogActions.replaceChildren(
-      createDialogButton("Новая партия", "primary", restartMatch),
-      createDialogButton("Главное меню", "", goToMainMenu),
+      createDialogButton(copy.newGame, "primary", restartMatch),
+      createDialogButton(copy.mainMenu, "", goToMainMenu),
     );
     elements.gameDialog.hidden = false;
   };
