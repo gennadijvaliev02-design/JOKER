@@ -2,6 +2,28 @@
   const medals = ["🥇", "🥈", "🥉", "4"];
   const PULKA_SUMMARY_HOLD = 9200;
 
+  function getLang() {
+    return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
+  }
+
+  function getCopy() {
+    return getLang() === "en"
+      ? {
+          you: "You",
+          pulkaFinished: (number) => `Bullet ${number} finished`,
+          subtitle: "Score before the next deal",
+          gameFinished: (number) => `Game ${number} finished`,
+          newDeal: (number) => `Game ${number}. New deal`,
+        }
+      : {
+          you: "Ты",
+          pulkaFinished: (number) => `Пулька ${number} завершена`,
+          subtitle: "Счёт перед следующей раздачей",
+          gameFinished: (number) => `Игра ${number} завершена`,
+          newDeal: (number) => `Игра ${number}. Новая раздача`,
+        };
+  }
+
   function getInitial(player) {
     return (player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";
   }
@@ -17,6 +39,7 @@
       return;
     }
 
+    const copy = getCopy();
     const rows = state.players
       .map((player) => ({
         player,
@@ -27,11 +50,11 @@
 
     const title = document.createElement("div");
     title.className = "pulka-summary-title";
-    title.textContent = `Пулька ${pulkaNumber} завершена`;
+    title.textContent = copy.pulkaFinished(pulkaNumber);
 
     const subtitle = document.createElement("div");
     subtitle.className = "pulka-summary-subtitle";
-    subtitle.textContent = "Счёт перед следующей раздачей";
+    subtitle.textContent = copy.subtitle;
 
     const list = document.createElement("div");
     list.className = "pulka-summary-list";
@@ -50,7 +73,7 @@
 
         const name = document.createElement("span");
         name.className = "pulka-summary-name";
-        name.textContent = item.player.seat === "bottom" ? "Ты" : item.player.name;
+        name.textContent = item.player.seat === "bottom" ? copy.you : item.player.name;
 
         const delta = document.createElement("span");
         delta.className = "pulka-summary-delta";
@@ -82,9 +105,10 @@
   };
 
   finishGameSoon = function patchedFinishGameSoon() {
+    const copy = getCopy();
     state.busy = true;
     render();
-    showNotice(`Игра ${state.currentGame} завершена`);
+    showNotice(copy.gameFinished(state.currentGame));
 
     scheduleGameTask(() => {
       const finishedGame = state.currentGame;
@@ -118,9 +142,7 @@
       advanceGame();
       startDeal();
 
-      const nextText = `Игра ${state.currentGame}. Новая раздача`;
-
-      showNotice(nextText);
+      showNotice(getCopy().newDeal(state.currentGame));
       render();
       scheduleGameTask(hideNotice, getDelay(1200));
     }, getDelay(1300));
