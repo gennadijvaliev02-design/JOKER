@@ -12,7 +12,7 @@
 
   function chooseSafeLegalCard(playerId, legalCards, chosenCard) {
     if (!legalCards.length) {
-      return chosenCard;
+      return chosenCard || null;
     }
 
     const standardCards = legalCards.filter((card) => card.type !== "joker");
@@ -25,13 +25,39 @@
   }
 
   chooseBotCard = function guardedChooseBotCard(playerId) {
-    const chosenCard = originalChooseBotCard(playerId);
+    let chosenCard = null;
 
-    if (!shouldGuardPlayer(playerId) || !chosenCard) {
+    try {
+      chosenCard = originalChooseBotCard(playerId);
+    } catch (error) {
+      console.warn("Bot legal guard caught choose error", {
+        playerId,
+        error,
+        phase: state.phase,
+        trick: state.currentTrick.map((play) => `${play.player.id}:${play.card.id}`),
+      });
+    }
+
+    if (!shouldGuardPlayer(playerId)) {
       return chosenCard;
     }
 
     const legalCards = getLegalCards(playerId);
+
+    if (!chosenCard) {
+      const safeCard = chooseSafeLegalCard(playerId, legalCards, chosenCard);
+
+      if (safeCard) {
+        console.warn("Bot legal guard replaced empty card", {
+          playerId,
+          legalCards: legalCards.map((card) => card.id),
+          phase: state.phase,
+        });
+      }
+
+      return safeCard;
+    }
+
     const isChosenLegal = legalCards.some((card) => card.id === chosenCard.id);
 
     if (isChosenLegal) {
