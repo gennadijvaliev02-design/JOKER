@@ -1,6 +1,7 @@
 (() => {
   const originalChooseBotCard = chooseBotCard;
   const originalChooseJokerMode = chooseJokerMode;
+  let isCooperationChecking = false;
 
   function isMediumAi() {
     return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
@@ -76,7 +77,32 @@
   }
 
   function getCurrentWinner() {
-    return getCurrentWinningPlay()?.player || null;
+    try {
+      return getCurrentWinningPlay()?.player || null;
+    } catch (error) {
+      console.warn("medium table cooperation winner check skipped", error);
+      return null;
+    }
+  }
+
+  function safelyWouldWin(playerId, card) {
+    if (!card || isCooperationChecking) {
+      return false;
+    }
+
+    if (card.type === "joker") {
+      return true;
+    }
+
+    try {
+      isCooperationChecking = true;
+      return wouldCardWinCurrentTrick(playerId, card);
+    } catch (error) {
+      console.warn("medium table cooperation win check skipped", error);
+      return false;
+    } finally {
+      isCooperationChecking = false;
+    }
   }
 
   function getAttackPriority(playerId) {
@@ -122,7 +148,7 @@
     const standards = getStandardCards(legalCards);
 
     if (currentWinner.id === target.id && targetGoal.needsTake) {
-      const winners = standards.filter((card) => wouldCardWinCurrentTrick(botId, card));
+      const winners = standards.filter((card) => safelyWouldWin(botId, card));
 
       if (winners.length) {
         return sortLow(winners)[0];
@@ -136,16 +162,15 @@
     }
 
     if (currentWinner.id === target.id && targetGoal.shouldAvoid) {
-      const losing = standards.filter((card) => !wouldCardWinCurrentTrick(botId, card));
+      const losing = standards.filter((card) => !safelyWouldWin(botId, card));
 
       if (losing.length) {
         return sortHigh(losing)[0];
       }
     }
 
-    // If another bot is already beating the target, don't waste a stronger card unless we need the trick.
     if (isBotId(currentWinner.id) && currentWinner.id !== botId && !ownGoal.needsTake) {
-      const losing = standards.filter((card) => !wouldCardWinCurrentTrick(botId, card));
+      const losing = standards.filter((card) => !safelyWouldWin(botId, card));
 
       if (losing.length) {
         return sortHigh(losing)[0];
@@ -191,6 +216,10 @@
   }
 
   chooseJokerMode = function mediumTableCooperationJokerMode(playerId, card) {
+    if (isCooperationChecking) {
+      return originalChooseJokerMode(playerId, card);
+    }
+
     if (isMediumAi() && isBotId(playerId) && card?.type === "joker" && state.currentTrick.length > 0) {
       const target = getTableTarget(playerId);
 
@@ -205,26 +234,31 @@
   chooseBotCard = function mediumTableCooperationChooseBotCard(playerId) {
     const originalCard = originalChooseBotCard(playerId);
 
-    if (!isMediumAi() || !isBotId(playerId) || !originalCard || state.phase !== "playing") {
+    if (!isMediumAi() || !isBotId(playerId) || !originalCard || state.phase !== "playing" || isCooperationChecking) {
       return originalCard;
     }
 
-    const target = getTableTarget(playerId);
+    try {
+      const target = getTableTarget(playerId);
 
-    if (!target) {
+      if (!target) {
+        return originalCard;
+      }
+
+      const legalCards = getLegalCards(playerId);
+
+      if (!legalCards.length) {
+        return originalCard;
+      }
+
+      if (state.currentTrick.length === 0) {
+        return chooseCooperativeLead(playerId, legalCards, target) || originalCard;
+      }
+
+      return chooseCooperativeFollow(playerId, legalCards, target) || originalCard;
+    } catch (error) {
+      console.warn("medium table cooperation fallback", error);
       return originalCard;
     }
-
-    const legalCards = getLegalCards(playerId);
-
-    if (!legalCards.length) {
-      return originalCard;
-    }
-
-    if (state.currentTrick.length === 0) {
-      return chooseCooperativeLead(playerId, legalCards, target) || originalCard;
-    }
-
-    return chooseCooperativeFollow(playerId, legalCards, target) || originalCard;
   };
 })();
