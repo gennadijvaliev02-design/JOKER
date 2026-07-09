@@ -57,10 +57,10 @@
 
   function cardPower(card) {
     if (card?.type === "joker") {
-      return 100;
+      return 120;
     }
 
-    return (isTrump(card) ? 38 : 0) + (RANK_POWER[card.rank] || 0);
+    return (isTrump(card) ? 46 : 0) + (RANK_POWER[card.rank] || 0);
   }
 
   function sortHigh(cards) {
@@ -85,12 +85,12 @@
     const entries = SUITS.map((suit) => {
       const cards = hand.filter((card) => card.type === "standard" && card.suit === suit.id);
       const highPower = cards.reduce((sum, card) => sum + (RANK_POWER[card.rank] || 0), 0);
-      const trumpBonus = trumpSuit && suit.id === trumpSuit ? 50 : 0;
+      const trumpBonus = trumpSuit && suit.id === trumpSuit ? 80 : 0;
 
       return {
         suit: suit.id,
         cards,
-        score: cards.length * 20 + highPower + trumpBonus,
+        score: cards.length * 26 + highPower + trumpBonus,
       };
     }).filter((entry) => entry.cards.length > 0);
 
@@ -115,6 +115,12 @@
       return sortHigh(trumps)[0];
     }
 
+    const aces = standards.filter((card) => card.rank === "A");
+
+    if (aces.length) {
+      return sortHigh(aces)[0];
+    }
+
     if (standards.length) {
       return sortHigh(standards)[0];
     }
@@ -134,6 +140,12 @@
 
     if (jokers.length) {
       return jokers.find((card) => card.color === "red") || jokers[0];
+    }
+
+    const highStandards = standards.filter((card) => card.rank === "A" || isTrump(card));
+
+    if (highStandards.length && state.currentTrick.length < state.players.length - 1) {
+      return sortHigh(highStandards)[0];
     }
 
     return originalCard;
