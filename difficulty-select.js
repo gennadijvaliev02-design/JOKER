@@ -1,12 +1,15 @@
 (() => {
   const startScreen = document.getElementById("start-screen");
-  const startButton = document.getElementById("start-game");
+  const originalStartButton = document.getElementById("start-game");
 
-  if (!startScreen || !startButton) {
+  if (!startScreen || !originalStartButton) {
     return;
   }
 
-  let allowDirectStart = false;
+  // script.js attaches direct start to the original button before this file loads.
+  // Replacing the node removes that old listener, so the selector becomes the only entry point.
+  const startButton = originalStartButton.cloneNode(true);
+  originalStartButton.replaceWith(startButton);
 
   function getCurrentDifficulty() {
     if (typeof window.getAiDifficulty === "function") {
@@ -90,25 +93,20 @@
   function startWithDifficulty(value) {
     setDifficulty(value);
     updateSelectedState();
-    allowDirectStart = true;
     closeDifficultyDialog();
-    window.setTimeout(() => startButton.click(), 80);
+    window.setTimeout(() => {
+      if (typeof window.startGame === "function") {
+        window.startGame();
+      } else {
+        console.warn("Difficulty selector could not find startGame()");
+      }
+    }, 120);
   }
 
-  startButton.addEventListener(
-    "click",
-    (event) => {
-      if (allowDirectStart) {
-        allowDirectStart = false;
-        return;
-      }
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      openDifficultyDialog();
-    },
-    true,
-  );
+  startButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    openDifficultyDialog();
+  });
 
   choices.forEach((button) => {
     button.addEventListener("click", () => {
@@ -129,4 +127,9 @@
       closeDifficultyDialog();
     }
   });
+
+  window.JokerDifficultySelect = {
+    open: openDifficultyDialog,
+    startWithDifficulty,
+  };
 })();
