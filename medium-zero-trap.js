@@ -39,6 +39,15 @@
     };
   }
 
+  function getTrapPriority(player) {
+    const isHuman = player.id === "human" ? 1000 : 0;
+    const forcedOne = player.mediumForcedOneBid ? 700 : 0;
+    const cardsLeft = state.hands[player.id]?.length || 0;
+    const lateBonus = Math.max(0, 9 - cardsLeft) * 30;
+
+    return isHuman + forcedOne + lateBonus;
+  }
+
   function findZeroTrapTarget(botId) {
     if (isFourHundredPulka()) {
       return null;
@@ -57,11 +66,15 @@
     }
 
     return candidates.sort((first, second) => {
-      const firstHuman = first.id === "human" ? 100 : 0;
-      const secondHuman = second.id === "human" ? 100 : 0;
+      const priorityDiff = getTrapPriority(second) - getTrapPriority(first);
+
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
+
       const firstCards = state.hands[first.id]?.length || 0;
       const secondCards = state.hands[second.id]?.length || 0;
-      return secondHuman - firstHuman || firstCards - secondCards;
+      return firstCards - secondCards;
     })[0];
   }
 
@@ -78,10 +91,10 @@
 
   function cardPower(card) {
     if (card?.type === "joker") {
-      return 100;
+      return 120;
     }
 
-    return (isTrump(card) ? 42 : 0) + (RANK_POWER[card.rank] || 0);
+    return (isTrump(card) ? 46 : 0) + (RANK_POWER[card.rank] || 0);
   }
 
   function sortLow(cards) {
@@ -109,13 +122,12 @@
       return false;
     }
 
-    const own = getOwnGoal(botId);
-
-    if (target.id === "human") {
+    if (target.id === "human" || target.mediumForcedOneBid) {
       return true;
     }
 
-    return own.canRisk || own.cardsLeft <= 4;
+    const own = getOwnGoal(botId);
+    return own.canRisk || own.cardsLeft <= 5;
   }
 
   function chooseTrumpDrainLead(botId, legalCards, target) {
