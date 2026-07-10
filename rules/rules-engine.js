@@ -45,8 +45,26 @@
   }
 
   window.addEventListener("DOMContentLoaded", () => {
+    const startButton = document.querySelector("#start-game");
+    if (startButton) {
+      startButton.disabled = true;
+      startButton.dataset.rulesLoading = "true";
+    }
+
     loadAdapter("rules/rules-hand-size-adapter.js?v=2", "hand-size")
-      .then(() => loadAdapter("rules/rules-progression-adapter.js?v=1", "progression"))
-      .catch((error) => console.error("Joker rules adapters failed", error));
+      .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
+      .then(() => {
+        document.documentElement.dataset.rulesReady = "true";
+        window.dispatchEvent(new CustomEvent("joker-rules-adapters-ready", {
+          detail: { id: selectedId, rules: activeRules },
+        }));
+      })
+      .catch((error) => console.error("Joker rules adapters failed", error))
+      .finally(() => {
+        if (startButton) {
+          startButton.disabled = false;
+          delete startButton.dataset.rulesLoading;
+        }
+      });
   }, { once: true });
 })();
