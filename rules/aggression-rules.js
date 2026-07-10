@@ -2,9 +2,9 @@
   const aggressionRules = Object.freeze({
     id: "aggression",
     name: "Aggression",
-    version: 1,
+    version: 2,
     description: "Текущая стратегическая версия с раздачами по 9 карт.",
-    shтангаPenalty: -250,
+    zeroTrickPenalty: -250,
     passScore: 50,
     fullHandScores: Object.freeze({ 9: 900 }),
     fulfilledScores: Object.freeze({
