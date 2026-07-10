@@ -109,6 +109,7 @@
       .then(() => loadAdapter("rules/deal-animation-adapter.js?v=2", "deal-animation"))
       .then(() => loadAdapter("rules/bot-survival-priority.js?v=1", "bot-survival"))
       .then(() => loadAdapter("rules/strategic-bot-brain.js?v=1", "strategic-brain"))
+      .then(() => loadAdapter("rules/short-deal-tactics.js?v=1", "short-deal-tactics"))
       .then(() => loadAdapter("rules/rules-select.js?v=2", "selector"))
       .then(() => {
         document.documentElement.dataset.rulesReady = "true";
