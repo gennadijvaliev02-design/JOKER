@@ -51,7 +51,7 @@
       startButton.dataset.rulesLoading = "true";
     }
 
-    loadAdapter("rules/rules-hand-size-adapter.js?v=2", "hand-size")
+    loadAdapter("rules/rules-hand-size-adapter.js?v=3", "hand-size")
       .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
       .then(() => loadAdapter("rules/rules-scoring-adapter.js?v=1", "scoring"))
       .then(() => {
