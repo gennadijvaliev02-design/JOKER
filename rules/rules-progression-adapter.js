@@ -52,7 +52,8 @@
   function crossBestSuccessfulEntryForPulka(gameRows, playerIndex) {
     const candidates = gameRows.slice(0, -1).flatMap((row, rowIndex) => {
       const entry = row.entries?.[playerIndex];
-      return entry?.fulfilled && !entry.crossed ? [{ entry, rowIndex }] : [];
+      const isPass = entry?.bidLabel === "-";
+      return entry?.fulfilled && !entry.crossed && !isPass ? [{ entry, rowIndex }] : [];
     });
 
     if (!candidates.length) {
