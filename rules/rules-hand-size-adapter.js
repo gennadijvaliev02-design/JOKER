@@ -191,6 +191,38 @@
     return Math.min(handSize, estimatedBid);
   };
 
+  const originalChooseBotBid = chooseBotBid;
+  chooseBotBid = function chooseBotBidWithinCurrentHand(playerId) {
+    const preferredBid = originalChooseBotBid(playerId);
+
+    if (isBidAllowedForCurrentTurn(preferredBid)) {
+      return preferredBid;
+    }
+
+    const handSize = getCurrentHandSize();
+    const preferredNumber = preferredBid === "pass" ? 0 : Number(preferredBid);
+    const target = Number.isFinite(preferredNumber) ? preferredNumber : 0;
+    const legalOptions = BID_OPTIONS
+      .filter((bid) => bid === "pass" || bid <= handSize)
+      .filter((bid) => isBidAllowedForCurrentTurn(bid))
+      .sort((firstBid, secondBid) => {
+        return Math.abs(getBidNumber(firstBid) - target) - Math.abs(getBidNumber(secondBid) - target);
+      });
+
+    const safeBid = legalOptions[0];
+    if (safeBid === undefined) {
+      console.error("No legal bot bid found", {
+        playerId,
+        preferredBid,
+        handSize,
+        currentTotal: getOrderedBidTotal(),
+      });
+      return "pass";
+    }
+
+    return safeBid;
+  };
+
   playCardDealAnimation = function playCardDealAnimationFromRules(handCount) {
     if (state.autoPlay || !elements.table) return;
 
@@ -223,5 +255,7 @@
     window.setTimeout(() => layer.remove(), getDelay(5200));
   };
 
-  window.JokerRules.getCurrentHandSize = getCurrentHandSize;
+  window.JokerRulesHandSize = Object.freeze({
+    getCurrentHandSize,
+  });
 })();
