@@ -2,9 +2,9 @@
   const popularRules = Object.freeze({
     id: "popular",
     name: "Popular",
-    version: 1,
+    version: 2,
     description: "Популярная версия с раздачами 1→8, 9×4, 8→1 и 9×4.",
-    shтангаPenalty: -200,
+    zeroTrickPenalty: -200,
     passScore: 50,
     fullHandScores: Object.freeze({
       1: 100,
