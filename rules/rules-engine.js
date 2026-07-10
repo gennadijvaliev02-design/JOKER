@@ -32,4 +32,11 @@
   window.dispatchEvent(new CustomEvent("joker-rules-ready", {
     detail: { id: selectedId, rules: activeRules },
   }));
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const adapter = document.createElement("script");
+    adapter.src = "rules/rules-hand-size-adapter.js?v=1";
+    adapter.dataset.rulesAdapter = "hand-size";
+    document.body.append(adapter);
+  }, { once: true });
 })();
