@@ -9,6 +9,10 @@
   const FLIGHT_DURATION_MS = 980;
   const END_PAUSE_MS = 260;
   let activeReveal = null;
+  let visibleCardIds = new Set();
+  let lastGameSignature = "";
+  let lastDealKey = -1;
+  let currentAnimationDuration = 1400;
 
   const style = document.createElement("style");
   style.textContent = `
@@ -22,9 +26,9 @@
       animation: sequential-hand-card-arrival 360ms cubic-bezier(.16,.84,.2,1) both !important;
     }
     @keyframes sequential-hand-card-arrival {
-      0% { opacity: 0; transform: translate3d(0,-18px,0) scale(.9) !important; }
-      72% { opacity: 1; transform: translate3d(0,-3px,0) scale(1.035) !important; }
-      100% { opacity: 1; transform: translate3d(0,0,0) scale(1) !important; }
+      0% { opacity: 0; filter: brightness(.88); }
+      72% { opacity: 1; filter: brightness(1.08); }
+      100% { opacity: 1; filter: brightness(1); }
     }
   `;
   document.head.append(style);
@@ -37,6 +41,10 @@
         Number(state.currentHandSize || window.JokerRulesHandSize?.getCurrentHandSize?.() || 9),
       ),
     );
+  }
+
+  function getGameSignature() {
+    return `${state.currentPulka}:${state.currentGame}`;
   }
 
   function getDealerForCurrentGame() {
@@ -56,57 +64,73 @@
     return target;
   }
 
-  function getDealDuration(handSize = getCurrentHandSize()) {
-    const totalCards = Math.max(1, handSize * Math.max(1, state.players.length));
+  function getDurationForCards(cardsPerPlayer) {
+    const totalCards = Math.max(1, cardsPerPlayer * Math.max(1, state.players.length));
     return (totalCards - 1) * CARD_STEP_MS + FLIGHT_DURATION_MS + END_PAUSE_MS;
   }
 
-  function applyRevealState() {
-    if (!activeReveal || activeReveal.key !== state.dealAnimationKey) {
-      return;
+  function resetRevealMemoryIfNeeded(hand) {
+    const signature = getGameSignature();
+    const currentIds = new Set((hand || []).map((card) => card.id));
+    const lostAllRememberedCards = visibleCardIds.size > 0
+      && ![...visibleCardIds].some((cardId) => currentIds.has(cardId));
+    const dealKeyRestarted = state.dealAnimationKey <= lastDealKey;
+
+    if (signature !== lastGameSignature || dealKeyRestarted || lostAllRememberedCards) {
+      visibleCardIds = new Set();
+      activeReveal = null;
     }
 
-    const cards = [...elements.playerHand.querySelectorAll(".card")];
-    cards.forEach((card, index) => {
-      const isVisible = index < activeReveal.revealed;
-      card.classList.toggle("is-sequential-deal-pending", !isVisible);
+    lastGameSignature = signature;
+    lastDealKey = state.dealAnimationKey;
+  }
 
-      if (isVisible && index === activeReveal.revealed - 1) {
-        card.classList.add("is-sequential-deal-arrived");
-      }
+  function applyRevealState() {
+    const cards = [...elements.playerHand.querySelectorAll(".card")];
+
+    cards.forEach((card) => {
+      const cardId = card.dataset.card;
+      const isVisible = !activeReveal || visibleCardIds.has(cardId);
+      card.classList.toggle("is-sequential-deal-pending", !isVisible);
     });
   }
 
-  function revealNextCard(index) {
+  function revealCard(cardId) {
     if (!activeReveal || activeReveal.key !== state.dealAnimationKey) {
       return;
     }
 
-    activeReveal.revealed = Math.max(activeReveal.revealed, index + 1);
-    applyRevealState();
+    visibleCardIds.add(cardId);
+    const card = elements.playerHand.querySelector(`[data-card="${CSS.escape(cardId)}"]`);
+
+    if (card) {
+      card.classList.remove("is-sequential-deal-pending");
+      card.classList.remove("is-sequential-deal-arrived");
+      void card.offsetWidth;
+      card.classList.add("is-sequential-deal-arrived");
+    }
   }
 
-  function startSequentialReveal(handSize, playersInDealOrder) {
+  function startSequentialReveal(hand, newCardIds, playersInDealOrder) {
     const humanPosition = Math.max(0, playersInDealOrder.indexOf("human"));
     activeReveal = {
       key: state.dealAnimationKey,
-      total: handSize,
-      revealed: 0,
+      pendingIds: new Set(newCardIds),
     };
     applyRevealState();
 
-    for (let cardIndex = 0; cardIndex < handSize; cardIndex += 1) {
-      const dealStep = cardIndex * state.players.length + humanPosition;
-      scheduleGameTask(() => revealNextCard(cardIndex), dealStep * CARD_STEP_MS + FLIGHT_REVEAL_MS);
-    }
+    newCardIds.forEach((cardId, index) => {
+      const dealStep = index * state.players.length + humanPosition;
+      scheduleGameTask(() => revealCard(cardId), dealStep * CARD_STEP_MS + FLIGHT_REVEAL_MS);
+    });
 
     scheduleGameTask(() => {
       if (activeReveal?.key === state.dealAnimationKey) {
-        activeReveal.revealed = handSize;
-        applyRevealState();
+        hand.forEach((card) => visibleCardIds.add(card.id));
         activeReveal = null;
+        applyRevealState();
       }
-    }, getDealDuration(handSize));
+    }, currentAnimationDuration);
   }
 
   const originalRenderHand = renderHand;
@@ -121,9 +145,21 @@
       return;
     }
 
+    const hand = state.hands.human || [];
+    resetRevealMemoryIfNeeded(hand);
+
     const handSize = Math.max(1, Math.min(Number(handCount) || getCurrentHandSize(), 9));
+    const newCardIds = hand
+      .map((card) => card.id)
+      .filter((cardId) => !visibleCardIds.has(cardId));
+    const cardsToDeal = Math.max(1, newCardIds.length);
+    currentAnimationDuration = getDurationForCards(cardsToDeal);
+
     const layer = createDealLayer("is-hand-deal is-dealer-seat-deal");
     if (!layer) {
+      hand.forEach((card) => visibleCardIds.add(card.id));
+      activeReveal = null;
+      applyRevealState();
       return;
     }
 
@@ -133,9 +169,11 @@
     const cards = [];
     let dealStep = 0;
 
-    startSequentialReveal(handSize, playersInDealOrder);
+    startSequentialReveal(hand, newCardIds, playersInDealOrder);
 
-    for (let cardIndex = 0; cardIndex < handSize; cardIndex += 1) {
+    for (let newCardIndex = 0; newCardIndex < cardsToDeal; newCardIndex += 1) {
+      const absoluteCardIndex = Math.max(0, handSize - cardsToDeal + newCardIndex);
+
       for (const playerId of playersInDealOrder) {
         const player = getPlayerById(playerId);
         if (!player) {
@@ -145,8 +183,8 @@
         const target = getSeatDealTarget(player.seat);
         const targetWithSpread = {
           ...target,
-          x: target.x + (cardIndex - (handSize - 1) / 2) * (player.seat === "top" || player.seat === "bottom" ? 9 : 2),
-          y: target.y + (cardIndex - (handSize - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),
+          x: target.x + (absoluteCardIndex - (handSize - 1) / 2) * (player.seat === "top" || player.seat === "bottom" ? 9 : 2),
+          y: target.y + (absoluteCardIndex - (handSize - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),
         };
         const delay = dealStep * CARD_STEP_MS;
         const flyingCard = createFlyingBack(targetWithSpread, delay, dealStep);
@@ -160,7 +198,7 @@
     }
 
     layer.replaceChildren(...cards);
-    scheduleGameTask(() => layer.remove(), getDealDuration(handSize));
+    scheduleGameTask(() => layer.remove(), currentAnimationDuration);
   };
 
   runAfterDealAnimation = function runAfterProfileDealAnimation(callback) {
@@ -169,13 +207,15 @@
       return;
     }
 
-    scheduleGameTask(callback, getDealDuration());
+    scheduleGameTask(callback, currentAnimationDuration);
   };
 
   window.JokerDealAnimation = Object.freeze({
-    getDuration: getDealDuration,
+    getDuration() {
+      return currentAnimationDuration;
+    },
     get revealedCards() {
-      return activeReveal?.revealed ?? getCurrentHandSize();
+      return visibleCardIds.size;
     },
   });
 })();
