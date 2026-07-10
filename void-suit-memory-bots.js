@@ -21,11 +21,6 @@
     return plays.find((play) => play.card?.type === "standard")?.card?.suit || null;
   }
 
-  function isHighJokerLead(plays) {
-    const firstPlay = plays[0];
-    return firstPlay?.card?.type === "joker" && firstPlay.jokerMode === "lead" && firstPlay.jokerCommand === "high";
-  }
-
   function getPlayedTricks() {
     const tricks = [];
 
@@ -46,7 +41,6 @@
 
     for (const trick of getPlayedTricks()) {
       const leadSuit = getLeadSuitFromPlays(trick);
-      const highJokerLead = isHighJokerLead(trick);
 
       if (!leadSuit) {
         continue;
@@ -60,16 +54,15 @@
           continue;
         }
 
+        // A standard off-suit card proves the player has no lead suit.
+        // A Joker proves nothing: under the "High" command a player may
+        // intentionally answer with a Joker while still holding the suit.
         if (play.card?.type === "standard" && play.card.suit !== leadSuit) {
           voids.add(leadSuit);
 
           if (trumpSuit && play.card.suit !== trumpSuit) {
             voids.add(trumpSuit);
           }
-        }
-
-        if (play.card?.type === "joker" && highJokerLead) {
-          voids.add(leadSuit);
         }
       }
     }
