@@ -106,7 +106,7 @@
       .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
       .then(() => loadAdapter("rules/rules-scoring-adapter.js?v=1", "scoring"))
       .then(() => loadAdapter("rules/core-logic-fixes.js?v=1", "core-fixes"))
-      .then(() => loadAdapter("rules/deal-animation-adapter.js?v=1", "deal-animation"))
+      .then(() => loadAdapter("rules/deal-animation-adapter.js?v=2", "deal-animation"))
       .then(() => loadAdapter("rules/bot-survival-priority.js?v=1", "bot-survival"))
       .then(() => loadAdapter("rules/rules-select.js?v=2", "selector"))
       .then(() => {
