@@ -33,10 +33,20 @@
     detail: { id: selectedId, rules: activeRules },
   }));
 
+  function loadAdapter(src, name) {
+    return new Promise((resolve, reject) => {
+      const adapter = document.createElement("script");
+      adapter.src = src;
+      adapter.dataset.rulesAdapter = name;
+      adapter.addEventListener("load", resolve, { once: true });
+      adapter.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), { once: true });
+      document.body.append(adapter);
+    });
+  }
+
   window.addEventListener("DOMContentLoaded", () => {
-    const adapter = document.createElement("script");
-    adapter.src = "rules/rules-hand-size-adapter.js?v=1";
-    adapter.dataset.rulesAdapter = "hand-size";
-    document.body.append(adapter);
+    loadAdapter("rules/rules-hand-size-adapter.js?v=2", "hand-size")
+      .then(() => loadAdapter("rules/rules-progression-adapter.js?v=1", "progression"))
+      .catch((error) => console.error("Joker rules adapters failed", error));
   }, { once: true });
 })();
