@@ -1,24 +1,76 @@
 (function () {
   const profiles = window.JokerRuleProfiles || {};
   const params = new URLSearchParams(window.location.search);
-  const requestedId = params.get("rules");
+  const storedId = (() => {
+    try {
+      return window.localStorage.getItem("joker-rules-mode");
+    } catch {
+      return null;
+    }
+  })();
   const fallbackId = "aggression";
-  const selectedId = profiles[requestedId] ? requestedId : fallbackId;
-  const activeRules = profiles[selectedId];
+  const requestedId = params.get("rules");
+  let selectedId = profiles[requestedId]
+    ? requestedId
+    : profiles[storedId]
+      ? storedId
+      : fallbackId;
 
-  window.JokerRules = Object.freeze({
-    activeId: selectedId,
-    active: activeRules,
+  function getActiveRules() {
+    return profiles[selectedId] || profiles[fallbackId];
+  }
+
+  function syncRuleSelection() {
+    document.documentElement.dataset.rules = selectedId;
+
+    try {
+      window.localStorage.setItem("joker-rules-mode", selectedId);
+    } catch {
+      // The in-memory selection still works for the current session.
+    }
+
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("rules", selectedId);
+      window.history.replaceState(window.history.state, "", url);
+    } catch {
+      // URL synchronization is optional; the selected profile still works.
+    }
+  }
+
+  function emitRulesEvent(name) {
+    window.dispatchEvent(new CustomEvent(name, {
+      detail: { id: selectedId, rules: getActiveRules() },
+    }));
+  }
+
+  const rulesApi = {
+    get activeId() {
+      return selectedId;
+    },
+    get active() {
+      return getActiveRules();
+    },
     profiles: Object.freeze({ ...profiles }),
     getProfile(id) {
       return profiles[id] || null;
     },
+    selectProfile(id) {
+      if (!profiles[id] || window.jokerState?.started) {
+        return false;
+      }
+
+      selectedId = id;
+      syncRuleSelection();
+      emitRulesEvent("joker-rules-change");
+      return true;
+    },
     getHandSize(pulkaNumber, gameNumber) {
-      const pulka = activeRules?.pulkas?.find((item) => item.id === pulkaNumber);
+      const pulka = getActiveRules()?.pulkas?.find((item) => item.id === pulkaNumber);
       return pulka?.handSizes?.[gameNumber - 1] ?? 9;
     },
     getPulka(pulkaNumber) {
-      return activeRules?.pulkas?.find((item) => item.id === pulkaNumber) || null;
+      return getActiveRules()?.pulkas?.find((item) => item.id === pulkaNumber) || null;
     },
     isPopular() {
       return selectedId === "popular";
@@ -26,12 +78,11 @@
     isAggression() {
       return selectedId === "aggression";
     },
-  });
+  };
 
-  document.documentElement.dataset.rules = selectedId;
-  window.dispatchEvent(new CustomEvent("joker-rules-ready", {
-    detail: { id: selectedId, rules: activeRules },
-  }));
+  window.JokerRules = Object.freeze(rulesApi);
+  syncRuleSelection();
+  emitRulesEvent("joker-rules-ready");
 
   function loadAdapter(src, name) {
     return new Promise((resolve, reject) => {
@@ -54,11 +105,10 @@
     loadAdapter("rules/rules-hand-size-adapter.js?v=3", "hand-size")
       .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
       .then(() => loadAdapter("rules/rules-scoring-adapter.js?v=1", "scoring"))
+      .then(() => loadAdapter("rules/rules-select.js?v=1", "selector"))
       .then(() => {
         document.documentElement.dataset.rulesReady = "true";
-        window.dispatchEvent(new CustomEvent("joker-rules-adapters-ready", {
-          detail: { id: selectedId, rules: activeRules },
-        }));
+        emitRulesEvent("joker-rules-adapters-ready");
       })
       .catch((error) => console.error("Joker rules adapters failed", error))
       .finally(() => {
