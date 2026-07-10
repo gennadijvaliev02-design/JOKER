@@ -1,11 +1,29 @@
 (function () {
   const startScreen = document.getElementById("start-screen");
   const startButton = document.getElementById("start-game");
+  const rulesCard = document.getElementById("rules-card");
 
   if (!startScreen || !startButton || !window.JokerRules) {
     console.warn("Joker rules selector: menu or rules engine is unavailable.");
     return;
   }
+
+  const style = document.createElement("style");
+  style.textContent = `
+    .rules-mode-option.is-popular {
+      border-color: rgba(75, 255, 155, 0.78);
+      box-shadow: 0 0 0 1px rgba(75, 255, 155, 0.16), 0 0 26px rgba(75, 255, 155, 0.15), inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    .rules-mode-option.is-popular .difficulty-icon,
+    .rules-mode-option.is-popular .difficulty-name { color: #65ffab; }
+    .rules-mode-option.is-aggression {
+      border-color: rgba(255, 115, 82, 0.82);
+      box-shadow: 0 0 0 1px rgba(255, 115, 82, 0.16), 0 0 30px rgba(255, 75, 55, 0.18), inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    .rules-mode-option.is-aggression .difficulty-icon,
+    .rules-mode-option.is-aggression .difficulty-name { color: #ff8a6d; }
+  `;
+  document.head.append(style);
 
   const overlay = document.createElement("div");
   overlay.className = "difficulty-overlay rules-mode-overlay";
@@ -69,6 +87,65 @@
         };
   }
 
+  function getRulesList() {
+    const isEnglish = getLanguage() === "en";
+
+    if (window.JokerRules.isPopular()) {
+      return isEnglish
+        ? [
+            "The match has four bullets: 1→8, four 9-card games, 8→1, then four 9-card games.",
+            "Bid how many tricks you plan to take.",
+            "The last player cannot leave the total bids equal to the number of tricks.",
+            "A center Joker means no trump; a chooser may also select no trump.",
+            "Follow suit when possible; otherwise play trump when available.",
+            "The Joker works with the same Take, High, Beat and Duck commands.",
+            "Complete every game in a bullet without failing to earn a premium.",
+          ]
+        : [
+            "В партии 4 пульки: 1→8, четыре игры по 9 карт, 8→1 и снова четыре игры по 9 карт.",
+            "Закажи, сколько взяток планируешь взять.",
+            "Последний игрок не может оставить сумму заказов равной числу взяток.",
+            "Джокер из центра означает безку; выбирающий козырь тоже может выбрать безку.",
+            "Ходи в масть, если она есть; без масти нужно ходить козырем.",
+            "Джокер работает с командами Берёт, Высший, Перебить и Подсунуть.",
+            "Не испортил ни одной игры в целой пульке — получаешь премию.",
+          ];
+    }
+
+    return isEnglish
+      ? [
+          "The match has five bullets with four games in each.",
+          "Bid how many tricks you plan to take.",
+          "The total bids cannot equal nine.",
+          "In the 400 bullet, every player must take exactly three tricks.",
+          "Follow suit when possible; otherwise play trump when available.",
+          "The Joker is the strongest card and supports tactical commands.",
+          "Complete all four games in a bullet to earn a premium.",
+        ]
+      : [
+          "В партии 5 пулек по 4 игры.",
+          "Закажи, сколько взяток планируешь взять.",
+          "Сумма заказов не должна быть ровно 9.",
+          "В пульке 400 всем нужно взять ровно 3 взятки.",
+          "Ходи в масть, если она есть; без масти нужно ходить козырем.",
+          "Джокер — самая сильная карта и поддерживает тактические команды.",
+          "За 4 выполненные игры пульки даётся премия.",
+        ];
+  }
+
+  function applyRulesCard() {
+    const list = rulesCard?.querySelector("ol");
+    if (!list) {
+      return;
+    }
+
+    list.replaceChildren(...getRulesList().map((text) => {
+      const item = document.createElement("li");
+      item.textContent = text;
+      return item;
+    }));
+  }
+
   function applyLanguage() {
     const texts = getTexts();
     title.textContent = texts.title;
@@ -77,12 +154,14 @@
     aggressionName.textContent = texts.aggressionName;
     aggressionDesc.textContent = texts.aggressionDesc;
     backButton.textContent = texts.back;
+    applyRulesCard();
   }
 
   function updateSelectedState() {
     choices.forEach((button) => {
       button.classList.toggle("is-selected", button.dataset.rulesModeChoice === window.JokerRules.activeId);
     });
+    applyRulesCard();
   }
 
   function openRulesDialog() {
@@ -121,7 +200,7 @@
       } else {
         console.warn("Rules selector could not find difficulty selector.");
       }
-    }, 120);
+    }, 220);
   }
 
   startButton.addEventListener("click", (event) => {
