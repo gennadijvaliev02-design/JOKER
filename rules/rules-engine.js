@@ -105,7 +105,7 @@
     loadAdapter("rules/rules-hand-size-adapter.js?v=3", "hand-size")
       .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
       .then(() => loadAdapter("rules/rules-scoring-adapter.js?v=1", "scoring"))
-      .then(() => loadAdapter("rules/rules-select.js?v=1", "selector"))
+      .then(() => loadAdapter("rules/rules-select.js?v=2", "selector"))
       .then(() => {
         document.documentElement.dataset.rulesReady = "true";
         emitRulesEvent("joker-rules-adapters-ready");
