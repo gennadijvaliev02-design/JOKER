@@ -1,7 +1,7 @@
 (() => {
   let lastAceDeal = null;
-  const ACE_CARD_DELAY = 390;
-  const ACE_END_PAUSE = 1700;
+  const ACE_CARD_DELAY = 440;
+  const ACE_END_PAUSE = 1900;
 
   function getLang() {
     return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
@@ -15,7 +15,7 @@
 
   function getAceDealDuration(aceDeal) {
     const cardCount = Math.max(1, aceDeal?.revealedCards?.length || 1);
-    return Math.max(3600, cardCount * ACE_CARD_DELAY + ACE_END_PAUSE);
+    return Math.max(3800, cardCount * ACE_CARD_DELAY + ACE_END_PAUSE);
   }
 
   function drawCardByRule(deck, rule) {
@@ -99,7 +99,8 @@
     const layer = createDealLayer("is-ace-open-deal");
     if (!layer) return;
 
-    const revealedCards = (aceDeal?.revealedCards || lastAceDeal?.revealedCards || []).slice(0, 24);
+    // Show the entire sequence through the real winning ace. No truncation.
+    const revealedCards = aceDeal?.revealedCards || lastAceDeal?.revealedCards || [];
     const winner = getPlayerById(aceDeal?.winnerId || lastAceDeal?.winnerId);
     const seatPileCount = {};
 
