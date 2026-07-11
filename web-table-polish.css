@@ -1,3 +1,101 @@
 /* Android branch entry point: keep these imports last in the stylesheet chain. */
 @import url("android-app.css?v=1");
 @import url("android-emotions.css?v=1");
+
+/* Second Android pass: top HUD geometry and compact player status badges. */
+
+/* Give Qwen and the trump card separate lanes. */
+.game-hud {
+  left: 13.8% !important;
+  top: 1.5% !important;
+}
+
+.trump-card {
+  overflow: hidden !important;
+}
+
+.trump-card .card-face {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.trump-card .card-fallback {
+  padding: 1px !important;
+  overflow: hidden !important;
+}
+
+.trump-card .card-center {
+  font-size: 17px !important;
+  line-height: 1 !important;
+}
+
+.trump-card .card-corner {
+  display: none !important;
+}
+
+/* All bot bid/taken badges use one compact size and sit under the avatar. */
+.player-left .player-stats,
+.player-top .player-stats,
+.player-right .player-stats {
+  top: 51px !important;
+  right: auto !important;
+  left: 8px !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 22px !important;
+  padding: 2px 4px !important;
+}
+
+.player-left {
+  top: 3.8% !important;
+  left: 2.1% !important;
+}
+
+.player-top {
+  top: 0.7% !important;
+  left: 39% !important;
+}
+
+/* Leave a dedicated strip at the far right for the menu button. */
+.player-right {
+  top: 3.8% !important;
+  right: 5.2% !important;
+}
+
+.table-menu {
+  top: 2.6% !important;
+  right: 1.1% !important;
+}
+
+/* Names should read as labels, not merge into the avatar circles. */
+.player .name {
+  margin-top: 4px !important;
+  transform: translateY(2px) !important;
+  line-height: 1.08 !important;
+}
+
+/* The hand remains large, but its lower edge is intentionally clipped. */
+.hand {
+  bottom: -34px !important;
+}
+
+@media (max-height: 420px) {
+  .game-hud {
+    left: 14.5% !important;
+  }
+
+  .player-left,
+  .player-right {
+    top: 3.1% !important;
+  }
+
+  .player-right {
+    right: 5.5% !important;
+  }
+
+  .hand {
+    bottom: -40px !important;
+  }
+}
