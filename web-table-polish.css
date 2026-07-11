@@ -1,3 +1,6 @@
+@import url("android-app.css?v=1");
+@import url("android-emotions.css?v=1");
+
 /* Web table polish: larger table frame, score button and played cards */
 .table-wrap {
   padding: 0.8% 0.9% !important;
