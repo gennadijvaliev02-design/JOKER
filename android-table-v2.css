@@ -1,99 +1,159 @@
 /*
- * Android Table V2
- * A dedicated landscape composition for the APK branch.
- * The web layout on main is intentionally untouched.
+ * Android Table V3
+ * Dedicated landscape composition for the APK branch.
+ * The web version on main is intentionally untouched.
  */
 
 :root {
-  --v2-edge: clamp(5px, 0.65vw, 10px);
-  --v2-top-lane: clamp(72px, 15vh, 104px);
-  --v2-glass: rgba(3, 15, 20, 0.84);
-  --v2-line: rgba(47, 207, 255, 0.74);
+  --v3-rail-x: clamp(7px, 0.8vw, 13px);
+  --v3-rail-y: clamp(6px, 1.1vh, 11px);
+  --v3-rail-size: clamp(12px, 1.45vw, 22px);
+  --v3-cyan: rgba(54, 211, 255, 0.78);
+  --v3-glass: rgba(3, 15, 20, 0.88);
 }
 
-/* Full-width mobile canvas. The old oval no longer controls the layout. */
+/* ---------- Full-screen stage and real table shape ---------- */
 .table-wrap {
   inset: 0 !important;
   padding: 0 !important;
-  background: #020a08;
+  overflow: hidden !important;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(19, 49, 42, 0.68), transparent 62%),
+    linear-gradient(145deg, #070b14 0%, #080d16 52%, #03060c 100%) !important;
 }
 
 .table {
   width: 100% !important;
   height: 100% !important;
+  overflow: hidden !important;
   border: 0 !important;
   border-radius: 0 !important;
   background:
-    radial-gradient(ellipse at 50% 43%, rgba(17, 235, 157, 0.30), transparent 38%),
-    radial-gradient(ellipse at 50% 50%, #087b50 0%, #03613e 42%, #013823 72%, #00130d 100%) !important;
-  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.55);
+    radial-gradient(circle at 12% 12%, rgba(26, 52, 71, 0.25), transparent 27%),
+    radial-gradient(circle at 88% 82%, rgba(17, 48, 39, 0.22), transparent 28%),
+    #050912 !important;
+  box-shadow: none !important;
+  isolation: isolate;
 }
 
-/* Wide premium frame instead of the giant circular rail. */
+/* Outer padded rail. */
 .table::before {
-  inset: var(--v2-edge) !important;
-  left: var(--v2-edge) !important;
-  right: var(--v2-edge) !important;
-  top: var(--v2-edge) !important;
-  bottom: var(--v2-edge) !important;
-  border: 2px solid var(--v2-line) !important;
-  border-radius: clamp(20px, 2.2vw, 34px) !important;
+  content: "";
+  position: absolute;
+  left: var(--v3-rail-x) !important;
+  right: var(--v3-rail-x) !important;
+  top: var(--v3-rail-y) !important;
+  bottom: var(--v3-rail-y) !important;
+  z-index: 0;
+  border: 1px solid rgba(86, 221, 255, 0.62) !important;
+  border-radius: 12% / 25% !important;
+  background:
+    linear-gradient(180deg, rgba(31, 37, 50, 0.98), rgba(9, 12, 20, 0.99)),
+    #111722 !important;
   box-shadow:
-    0 0 22px rgba(0, 190, 255, 0.32),
-    inset 0 0 44px rgba(0, 0, 0, 0.34) !important;
+    0 0 0 1px rgba(112, 233, 255, 0.10),
+    0 0 25px rgba(0, 184, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -10px 24px rgba(0, 0, 0, 0.58) !important;
+  pointer-events: none;
 }
 
+/* Inner felt surface. */
 .table::after {
   content: "";
   position: absolute;
-  left: 12%;
-  right: 12%;
-  top: calc(var(--v2-top-lane) + 2px);
-  height: 1px;
+  left: calc(var(--v3-rail-x) + var(--v3-rail-size));
+  right: calc(var(--v3-rail-x) + var(--v3-rail-size));
+  top: calc(var(--v3-rail-y) + var(--v3-rail-size));
+  bottom: calc(var(--v3-rail-y) + var(--v3-rail-size));
   z-index: 1;
-  background: linear-gradient(90deg, transparent, rgba(118, 238, 255, 0.40), transparent);
+  border: 1px solid rgba(126, 255, 211, 0.16);
+  border-radius: 11% / 23%;
+  background:
+    radial-gradient(ellipse at 50% 44%, rgba(40, 239, 168, 0.28), transparent 40%),
+    radial-gradient(ellipse at 50% 52%, #0a8c5c 0%, #05734a 38%, #035236 70%, #012c20 100%);
+  box-shadow:
+    inset 0 0 80px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+    0 8px 22px rgba(0, 0, 0, 0.42);
   pointer-events: none;
 }
 
 .felt-glow {
-  inset: 18% 15% 17% !important;
-  border-radius: 42% !important;
-  background: radial-gradient(ellipse, rgba(0, 255, 170, 0.13), transparent 68%) !important;
-  filter: blur(15px) !important;
+  z-index: 2 !important;
+  inset: 11% 9% 12% !important;
+  border-radius: 20% / 34% !important;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(0, 255, 181, 0.13), transparent 63%) !important;
+  filter: blur(18px) !important;
+  pointer-events: none;
 }
 
-/* ---------- Top information lane ---------- */
+/* Keep all gameplay UI above the physical table layers. */
+.game-hud,
+.player,
+.hidden-cards,
+.drop-zone,
+.deal-deck,
+.deal-flight-layer,
+.played-card-slot,
+.table-notice,
+.game-summary,
+.bid-panel,
+.game-dialog,
+.hand,
+.score,
+.smile,
+.emotion-panel,
+.table-menu {
+  z-index: 4;
+}
+
+.game-summary,
+.bid-panel,
+.game-dialog,
+.emotion-panel {
+  z-index: 12 !important;
+}
+
+.player,
+.game-hud,
+.smile,
+.table-menu,
+.score {
+  z-index: 8 !important;
+}
+
+/* ---------- Compact upper information lane ---------- */
 .game-hud {
-  left: clamp(116px, 12.4vw, 190px) !important;
-  top: clamp(9px, 1.8vh, 16px) !important;
-  width: min(290px, 26vw);
+  left: clamp(112px, 10.8vw, 170px) !important;
+  top: clamp(14px, 3.1vh, 25px) !important;
+  width: min(290px, 27vw);
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: clamp(6px, 0.8vw, 12px) !important;
+  gap: clamp(6px, 0.8vw, 11px) !important;
   white-space: nowrap;
 }
 
 #round-label {
-  max-width: 145px;
+  max-width: 142px;
   padding: 6px 9px !important;
-  border-radius: 9px !important;
-  font-size: clamp(9px, 1.05vw, 13px) !important;
+  border-radius: 10px !important;
+  background: rgba(4, 17, 22, 0.88) !important;
+  font-size: clamp(9px, 1vw, 12px) !important;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .trump-pill {
   min-width: 0;
-  min-height: 38px !important;
+  min-height: 39px !important;
   padding: 4px 7px !important;
   gap: 5px !important;
-  border-radius: 9px !important;
+  border-radius: 10px !important;
+  background: rgba(4, 17, 22, 0.88) !important;
   overflow: visible !important;
-}
-
-.trump-pill > :not(.trump-card) {
-  font-size: clamp(8px, 0.9vw, 11px);
 }
 
 .trump-card {
@@ -133,70 +193,75 @@
   height: 48px !important;
 }
 
-/* ---------- Player seats: independent of the table frame ---------- */
+/* ---------- Seats overlap the table rail like a mobile card game ---------- */
 .player {
-  width: 66px !important;
-  z-index: 7 !important;
+  width: 68px !important;
 }
 
 .player:not(.player-you) .avatar {
-  width: 44px !important;
-  height: 44px !important;
-  font-size: 22px !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-width: 2px !important;
+  font-size: 24px !important;
+  background:
+    radial-gradient(circle at 36% 25%, rgba(255, 255, 255, 0.12), transparent 28%),
+    #071622 !important;
 }
 
 .player-you .avatar {
-  width: 50px !important;
-  height: 50px !important;
-  font-size: 25px !important;
+  width: 54px !important;
+  height: 54px !important;
+  font-size: 27px !important;
 }
 
 .badge {
   top: -5px !important;
-  right: 5px !important;
-  width: 19px !important;
-  height: 19px !important;
+  right: 4px !important;
+  width: 20px !important;
+  height: 20px !important;
   font-size: 11px !important;
 }
 
 .player .name {
-  min-width: 48px !important;
+  min-width: 50px !important;
   margin-top: 5px !important;
   padding: 3px 8px 4px !important;
-  border-radius: 11px !important;
+  border-radius: 12px !important;
+  background: rgba(4, 18, 27, 0.92) !important;
   font-size: 9px !important;
   line-height: 1 !important;
   transform: none !important;
 }
 
 .player-left {
-  left: clamp(14px, 1.8vw, 28px) !important;
-  top: clamp(12px, 2.3vh, 20px) !important;
+  left: clamp(5px, 0.6vw, 10px) !important;
+  top: clamp(72px, 13vh, 96px) !important;
 }
 
 .player-top {
   left: 50% !important;
-  top: clamp(8px, 1.5vh, 14px) !important;
+  top: clamp(2px, 0.5vh, 5px) !important;
   transform: translateX(-50%);
 }
 
 .player-right {
-  right: clamp(55px, 5.2vw, 82px) !important;
-  top: clamp(12px, 2.3vh, 20px) !important;
+  right: clamp(5px, 0.6vw, 10px) !important;
+  top: clamp(72px, 13vh, 96px) !important;
 }
 
 .player-you {
-  left: clamp(17px, 2vw, 32px) !important;
-  bottom: clamp(10px, 2vh, 20px) !important;
+  left: clamp(12px, 1.25vw, 20px) !important;
+  bottom: clamp(-2px, -0.2vh, 0px) !important;
 }
 
 .player-stats {
-  min-width: 43px !important;
-  width: 43px !important;
-  max-width: 43px !important;
+  min-width: 44px !important;
+  width: 44px !important;
+  max-width: 44px !important;
   height: 23px !important;
   padding: 2px 4px !important;
-  border-radius: 7px !important;
+  border-radius: 8px !important;
+  background: rgba(3, 15, 21, 0.90) !important;
 }
 
 .stat-score {
@@ -205,119 +270,129 @@
 
 .player-left .player-stats,
 .player-right .player-stats {
-  top: 52px !important;
-  left: 11px !important;
+  top: 58px !important;
+  left: 12px !important;
   right: auto !important;
 }
 
-/* As requested: the top player's bid is above-left, not below the name. */
+/* Top player's bid remains above-left, as requested. */
 .player-top .player-stats {
-  top: 4px !important;
-  left: -45px !important;
+  top: 7px !important;
+  left: -47px !important;
   right: auto !important;
 }
 
 .player-you .player-stats {
-  top: 12px !important;
-  right: -45px !important;
+  top: 15px !important;
+  right: -46px !important;
 }
 
 .turn-pill {
-  top: -31px !important;
+  top: -32px !important;
   width: 96px !important;
   padding: 6px 9px !important;
   font-size: 9px !important;
 }
 
 .player-you .turn-pill {
-  left: 56px !important;
+  left: 61px !important;
 }
 
-/* ---------- Opponent hands ---------- */
+/* ---------- Opponent hands fill the side rails ---------- */
 .hidden-cards {
   gap: 2px !important;
-  z-index: 3 !important;
 }
 
 .left-stack,
 .right-stack {
-  top: 31% !important;
+  top: 32% !important;
 }
 
 .left-stack {
-  left: clamp(19px, 2.2vw, 34px) !important;
+  left: clamp(15px, 1.55vw, 24px) !important;
 }
 
 .right-stack {
-  right: clamp(19px, 2.2vw, 34px) !important;
+  right: clamp(15px, 1.55vw, 24px) !important;
 }
 
 .left-stack span,
 .right-stack span {
-  width: 25px !important;
-  height: 16px !important;
+  width: 27px !important;
+  height: 17px !important;
   border-width: 1px !important;
   border-radius: 3px !important;
 }
 
 .top-stack {
   left: 62% !important;
-  top: clamp(58px, 10.5vh, 78px) !important;
+  top: clamp(62px, 11.5vh, 84px) !important;
   gap: 2px !important;
 }
 
 .top-stack span {
-  width: 17px !important;
-  height: 25px !important;
+  width: 18px !important;
+  height: 27px !important;
   border-width: 1px !important;
   border-radius: 3px !important;
 }
 
-/* ---------- Top-right controls ---------- */
+/* ---------- Edge controls ---------- */
 .smile {
-  top: clamp(13px, 2.2vh, 20px) !important;
-  right: clamp(122px, 10.7vw, 166px) !important;
+  top: clamp(17px, 3.4vh, 27px) !important;
+  right: clamp(106px, 9vw, 142px) !important;
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.smile .game-emote {
   width: 32px !important;
   height: 32px !important;
 }
 
-.smile .game-emote {
-  width: 30px !important;
-  height: 30px !important;
-}
-
 .table-menu {
-  top: clamp(13px, 2.2vh, 20px) !important;
-  right: clamp(12px, 1.35vw, 22px) !important;
-  width: 36px !important;
-  height: 36px !important;
-  font-size: 18px !important;
+  top: clamp(16px, 3.2vh, 26px) !important;
+  right: clamp(13px, 1.35vw, 22px) !important;
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 19px !important;
+  background: rgba(4, 15, 22, 0.90) !important;
 }
 
 .emotion-panel {
-  top: clamp(51px, 8vh, 66px) !important;
-  right: clamp(48px, 4.8vw, 74px) !important;
+  top: clamp(56px, 9.5vh, 75px) !important;
+  right: clamp(44px, 4.5vw, 70px) !important;
   grid-template-columns: repeat(4, 34px) !important;
   gap: 5px !important;
   padding: 7px !important;
 }
 
+.score {
+  right: clamp(12px, 1.2vw, 19px) !important;
+  bottom: clamp(17px, 3.2vh, 26px) !important;
+  width: 37px !important;
+  height: 57px !important;
+  border-radius: 8px !important;
+  background: rgba(248, 245, 231, 0.95) !important;
+  font-size: 8px !important;
+}
+
 /* ---------- Center play area ---------- */
 .played-card-slot {
   left: 50% !important;
-  top: 30% !important;
-  width: min(380px, 46vw) !important;
-  height: min(190px, 38vh) !important;
+  top: 28% !important;
+  width: min(410px, 46vw) !important;
+  height: min(205px, 39vh) !important;
   min-width: 0 !important;
   min-height: 0 !important;
   transform: translateX(-50%) !important;
 }
 
 .drop-zone {
-  left: 34% !important;
-  top: 24% !important;
-  width: 32% !important;
-  height: 40% !important;
+  left: 33% !important;
+  top: 21% !important;
+  width: 34% !important;
+  height: 44% !important;
 }
 
 .deal-deck,
@@ -328,21 +403,24 @@
 
 .table-notice {
   top: 24% !important;
-  max-width: min(310px, 38vw) !important;
-  padding: 8px 12px !important;
-  border-radius: 10px !important;
+  max-width: min(320px, 40vw) !important;
+  padding: 8px 13px !important;
+  border-radius: 11px !important;
   font-size: 12px !important;
 }
 
-/* Panels live in the center lane and do not cover player names. */
+/* Modal panels sit inside the felt, away from names and avatars. */
 .bid-panel {
   left: 50% !important;
-  top: 52% !important;
+  top: 53% !important;
   bottom: auto !important;
-  width: min(540px, 57vw) !important;
+  width: min(600px, 59vw) !important;
   max-height: 54vh;
   padding: 11px 15px 13px !important;
-  border-radius: 18px !important;
+  border: 1px solid rgba(255, 233, 146, 0.62) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(145deg, rgba(43, 72, 83, 0.90), rgba(16, 38, 47, 0.94)) !important;
   transform: translate(-50%, -50%) !important;
   overflow: auto;
   scrollbar-width: none;
@@ -364,127 +442,140 @@
 .bid-option {
   min-height: 42px !important;
   padding: 7px 10px !important;
-  border-radius: 12px !important;
-  font-size: clamp(14px, 1.8vw, 18px) !important;
+  border-radius: 13px !important;
+  font-size: clamp(14px, 1.75vw, 18px) !important;
 }
 
-/* ---------- Player hand: large cards, clipped lower edge ---------- */
+/* ---------- Player hand overlaps the lower rail ---------- */
 .hand {
   left: 50% !important;
-  bottom: clamp(-48px, -7vh, -31px) !important;
-  width: min(760px, 73vw) !important;
-  max-width: 73vw !important;
+  bottom: clamp(-52px, -7.7vh, -34px) !important;
+  width: min(800px, 75vw) !important;
+  max-width: 75vw !important;
   justify-content: center !important;
   transform: translateX(-50%) !important;
   overflow: visible !important;
+  z-index: 7 !important;
 }
 
 .hand .card {
-  width: clamp(68px, 7.6vw, 92px) !important;
-  height: clamp(96px, 10.7vw, 129px) !important;
+  width: clamp(70px, 7.8vw, 95px) !important;
+  height: clamp(99px, 11vw, 134px) !important;
   border-radius: 9px !important;
 }
 
 .hand .card + .card {
-  margin-left: clamp(-30px, -2.7vw, -19px) !important;
+  margin-left: clamp(-31px, -2.8vw, -20px) !important;
 }
 
-.score {
-  right: clamp(15px, 1.7vw, 26px) !important;
-  bottom: clamp(14px, 2.2vh, 22px) !important;
-  width: 34px !important;
-  height: 52px !important;
-  font-size: 8px !important;
-}
-
-/* ---------- Aspect-ratio tuning ---------- */
+/* ---------- Wider phones ---------- */
 @media (min-aspect-ratio: 18/9) {
-  .game-hud {
-    left: 11.5vw !important;
-  }
-
-  .player-right {
-    right: 4.8vw !important;
-  }
-
-  .played-card-slot {
-    width: min(420px, 42vw) !important;
-  }
-
-  .bid-panel {
-    width: min(560px, 52vw) !important;
-  }
-
-  .hand {
-    width: min(800px, 68vw) !important;
-    max-width: 68vw !important;
-  }
-}
-
-@media (max-aspect-ratio: 16/10) {
   :root {
-    --v2-top-lane: 82px;
+    --v3-rail-x: clamp(6px, 0.55vw, 10px);
+  }
+
+  .table::before {
+    border-radius: 10% / 25% !important;
+  }
+
+  .table::after {
+    border-radius: 9.5% / 23% !important;
   }
 
   .game-hud {
-    left: 14vw !important;
-    width: 31vw;
-  }
-
-  .player-right {
-    right: 6.6vw !important;
-  }
-
-  .smile {
-    right: 13vw !important;
-  }
-
-  .bid-panel {
-    top: 53% !important;
-    width: 62vw !important;
-  }
-
-  .played-card-slot {
-    top: 31% !important;
-    height: 34vh !important;
-  }
-
-  .hand {
-    bottom: -43px !important;
-    width: 77vw !important;
-    max-width: 77vw !important;
-  }
-}
-
-@media (max-height: 430px) {
-  :root {
-    --v2-top-lane: 70px;
-  }
-
-  .game-hud {
-    top: 7px !important;
+    left: 9.6vw !important;
   }
 
   .player-left,
   .player-right {
-    top: 8px !important;
-  }
-
-  .player-top {
-    top: 5px !important;
-  }
-
-  .top-stack {
-    top: 50px !important;
+    top: 12vh !important;
   }
 
   .played-card-slot {
-    top: 29% !important;
-    height: 150px !important;
+    width: min(440px, 42vw) !important;
   }
 
   .bid-panel {
-    top: 52% !important;
+    width: min(620px, 55vw) !important;
+  }
+
+  .hand {
+    width: min(840px, 70vw) !important;
+    max-width: 70vw !important;
+  }
+}
+
+/* Taller / more square landscape screens. */
+@media (max-aspect-ratio: 16/10) {
+  .table::before {
+    border-radius: 14% / 23% !important;
+  }
+
+  .table::after {
+    border-radius: 13% / 21% !important;
+  }
+
+  .game-hud {
+    left: 13vw !important;
+    width: 31vw;
+  }
+
+  .player-left,
+  .player-right {
+    top: 14vh !important;
+  }
+
+  .smile {
+    right: 11.5vw !important;
+  }
+
+  .bid-panel {
+    top: 53% !important;
+    width: 64vw !important;
+  }
+
+  .played-card-slot {
+    top: 30% !important;
+    height: 35vh !important;
+  }
+
+  .hand {
+    bottom: -47px !important;
+    width: 78vw !important;
+    max-width: 78vw !important;
+  }
+}
+
+/* Short emulator and compact Android landscape screens. */
+@media (max-height: 430px) {
+  :root {
+    --v3-rail-size: 12px;
+  }
+
+  .game-hud {
+    top: 9px !important;
+  }
+
+  .player-left,
+  .player-right {
+    top: 54px !important;
+  }
+
+  .player-top {
+    top: 1px !important;
+  }
+
+  .top-stack {
+    top: 49px !important;
+  }
+
+  .played-card-slot {
+    top: 27% !important;
+    height: 155px !important;
+  }
+
+  .bid-panel {
+    top: 53% !important;
     max-height: 52vh;
     padding: 8px 12px 10px !important;
   }
@@ -495,6 +586,6 @@
   }
 
   .hand {
-    bottom: -49px !important;
+    bottom: -53px !important;
   }
 }
