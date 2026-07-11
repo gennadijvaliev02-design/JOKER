@@ -111,6 +111,7 @@
       .then(() => loadAdapter("rules/strategic-bot-brain.js?v=1", "strategic-brain"))
       .then(() => loadAdapter("rules/short-deal-tactics.js?v=1", "short-deal-tactics"))
       .then(() => loadAdapter("rules/rules-select.js?v=2", "selector"))
+      .then(() => loadAdapter("rules/rules-book.js?v=1", "rules-book"))
       .then(() => {
         document.documentElement.dataset.rulesReady = "true";
         emitRulesEvent("joker-rules-adapters-ready");
