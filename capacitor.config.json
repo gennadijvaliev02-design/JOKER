@@ -1,0 +1,8 @@
+{
+  "appId": "com.valievcompany.joker",
+  "appName": "Joker",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
