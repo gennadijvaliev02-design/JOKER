@@ -81,6 +81,60 @@
   bottom: -34px !important;
 }
 
+/* ---------- Joker command panel ----------
+   Restore the same visual hierarchy as the web version. Android only changes
+   the outer panel size so the controls fit a short landscape viewport. */
+.bid-panel:has(.joker-take-option, .joker-high-option, .joker-duck-option, .joker-beat-option) {
+  width: min(520px, 58vw) !important;
+  min-width: 0 !important;
+  padding: 12px 16px 14px !important;
+  border-radius: 18px !important;
+}
+
+.bid-options:has(.joker-take-option, .joker-high-option),
+.bid-options:has(.joker-duck-option, .joker-beat-option) {
+  grid-template-columns: repeat(5, minmax(46px, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.joker-take-option,
+.joker-high-option,
+.joker-duck-option,
+.joker-beat-option {
+  min-width: 0 !important;
+  min-height: 44px !important;
+  height: auto !important;
+  padding: 9px 14px !important;
+  border-radius: 13px !important;
+  font-size: 14.5px !important;
+  line-height: 1.08 !important;
+  white-space: nowrap !important;
+  aspect-ratio: auto !important;
+}
+
+.bid-panel:has(.bid-option[data-joker-lead-suit]) {
+  width: min(500px, 55vw) !important;
+  min-width: 0 !important;
+  padding: 12px 16px 14px !important;
+  border-radius: 18px !important;
+}
+
+.bid-options:has(.bid-option[data-joker-lead-suit]) {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 13px !important;
+}
+
+.bid-option[data-joker-lead-suit] {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 52px !important;
+  padding: 3px 12px 5px !important;
+  border-radius: 14px !important;
+  font-size: 35px !important;
+  line-height: 0.9 !important;
+  aspect-ratio: auto !important;
+}
+
 @media (max-height: 420px) {
   .game-hud {
     left: 14.5% !important;
@@ -97,5 +151,29 @@
 
   .hand {
     bottom: -40px !important;
+  }
+
+  .bid-panel:has(.joker-take-option, .joker-high-option, .joker-duck-option, .joker-beat-option) {
+    width: min(480px, 57vw) !important;
+    padding: 9px 13px 11px !important;
+  }
+
+  .joker-take-option,
+  .joker-high-option,
+  .joker-duck-option,
+  .joker-beat-option {
+    min-height: 39px !important;
+    padding: 7px 11px !important;
+    font-size: 13px !important;
+  }
+
+  .bid-panel:has(.bid-option[data-joker-lead-suit]) {
+    width: min(460px, 53vw) !important;
+    padding: 9px 13px 11px !important;
+  }
+
+  .bid-option[data-joker-lead-suit] {
+    min-height: 46px !important;
+    font-size: 31px !important;
   }
 }
