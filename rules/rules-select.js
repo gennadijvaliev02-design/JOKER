@@ -35,14 +35,14 @@
         <button class="difficulty-option rules-mode-option is-popular" type="button" data-rules-mode-choice="popular">
           <span class="difficulty-icon" aria-hidden="true">🎲</span>
           <span class="difficulty-copy">
-            <span class="difficulty-name" data-rules-popular-name>Popular</span>
+            <span class="difficulty-name" data-rules-popular-name>Популярная</span>
             <span class="difficulty-desc" data-rules-popular-desc>Раздачи 1→8 и 8→1. Быстрее и непредсказуемее.</span>
           </span>
         </button>
         <button class="difficulty-option rules-mode-option is-aggression" type="button" data-rules-mode-choice="aggression">
           <span class="difficulty-icon" aria-hidden="true">🧠</span>
           <span class="difficulty-copy">
-            <span class="difficulty-name" data-rules-aggression-name>Aggression</span>
+            <span class="difficulty-name" data-rules-aggression-name>Агрессивная</span>
             <span class="difficulty-desc" data-rules-aggression-desc>По 9 карт. Больше расчёта, контроля и давления.</span>
           </span>
         </button>
@@ -79,9 +79,9 @@
         }
       : {
           title: "Выбери правила",
-          popularName: "Popular",
+          popularName: "Популярная",
           popularDesc: "Раздачи 1→8 и 8→1. Быстрее и непредсказуемее.",
-          aggressionName: "Aggression",
+          aggressionName: "Агрессивная",
           aggressionDesc: "По 9 карт. Больше расчёта, контроля и давления.",
           back: "← Назад",
         };
