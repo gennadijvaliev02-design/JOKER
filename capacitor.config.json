@@ -2,6 +2,11 @@
   "appId": "com.valievcompany.joker",
   "appName": "Joker",
   "webDir": "www",
+  "backgroundColor": "#03110f",
+  "android": {
+    "backgroundColor": "#03110f",
+    "zoomEnabled": false
+  },
   "server": {
     "androidScheme": "https"
   }
