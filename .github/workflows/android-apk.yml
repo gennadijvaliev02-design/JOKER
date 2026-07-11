@@ -45,6 +45,11 @@ jobs:
             --exclude 'package-lock.json' \
             --exclude 'capacitor.config.json'
 
+          # Android-only cache busting and safer mobile viewport.
+          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=5/' www/index.html
+          sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
+          sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no/' www/index.html
+
       - name: Create Android project
         run: npx cap add android
 
