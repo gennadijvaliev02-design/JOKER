@@ -1,0 +1,500 @@
+/*
+ * Android Table V2
+ * A dedicated landscape composition for the APK branch.
+ * The web layout on main is intentionally untouched.
+ */
+
+:root {
+  --v2-edge: clamp(5px, 0.65vw, 10px);
+  --v2-top-lane: clamp(72px, 15vh, 104px);
+  --v2-glass: rgba(3, 15, 20, 0.84);
+  --v2-line: rgba(47, 207, 255, 0.74);
+}
+
+/* Full-width mobile canvas. The old oval no longer controls the layout. */
+.table-wrap {
+  inset: 0 !important;
+  padding: 0 !important;
+  background: #020a08;
+}
+
+.table {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background:
+    radial-gradient(ellipse at 50% 43%, rgba(17, 235, 157, 0.30), transparent 38%),
+    radial-gradient(ellipse at 50% 50%, #087b50 0%, #03613e 42%, #013823 72%, #00130d 100%) !important;
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.55);
+}
+
+/* Wide premium frame instead of the giant circular rail. */
+.table::before {
+  inset: var(--v2-edge) !important;
+  left: var(--v2-edge) !important;
+  right: var(--v2-edge) !important;
+  top: var(--v2-edge) !important;
+  bottom: var(--v2-edge) !important;
+  border: 2px solid var(--v2-line) !important;
+  border-radius: clamp(20px, 2.2vw, 34px) !important;
+  box-shadow:
+    0 0 22px rgba(0, 190, 255, 0.32),
+    inset 0 0 44px rgba(0, 0, 0, 0.34) !important;
+}
+
+.table::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: calc(var(--v2-top-lane) + 2px);
+  height: 1px;
+  z-index: 1;
+  background: linear-gradient(90deg, transparent, rgba(118, 238, 255, 0.40), transparent);
+  pointer-events: none;
+}
+
+.felt-glow {
+  inset: 18% 15% 17% !important;
+  border-radius: 42% !important;
+  background: radial-gradient(ellipse, rgba(0, 255, 170, 0.13), transparent 68%) !important;
+  filter: blur(15px) !important;
+}
+
+/* ---------- Top information lane ---------- */
+.game-hud {
+  left: clamp(116px, 12.4vw, 190px) !important;
+  top: clamp(9px, 1.8vh, 16px) !important;
+  width: min(290px, 26vw);
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: clamp(6px, 0.8vw, 12px) !important;
+  white-space: nowrap;
+}
+
+#round-label {
+  max-width: 145px;
+  padding: 6px 9px !important;
+  border-radius: 9px !important;
+  font-size: clamp(9px, 1.05vw, 13px) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trump-pill {
+  min-width: 0;
+  min-height: 38px !important;
+  padding: 4px 7px !important;
+  gap: 5px !important;
+  border-radius: 9px !important;
+  overflow: visible !important;
+}
+
+.trump-pill > :not(.trump-card) {
+  font-size: clamp(8px, 0.9vw, 11px);
+}
+
+.trump-card {
+  flex: 0 0 auto;
+  width: 28px !important;
+  height: 39px !important;
+  padding: 1px !important;
+  overflow: hidden !important;
+  border-radius: 4px !important;
+}
+
+.trump-card .card-face {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+.trump-card .card-fallback {
+  inset: 0 !important;
+  padding: 1px !important;
+  overflow: hidden !important;
+}
+
+.trump-card .card-corner {
+  display: none !important;
+}
+
+.trump-card .card-center,
+.trump-suit {
+  font-size: 19px !important;
+  line-height: 1 !important;
+}
+
+.trump-pill:has(.trump-card.is-revealed)::before {
+  right: -8px !important;
+  width: 48px !important;
+  height: 48px !important;
+}
+
+/* ---------- Player seats: independent of the table frame ---------- */
+.player {
+  width: 66px !important;
+  z-index: 7 !important;
+}
+
+.player:not(.player-you) .avatar {
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 22px !important;
+}
+
+.player-you .avatar {
+  width: 50px !important;
+  height: 50px !important;
+  font-size: 25px !important;
+}
+
+.badge {
+  top: -5px !important;
+  right: 5px !important;
+  width: 19px !important;
+  height: 19px !important;
+  font-size: 11px !important;
+}
+
+.player .name {
+  min-width: 48px !important;
+  margin-top: 5px !important;
+  padding: 3px 8px 4px !important;
+  border-radius: 11px !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+.player-left {
+  left: clamp(14px, 1.8vw, 28px) !important;
+  top: clamp(12px, 2.3vh, 20px) !important;
+}
+
+.player-top {
+  left: 50% !important;
+  top: clamp(8px, 1.5vh, 14px) !important;
+  transform: translateX(-50%);
+}
+
+.player-right {
+  right: clamp(55px, 5.2vw, 82px) !important;
+  top: clamp(12px, 2.3vh, 20px) !important;
+}
+
+.player-you {
+  left: clamp(17px, 2vw, 32px) !important;
+  bottom: clamp(10px, 2vh, 20px) !important;
+}
+
+.player-stats {
+  min-width: 43px !important;
+  width: 43px !important;
+  max-width: 43px !important;
+  height: 23px !important;
+  padding: 2px 4px !important;
+  border-radius: 7px !important;
+}
+
+.stat-score {
+  font-size: 11px !important;
+}
+
+.player-left .player-stats,
+.player-right .player-stats {
+  top: 52px !important;
+  left: 11px !important;
+  right: auto !important;
+}
+
+/* As requested: the top player's bid is above-left, not below the name. */
+.player-top .player-stats {
+  top: 4px !important;
+  left: -45px !important;
+  right: auto !important;
+}
+
+.player-you .player-stats {
+  top: 12px !important;
+  right: -45px !important;
+}
+
+.turn-pill {
+  top: -31px !important;
+  width: 96px !important;
+  padding: 6px 9px !important;
+  font-size: 9px !important;
+}
+
+.player-you .turn-pill {
+  left: 56px !important;
+}
+
+/* ---------- Opponent hands ---------- */
+.hidden-cards {
+  gap: 2px !important;
+  z-index: 3 !important;
+}
+
+.left-stack,
+.right-stack {
+  top: 31% !important;
+}
+
+.left-stack {
+  left: clamp(19px, 2.2vw, 34px) !important;
+}
+
+.right-stack {
+  right: clamp(19px, 2.2vw, 34px) !important;
+}
+
+.left-stack span,
+.right-stack span {
+  width: 25px !important;
+  height: 16px !important;
+  border-width: 1px !important;
+  border-radius: 3px !important;
+}
+
+.top-stack {
+  left: 62% !important;
+  top: clamp(58px, 10.5vh, 78px) !important;
+  gap: 2px !important;
+}
+
+.top-stack span {
+  width: 17px !important;
+  height: 25px !important;
+  border-width: 1px !important;
+  border-radius: 3px !important;
+}
+
+/* ---------- Top-right controls ---------- */
+.smile {
+  top: clamp(13px, 2.2vh, 20px) !important;
+  right: clamp(122px, 10.7vw, 166px) !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.smile .game-emote {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.table-menu {
+  top: clamp(13px, 2.2vh, 20px) !important;
+  right: clamp(12px, 1.35vw, 22px) !important;
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 18px !important;
+}
+
+.emotion-panel {
+  top: clamp(51px, 8vh, 66px) !important;
+  right: clamp(48px, 4.8vw, 74px) !important;
+  grid-template-columns: repeat(4, 34px) !important;
+  gap: 5px !important;
+  padding: 7px !important;
+}
+
+/* ---------- Center play area ---------- */
+.played-card-slot {
+  left: 50% !important;
+  top: 30% !important;
+  width: min(380px, 46vw) !important;
+  height: min(190px, 38vh) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  transform: translateX(-50%) !important;
+}
+
+.drop-zone {
+  left: 34% !important;
+  top: 24% !important;
+  width: 32% !important;
+  height: 40% !important;
+}
+
+.deal-deck,
+.deal-flight-layer {
+  left: 50% !important;
+  top: 39% !important;
+}
+
+.table-notice {
+  top: 24% !important;
+  max-width: min(310px, 38vw) !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+}
+
+/* Panels live in the center lane and do not cover player names. */
+.bid-panel {
+  left: 50% !important;
+  top: 52% !important;
+  bottom: auto !important;
+  width: min(540px, 57vw) !important;
+  max-height: 54vh;
+  padding: 11px 15px 13px !important;
+  border-radius: 18px !important;
+  transform: translate(-50%, -50%) !important;
+  overflow: auto;
+  scrollbar-width: none;
+}
+
+.bid-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.bid-title {
+  margin-bottom: 8px !important;
+  font-size: clamp(14px, 1.8vw, 19px) !important;
+}
+
+.bid-options {
+  gap: 8px !important;
+}
+
+.bid-option {
+  min-height: 42px !important;
+  padding: 7px 10px !important;
+  border-radius: 12px !important;
+  font-size: clamp(14px, 1.8vw, 18px) !important;
+}
+
+/* ---------- Player hand: large cards, clipped lower edge ---------- */
+.hand {
+  left: 50% !important;
+  bottom: clamp(-48px, -7vh, -31px) !important;
+  width: min(760px, 73vw) !important;
+  max-width: 73vw !important;
+  justify-content: center !important;
+  transform: translateX(-50%) !important;
+  overflow: visible !important;
+}
+
+.hand .card {
+  width: clamp(68px, 7.6vw, 92px) !important;
+  height: clamp(96px, 10.7vw, 129px) !important;
+  border-radius: 9px !important;
+}
+
+.hand .card + .card {
+  margin-left: clamp(-30px, -2.7vw, -19px) !important;
+}
+
+.score {
+  right: clamp(15px, 1.7vw, 26px) !important;
+  bottom: clamp(14px, 2.2vh, 22px) !important;
+  width: 34px !important;
+  height: 52px !important;
+  font-size: 8px !important;
+}
+
+/* ---------- Aspect-ratio tuning ---------- */
+@media (min-aspect-ratio: 18/9) {
+  .game-hud {
+    left: 11.5vw !important;
+  }
+
+  .player-right {
+    right: 4.8vw !important;
+  }
+
+  .played-card-slot {
+    width: min(420px, 42vw) !important;
+  }
+
+  .bid-panel {
+    width: min(560px, 52vw) !important;
+  }
+
+  .hand {
+    width: min(800px, 68vw) !important;
+    max-width: 68vw !important;
+  }
+}
+
+@media (max-aspect-ratio: 16/10) {
+  :root {
+    --v2-top-lane: 82px;
+  }
+
+  .game-hud {
+    left: 14vw !important;
+    width: 31vw;
+  }
+
+  .player-right {
+    right: 6.6vw !important;
+  }
+
+  .smile {
+    right: 13vw !important;
+  }
+
+  .bid-panel {
+    top: 53% !important;
+    width: 62vw !important;
+  }
+
+  .played-card-slot {
+    top: 31% !important;
+    height: 34vh !important;
+  }
+
+  .hand {
+    bottom: -43px !important;
+    width: 77vw !important;
+    max-width: 77vw !important;
+  }
+}
+
+@media (max-height: 430px) {
+  :root {
+    --v2-top-lane: 70px;
+  }
+
+  .game-hud {
+    top: 7px !important;
+  }
+
+  .player-left,
+  .player-right {
+    top: 8px !important;
+  }
+
+  .player-top {
+    top: 5px !important;
+  }
+
+  .top-stack {
+    top: 50px !important;
+  }
+
+  .played-card-slot {
+    top: 29% !important;
+    height: 150px !important;
+  }
+
+  .bid-panel {
+    top: 52% !important;
+    max-height: 52vh;
+    padding: 8px 12px 10px !important;
+  }
+
+  .bid-option {
+    min-height: 37px !important;
+    padding: 5px 8px !important;
+  }
+
+  .hand {
+    bottom: -49px !important;
+  }
+}
