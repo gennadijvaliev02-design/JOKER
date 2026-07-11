@@ -81,7 +81,7 @@
 
   if (elements.emotionButton) {
     elements.emotionButton.innerHTML = "";
-    elements.emotionButton.append(createGameEmotionIcon("ok"));
+    elements.emotionButton.append(createGameEmotionIcon("laugh"));
     elements.emotionButton.setAttribute("aria-label", "Эмоции");
   }
 
