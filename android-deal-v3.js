@@ -72,6 +72,22 @@
     return deck;
   }
 
+  function removeFlightCardAfterLanding(card, delay) {
+    let removed = false;
+    const remove = () => {
+      if (removed) return;
+      removed = true;
+      card.remove();
+    };
+
+    card.addEventListener("animationend", (event) => {
+      if (event.target === card) remove();
+    }, { once: true });
+
+    // Fallback for WebViews that suppress animationend while frames are skipped.
+    window.setTimeout(remove, safeDelay(delay + DEAL_FLIGHT_TIME + 90));
+  }
+
   function getArcForSeat(seat, cardIndex) {
     const alternating = cardIndex % 2 === 0 ? 1 : -1;
     if (seat === "top") return { arcY: -24, turn: 5 * alternating };
@@ -134,6 +150,7 @@
         card.style.setProperty("--deal-arc-y", `${arc.arcY}px`);
         card.style.setProperty("--deal-turn", `${arc.turn}deg`);
         cards.push(card);
+        removeFlightCardAfterLanding(card, delay);
         scheduleDealSound(delay + 26);
         dealStep += 1;
       }
