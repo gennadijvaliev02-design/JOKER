@@ -1,0 +1,179 @@
+/*
+ * Android UI V7 — final table composition pass.
+ * Keeps the approved top hand intact and lowers only the two side seats.
+ */
+
+/* ---------- Side seats: one calm, symmetrical arc ---------- */
+.player-left,
+.player-right {
+  top: clamp(70px, 12.2vh, 94px) !important;
+  width: 68px !important;
+}
+
+.player-left {
+  left: clamp(9px, 0.85vw, 14px) !important;
+}
+
+.player-right {
+  right: clamp(78px, 6.8vw, 103px) !important;
+}
+
+.player-left .avatar,
+.player-right .avatar {
+  width: 52px !important;
+  height: 52px !important;
+}
+
+.player-left .name,
+.player-right .name {
+  min-width: 56px !important;
+  margin-top: 6px !important;
+}
+
+.player-left .player-stats,
+.player-right .player-stats {
+  top: 14px !important;
+}
+
+.player-left .player-stats {
+  left: 59px !important;
+  right: auto !important;
+}
+
+.player-right .player-stats {
+  left: -50px !important;
+  right: auto !important;
+}
+
+/* Keep side hands visually attached to the side seats without crowding them. */
+.left-stack,
+.right-stack {
+  top: clamp(190px, 34vh, 244px) !important;
+}
+
+/* ---------- Approved top seat and top cards remain untouched ---------- */
+.player-top .name {
+  margin-top: 6px !important;
+}
+
+/* ---------- HUD: one readable instrument, not two floating stickers ---------- */
+.game-hud {
+  left: clamp(124px, 13.4vw, 168px) !important;
+  top: clamp(18px, 3.2vh, 27px) !important;
+  gap: 5px !important;
+}
+
+#round-label,
+.trump-pill {
+  min-width: 116px !important;
+  max-width: 158px !important;
+  justify-content: center !important;
+  text-align: center !important;
+  border-color: rgba(75, 205, 255, 0.46) !important;
+  background:
+    linear-gradient(155deg, rgba(7, 25, 32, 0.94), rgba(2, 13, 19, 0.92)) !important;
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+#round-label {
+  padding: 5px 9px !important;
+  font-size: clamp(9px, 0.95vw, 12px) !important;
+}
+
+.trump-pill {
+  min-height: 39px !important;
+  padding: 4px 7px !important;
+}
+
+/* ---------- Lower-right tools: one aligned control family ---------- */
+.score,
+.last-trick-button {
+  bottom: clamp(16px, 2.8vh, 23px) !important;
+  height: 56px !important;
+  border-color: rgba(114, 215, 255, 0.38) !important;
+  background:
+    radial-gradient(circle at 24% 10%, rgba(69, 208, 255, 0.13), transparent 38%),
+    linear-gradient(158deg, rgba(29, 44, 53, 0.97), rgba(7, 17, 23, 0.99)) !important;
+}
+
+.score {
+  right: clamp(13px, 1.2vw, 20px) !important;
+  width: 50px !important;
+}
+
+.last-trick-button {
+  right: clamp(69px, 6.25vw, 93px) !important;
+  width: 116px !important;
+}
+
+/* ---------- Center: keep game cards dominant and messages secondary ---------- */
+.played-card-slot {
+  top: 33% !important;
+}
+
+.table-notice {
+  max-width: min(390px, 54vw) !important;
+  padding: 8px 15px !important;
+  border-radius: 999px !important;
+  background: rgba(5, 20, 25, 0.84) !important;
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* ---------- Subtle common depth system ---------- */
+.avatar,
+.player-stats,
+.name,
+.score,
+.last-trick-button,
+.table-menu {
+  -webkit-font-smoothing: antialiased;
+}
+
+.player.is-active .avatar {
+  box-shadow:
+    0 0 0 3px rgba(255, 214, 41, 0.14),
+    0 0 17px rgba(255, 214, 41, 0.62),
+    0 8px 18px rgba(0, 0, 0, 0.34) !important;
+}
+
+/* ---------- Compact emulator / small Android landscape ---------- */
+@media (max-height: 430px) {
+  .player-left,
+  .player-right {
+    top: 48px !important;
+  }
+
+  .left-stack,
+  .right-stack {
+    top: 31vh !important;
+  }
+
+  .game-hud {
+    left: 13.2vw !important;
+    top: 9px !important;
+  }
+
+  .score,
+  .last-trick-button {
+    bottom: 9px !important;
+    height: 51px !important;
+  }
+}
+
+@media (min-aspect-ratio: 18/9) {
+  .player-left,
+  .player-right {
+    top: 11.5vh !important;
+  }
+
+  .left-stack,
+  .right-stack {
+    top: 33vh !important;
+  }
+}
