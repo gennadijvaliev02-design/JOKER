@@ -45,13 +45,13 @@ jobs:
             --exclude 'package-lock.json' \
             --exclude 'capacitor.config.json'
 
-          # Android-only cache busting and safer mobile viewport.
-          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=9/' www/index.html
+          # Android-only cache busting and full edge-to-edge viewport.
+          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=10/' www/index.html
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
-          sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no/' www/index.html
+          sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0/' www/index.html
 
-          # Consolidated Android-only table, composition and motion layers.
-          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n  </head>#' www/index.html
+          # Consolidated Android-only table, composition, motion and fullscreen layers.
+          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n    <link rel="stylesheet" href="android-fullscreen.css?v=1" />\n  </head>#' www/index.html
           sed -i 's#</body>#    <script src="android-opponent-hands.js?v=1"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n  </body>#' www/index.html
 
       - name: Create Android project
@@ -60,10 +60,11 @@ jobs:
       - name: Sync web app to Android
         run: npx cap sync android
 
-      - name: Configure landscape fullscreen app
+      - name: Configure true immersive landscape app
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import xml.etree.ElementTree as ET
 
           manifest_path = Path('android/app/src/main/AndroidManifest.xml')
           manifest = manifest_path.read_text(encoding='utf-8')
@@ -76,12 +77,46 @@ jobs:
               )
           manifest_path.write_text(manifest, encoding='utf-8')
 
+          # Make the native theme draw behind status/navigation bars and cutouts.
+          styles_path = Path('android/app/src/main/res/values/styles.xml')
+          tree = ET.parse(styles_path)
+          root = tree.getroot()
+          fullscreen_items = {
+              'android:windowFullscreen': 'true',
+              'android:windowNoTitle': 'true',
+              'android:windowActionModeOverlay': 'true',
+              'android:windowDrawsSystemBarBackgrounds': 'true',
+              'android:statusBarColor': '@android:color/transparent',
+              'android:navigationBarColor': '@android:color/transparent',
+              'android:windowLightStatusBar': 'false',
+              'android:windowLightNavigationBar': 'false',
+              'android:windowLayoutInDisplayCutoutMode': 'shortEdges',
+              'android:windowDisablePreview': 'true',
+          }
+
+          for style in root.findall('style'):
+              if style.attrib.get('name') not in {'AppTheme.NoActionBar', 'AppTheme.NoActionBarLaunch'}:
+                  continue
+              existing = {item.attrib.get('name'): item for item in style.findall('item')}
+              for item_name, item_value in fullscreen_items.items():
+                  item = existing.get(item_name)
+                  if item is None:
+                      item = ET.SubElement(style, 'item', {'name': item_name})
+                  item.text = item_value
+
+          tree.write(styles_path, encoding='utf-8', xml_declaration=True)
+
           java_path = Path('android/app/src/main/java/com/valievcompany/joker/MainActivity.java')
           java_path.parent.mkdir(parents=True, exist_ok=True)
           java_path.write_text('''package com.valievcompany.joker;
 
+          import android.content.res.Configuration;
+          import android.graphics.Color;
+          import android.os.Build;
           import android.os.Bundle;
           import android.view.View;
+          import android.view.WindowInsets;
+          import android.view.WindowInsetsController;
           import android.view.WindowManager;
 
           import com.getcapacitor.BridgeActivity;
@@ -90,10 +125,20 @@ jobs:
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
-                  getWindow().setFlags(
-                      WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                      WindowManager.LayoutParams.FLAG_FULLSCREEN
-                  );
+                  configureWindow();
+                  hideSystemUI();
+                  getWindow().getDecorView().postDelayed(this::hideSystemUI, 250);
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  hideSystemUI();
+              }
+
+              @Override
+              protected void onPostResume() {
+                  super.onPostResume();
                   hideSystemUI();
               }
 
@@ -102,10 +147,58 @@ jobs:
                   super.onWindowFocusChanged(hasFocus);
                   if (hasFocus) {
                       hideSystemUI();
+                      getWindow().getDecorView().postDelayed(this::hideSystemUI, 180);
+                  }
+              }
+
+              @Override
+              public void onConfigurationChanged(Configuration newConfig) {
+                  super.onConfigurationChanged(newConfig);
+                  hideSystemUI();
+              }
+
+              private void configureWindow() {
+                  getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                  getWindow().setStatusBarColor(Color.TRANSPARENT);
+                  getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                      getWindow().setStatusBarContrastEnforced(false);
+                      getWindow().setNavigationBarContrastEnforced(false);
+                  }
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                      WindowManager.LayoutParams attributes = getWindow().getAttributes();
+                      attributes.layoutInDisplayCutoutMode =
+                          WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                      getWindow().setAttributes(attributes);
+                  }
+
+                  if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                      getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(
+                          visibility -> {
+                              if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                                  getWindow().getDecorView().postDelayed(this::hideSystemUI, 120);
+                              }
+                          }
+                      );
                   }
               }
 
               private void hideSystemUI() {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                      getWindow().setDecorFitsSystemWindows(false);
+                      WindowInsetsController controller = getWindow().getInsetsController();
+                      if (controller != null) {
+                          controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                          controller.setSystemBarsBehavior(
+                              WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                          );
+                      }
+                      return;
+                  }
+
                   getWindow().getDecorView().setSystemUiVisibility(
                       View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                           | View.SYSTEM_UI_FLAG_FULLSCREEN
