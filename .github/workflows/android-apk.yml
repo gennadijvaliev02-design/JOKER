@@ -50,8 +50,8 @@ jobs:
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
           sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no/' www/index.html
 
-          # Table V3 and reliable card-fan motion are injected only into the APK.
-          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n  </head>#' www/index.html
+          # Shaped table, V4 UI polish and reliable card-fan motion are APK-only.
+          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n  </head>#' www/index.html
           sed -i 's#</body>#    <script src="android-menu-motion.js?v=1"></script>\n  </body>#' www/index.html
 
       - name: Create Android project
