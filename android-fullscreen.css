@@ -1,0 +1,82 @@
+/*
+ * Android true fullscreen stage.
+ * Removes the browser-era 2.16:1 letterbox and lets the native WebView
+ * occupy every physical pixel provided by immersive Android mode.
+ */
+
+html,
+body {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #050912 !important;
+  overscroll-behavior: none;
+}
+
+body {
+  position: fixed !important;
+  inset: 0 !important;
+  display: block !important;
+  touch-action: manipulation;
+}
+
+.phone-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #050912 !important;
+}
+
+@supports (width: 100dvw) {
+  .phone-screen {
+    width: 100dvw !important;
+    height: 100dvh !important;
+  }
+}
+
+.table-wrap,
+.start-screen,
+.score-sheet {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.table-wrap {
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #050912 !important;
+}
+
+.table {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Paint behind rounded corners/cutouts instead of exposing a white WebView. */
+html,
+body,
+.phone-screen,
+.table-wrap,
+.table {
+  background-color: #050912 !important;
+}
