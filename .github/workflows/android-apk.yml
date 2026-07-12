@@ -2,9 +2,6 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - android-app
 
 permissions:
   contents: read
@@ -50,7 +47,7 @@ jobs:
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
           sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no/' www/index.html
 
-          # Android table and correction layers are injected only into the APK.
+          # Android-only UI layers.
           sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n  </head>#' www/index.html
           sed -i 's#</body>#    <script src="android-menu-motion.js?v=1"></script>\n  </body>#' www/index.html
 
