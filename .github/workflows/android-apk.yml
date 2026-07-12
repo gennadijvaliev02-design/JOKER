@@ -2,6 +2,9 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - android-app
 
 permissions:
   contents: read
@@ -43,13 +46,13 @@ jobs:
             --exclude 'capacitor.config.json'
 
           # Android-only cache busting and safer mobile viewport.
-          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=8/' www/index.html
+          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=9/' www/index.html
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
           sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no/' www/index.html
 
-          # Consolidated Android-only table and UI layers.
-          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n  </head>#' www/index.html
-          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=1"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n  </body>#' www/index.html
+          # Consolidated Android-only table, composition and motion layers.
+          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n  </head>#' www/index.html
+          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=1"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n  </body>#' www/index.html
 
       - name: Create Android project
         run: npx cap add android
