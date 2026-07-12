@@ -1,0 +1,298 @@
+/*
+ * Android UI V4 polish layer.
+ * Loaded after the shaped table stylesheet only inside the APK build.
+ */
+
+/* ---------- Separate top zones ---------- */
+.game-hud {
+  position: absolute !important;
+  left: clamp(104px, 9.2vw, 148px) !important;
+  top: clamp(14px, 2.5vh, 22px) !important;
+  width: min(330px, 30vw) !important;
+  transform: none !important;
+  justify-content: flex-start !important;
+}
+
+#round-label {
+  flex: 0 1 auto !important;
+  max-width: 132px !important;
+}
+
+.trump-pill {
+  flex: 0 0 auto !important;
+  max-width: 144px !important;
+}
+
+.player-left {
+  left: clamp(8px, 0.75vw, 13px) !important;
+  top: clamp(66px, 11.5vh, 88px) !important;
+}
+
+.player-top {
+  left: 50% !important;
+  top: clamp(3px, 0.7vh, 7px) !important;
+  transform: translateX(-50%) !important;
+}
+
+.player-right {
+  right: clamp(72px, 6.3vw, 98px) !important;
+  top: clamp(18px, 3.4vh, 28px) !important;
+}
+
+.player .name {
+  margin-top: 7px !important;
+  letter-spacing: 0.025em !important;
+  box-shadow:
+    0 5px 13px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.player-top .player-stats {
+  top: 6px !important;
+  left: -52px !important;
+}
+
+.player-left .player-stats,
+.player-right .player-stats {
+  top: 61px !important;
+}
+
+/* ---------- Opponent hands belong to their seats ---------- */
+.top-stack {
+  left: 50% !important;
+  top: clamp(69px, 12.7vh, 91px) !important;
+  transform: translateX(-50%) !important;
+  gap: 2px !important;
+}
+
+.top-stack span {
+  width: clamp(17px, 1.7vw, 21px) !important;
+  height: clamp(25px, 2.45vw, 31px) !important;
+}
+
+.left-stack,
+.right-stack {
+  top: clamp(172px, 31vh, 225px) !important;
+  gap: 2px !important;
+}
+
+.left-stack {
+  left: clamp(13px, 1.25vw, 20px) !important;
+  transform: rotate(-1.5deg) !important;
+}
+
+.right-stack {
+  right: clamp(13px, 1.25vw, 20px) !important;
+  transform: rotate(1.5deg) !important;
+}
+
+.left-stack span,
+.right-stack span {
+  width: clamp(27px, 2.45vw, 31px) !important;
+  height: clamp(17px, 1.55vw, 20px) !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.24) !important;
+}
+
+/* ---------- Top-right control cluster ---------- */
+.smile {
+  top: clamp(20px, 3.6vh, 29px) !important;
+  right: clamp(134px, 11.2vw, 174px) !important;
+}
+
+.table-menu {
+  top: clamp(18px, 3.3vh, 27px) !important;
+  right: clamp(15px, 1.4vw, 23px) !important;
+  border: 1px solid rgba(108, 221, 255, 0.24) !important;
+  box-shadow:
+    0 9px 22px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+.emotion-panel {
+  right: clamp(55px, 5vw, 78px) !important;
+}
+
+/* ---------- Accessible player hand ---------- */
+.hand {
+  bottom: clamp(-58px, -8.2vh, -40px) !important;
+  width: min(870px, 79vw) !important;
+  max-width: 79vw !important;
+}
+
+.hand .card {
+  width: clamp(78px, 8.55vw, 105px) !important;
+  height: clamp(110px, 12vw, 148px) !important;
+  border-radius: 10px !important;
+}
+
+.hand .card + .card {
+  margin-left: clamp(-35px, -3.15vw, -23px) !important;
+}
+
+.hand .card:hover,
+.hand .card:focus-visible {
+  transform: translate3d(0, -16px, 0) scale(1.045) !important;
+}
+
+/* ---------- Premium utility buttons ---------- */
+.score {
+  right: clamp(13px, 1.25vw, 20px) !important;
+  bottom: clamp(18px, 3.2vh, 27px) !important;
+  width: 48px !important;
+  height: 70px !important;
+  display: grid !important;
+  place-content: center !important;
+  gap: 3px !important;
+  padding: 7px 4px !important;
+  border: 1px solid rgba(255, 226, 126, 0.46) !important;
+  border-radius: 13px !important;
+  background:
+    linear-gradient(160deg, rgba(31, 44, 51, 0.95), rgba(8, 18, 24, 0.97)) !important;
+  color: #fff0ad !important;
+  font-size: 0 !important;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+.score::before {
+  content: "▤";
+  font-size: 24px;
+  line-height: 1;
+}
+
+.score::after {
+  content: "СЧЁТ";
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+}
+
+.last-trick-button {
+  bottom: clamp(106px, 16vh, 142px) !important;
+  min-width: 132px !important;
+  height: 36px !important;
+  border-color: rgba(112, 225, 255, 0.24) !important;
+  background:
+    linear-gradient(155deg, rgba(23, 49, 50, 0.88), rgba(4, 20, 22, 0.92)) !important;
+  color: rgba(255, 239, 181, 0.95) !important;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+/* ---------- One visual language for overlays ---------- */
+.game-summary:not([hidden]),
+.game-dialog:not([hidden]),
+.last-trick-panel,
+.difficulty-modal,
+.sheet-paper {
+  border: 1px solid rgba(255, 229, 133, 0.42) !important;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(79, 218, 255, 0.10), transparent 31%),
+    linear-gradient(145deg, rgba(22, 50, 57, 0.96), rgba(5, 18, 24, 0.97)) !important;
+  box-shadow:
+    0 26px 68px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(63, 215, 255, 0.07) !important;
+  backdrop-filter: blur(14px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+}
+
+.game-summary:not([hidden]),
+.game-dialog:not([hidden]),
+.last-trick-panel,
+.difficulty-modal {
+  border-radius: 22px !important;
+}
+
+.summary-row,
+.pulka-summary-row,
+.dialog-action,
+.difficulty-option {
+  border-color: rgba(112, 224, 255, 0.20) !important;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)) !important;
+}
+
+.summary-title,
+.dialog-title,
+.last-trick-title,
+.difficulty-title {
+  color: #fff0ad !important;
+  text-shadow: 0 2px 9px rgba(0, 0, 0, 0.35);
+}
+
+/* Keep the order panel large and finger-friendly, as requested. */
+.bid-panel {
+  min-width: min(600px, 59vw) !important;
+}
+
+/* ---------- Compact emulator height ---------- */
+@media (max-height: 430px) {
+  .game-hud {
+    left: 9vw !important;
+    top: 8px !important;
+  }
+
+  .player-left {
+    top: 50px !important;
+  }
+
+  .player-right {
+    right: 6.8vw !important;
+    top: 10px !important;
+  }
+
+  .top-stack {
+    top: 53px !important;
+  }
+
+  .left-stack,
+  .right-stack {
+    top: 30vh !important;
+  }
+
+  .smile {
+    top: 10px !important;
+    right: 12vw !important;
+  }
+
+  .table-menu {
+    top: 9px !important;
+  }
+
+  .hand {
+    bottom: -61px !important;
+    width: 81vw !important;
+    max-width: 81vw !important;
+  }
+
+  .hand .card {
+    width: clamp(74px, 8.2vw, 98px) !important;
+    height: clamp(104px, 11.55vw, 138px) !important;
+  }
+
+  .last-trick-button {
+    bottom: 92px !important;
+  }
+}
+
+@media (min-aspect-ratio: 18/9) {
+  .game-hud {
+    left: 8.4vw !important;
+  }
+
+  .player-right {
+    right: 5.7vw !important;
+  }
+
+  .smile {
+    right: 10.4vw !important;
+  }
+
+  .hand {
+    width: min(900px, 73vw) !important;
+    max-width: 73vw !important;
+  }
+}
