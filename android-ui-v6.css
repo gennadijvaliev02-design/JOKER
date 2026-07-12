@@ -1,0 +1,277 @@
+/*
+ * Android UI V6: calm table composition.
+ * Universal seat geometry: player names may rotate between seats.
+ */
+
+/* ---------- HUD becomes one compact vertical object ---------- */
+.game-hud {
+  left: clamp(132px, 14.5vw, 178px) !important;
+  top: clamp(15px, 2.8vh, 23px) !important;
+  width: auto !important;
+  max-width: 170px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 5px !important;
+}
+
+#round-label {
+  max-width: 160px !important;
+  padding: 5px 9px !important;
+  font-size: clamp(9px, 1vw, 12px) !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.trump-pill {
+  max-width: 160px !important;
+  min-height: 37px !important;
+  padding: 4px 7px !important;
+  white-space: nowrap !important;
+}
+
+/* ---------- Three opponent seats follow one visual system ---------- */
+.player-left,
+.player-right,
+.player-top {
+  width: 68px !important;
+}
+
+.player-left {
+  left: clamp(8px, 0.8vw, 13px) !important;
+  top: clamp(18px, 3.4vh, 28px) !important;
+}
+
+.player-right {
+  right: clamp(79px, 6.9vw, 105px) !important;
+  top: clamp(18px, 3.4vh, 28px) !important;
+}
+
+/* Top seat shifts left, leaving a clean card lane to its right. */
+.player-top {
+  left: 42% !important;
+  top: clamp(12px, 2.1vh, 18px) !important;
+  transform: translateX(-50%) !important;
+}
+
+.player-left .name,
+.player-right .name,
+.player-top .name {
+  position: static !important;
+  min-width: 52px !important;
+  margin: 7px 0 0 !important;
+  transform: none !important;
+  white-space: nowrap !important;
+}
+
+/* Order/taken badges live outside the name lane. */
+.player-left .player-stats {
+  top: 13px !important;
+  left: 58px !important;
+  right: auto !important;
+}
+
+.player-right .player-stats {
+  top: 13px !important;
+  left: -49px !important;
+  right: auto !important;
+}
+
+.player-top .player-stats {
+  top: 13px !important;
+  left: -51px !important;
+  right: auto !important;
+}
+
+/* ---------- Opponent cards sit on the table perimeter ---------- */
+.top-stack {
+  left: calc(42% + 42px) !important;
+  right: auto !important;
+  top: clamp(17px, 3vh, 25px) !important;
+  width: min(315px, 30vw) !important;
+  max-width: 30vw !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: var(--opponent-gap, 3px) !important;
+  transform: none !important;
+}
+
+.top-stack span {
+  width: calc(22px * var(--opponent-scale, 1)) !important;
+  height: calc(32px * var(--opponent-scale, 1)) !important;
+  flex: 0 0 auto !important;
+  border-width: 1px !important;
+  border-radius: 4px !important;
+}
+
+.left-stack,
+.right-stack {
+  top: clamp(166px, 30vh, 218px) !important;
+  gap: var(--opponent-gap, 3px) !important;
+}
+
+.left-stack {
+  left: clamp(12px, 1.2vw, 19px) !important;
+}
+
+.right-stack {
+  right: clamp(12px, 1.2vw, 19px) !important;
+}
+
+.left-stack span,
+.right-stack span {
+  width: calc(31px * var(--opponent-scale, 1)) !important;
+  height: calc(20px * var(--opponent-scale, 1)) !important;
+  border-width: 1px !important;
+  border-radius: 4px !important;
+}
+
+/* ---------- Menu and reactions form one small vertical rail ---------- */
+.table-menu {
+  top: clamp(17px, 3.1vh, 26px) !important;
+  right: clamp(14px, 1.35vw, 22px) !important;
+  width: 38px !important;
+  height: 38px !important;
+}
+
+.smile {
+  top: clamp(62px, 10.5vh, 78px) !important;
+  right: clamp(21px, 2vw, 31px) !important;
+  width: 21px !important;
+  height: 21px !important;
+  padding: 0 !important;
+}
+
+.smile .game-emote {
+  width: 20px !important;
+  height: 20px !important;
+  border-width: 1px !important;
+}
+
+.emotion-panel {
+  top: clamp(88px, 15vh, 112px) !important;
+  right: clamp(43px, 4.2vw, 65px) !important;
+}
+
+/* ---------- Score and last trick become one lower-right tool group ---------- */
+.score,
+.last-trick-button {
+  bottom: clamp(17px, 3vh, 25px) !important;
+  height: 58px !important;
+  border: 1px solid rgba(255, 226, 126, 0.43) !important;
+  border-radius: 13px !important;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(80, 215, 255, 0.10), transparent 34%),
+    linear-gradient(160deg, rgba(31, 44, 51, 0.96), rgba(8, 18, 24, 0.98)) !important;
+  color: #fff0ad !important;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+}
+
+.score {
+  right: clamp(13px, 1.25vw, 20px) !important;
+  width: 48px !important;
+}
+
+.last-trick-button {
+  left: auto !important;
+  right: clamp(68px, 6.2vw, 91px) !important;
+  min-width: 0 !important;
+  width: 118px !important;
+  padding: 0 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+  line-height: 1.08 !important;
+  letter-spacing: 0.045em !important;
+  text-align: center !important;
+  white-space: normal !important;
+  transform: none !important;
+}
+
+.last-trick-button::before {
+  content: "🂠";
+  flex: 0 0 auto;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.last-trick-button:not(:disabled):active,
+.last-trick-button.is-active {
+  transform: translateY(1px) scale(0.985) !important;
+}
+
+/* Preserve approved large order panel and accessible hand. */
+.bid-panel {
+  width: min(600px, 59vw) !important;
+  min-width: min(600px, 59vw) !important;
+}
+
+/* ---------- Short emulator landscape ---------- */
+@media (max-height: 430px) {
+  .game-hud {
+    left: 14vw !important;
+    top: 8px !important;
+    gap: 3px !important;
+  }
+
+  .player-left,
+  .player-right {
+    top: 8px !important;
+  }
+
+  .player-top {
+    left: 42% !important;
+    top: 7px !important;
+  }
+
+  .top-stack {
+    left: calc(42% + 40px) !important;
+    top: 11px !important;
+  }
+
+  .left-stack,
+  .right-stack {
+    top: 29vh !important;
+  }
+
+  .smile {
+    top: 51px !important;
+  }
+
+  .emotion-panel {
+    top: 76px !important;
+  }
+
+  .score,
+  .last-trick-button {
+    bottom: 10px !important;
+    height: 52px !important;
+  }
+
+  .last-trick-button {
+    right: 65px !important;
+    width: 108px !important;
+    font-size: 8px !important;
+  }
+}
+
+@media (min-aspect-ratio: 18/9) {
+  .game-hud {
+    left: 13vw !important;
+  }
+
+  .player-top {
+    left: 43% !important;
+  }
+
+  .top-stack {
+    left: calc(43% + 44px) !important;
+    max-width: 28vw !important;
+  }
+}
