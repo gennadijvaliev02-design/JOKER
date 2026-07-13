@@ -1,0 +1,3 @@
+Android diagnostic rebuild marker
+Expected deal engine: android-deal-2026 staging piles
+Build marker: STAGE4-20260714
