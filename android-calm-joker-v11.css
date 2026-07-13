@@ -1,0 +1,14 @@
+/* Android V11: keep the clean trick flight, remove cartoon Joker magic. */
+.trick-collect-layer.is-joker-magic .trick-collect-card::after,
+.trick-collect-layer.is-joker-duel .trick-collect-card::after,
+.joker-bubble-trail,
+.joker-star-burst {
+  display: none !important;
+  animation: none !important;
+}
+
+.joker-bubble-trail *,
+.joker-star-burst * {
+  display: none !important;
+  animation: none !important;
+}
