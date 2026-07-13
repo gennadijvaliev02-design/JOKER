@@ -146,8 +146,8 @@
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="hearts"],
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="diamonds"],
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-suit="hearts"] .android-joker-suit-symbol,
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-suit="diamonds"] .android-joker-suit-symbol {
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="hearts"] .android-joker-suit-symbol,
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="diamonds"] .android-joker-suit-symbol {
       color: #ff5b70 !important;
       text-shadow:
         0 1px 0 rgba(255,255,255,.35),
@@ -160,8 +160,8 @@
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="clubs"],
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="spades"],
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-suit="clubs"] .android-joker-suit-symbol,
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-suit="spades"] .android-joker-suit-symbol {
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="clubs"] .android-joker-suit-symbol,
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="spades"] .android-joker-suit-symbol {
       color: #f8fcff !important;
       text-shadow:
         0 1px 0 #fff,
@@ -339,7 +339,7 @@
   }
 
   function bidsAreFinished() {
-    if (!window.state?.players?.length) return false;
+    if (typeof state === "undefined" || !state?.players?.length) return false;
     return state.players.every((player) => player.bid !== null && player.bid !== undefined);
   }
 
