@@ -114,7 +114,7 @@
     const node = getSeatNodes(seat).find((candidate) => candidate.classList.contains("is-deal-pending"));
     if (!node) return;
 
-    node.classList.remove("is-deal-pending");
+    node.classList.remove("is-deal-pending", "is-dealt");
     node.classList.add("is-deal-arrived");
 
     if (seat === "bottom" && node.dataset.card) {
@@ -203,7 +203,7 @@
     window.setTimeout(() => deck.classList.add("is-finishing"), safeDelay(totalDuration - 210));
     window.setTimeout(() => {
       for (const seat of ["left", "top", "right", "bottom"]) {
-        getSeatNodes(seat).forEach((node) => node.classList.remove("is-deal-pending"));
+        getSeatNodes(seat).forEach((node) => node.classList.remove("is-deal-pending", "is-dealt"));
       }
       layer.remove();
     }, safeDelay(totalDuration + 280));
