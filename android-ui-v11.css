@@ -1,0 +1,218 @@
+/*
+ * Android UI V11 — real-device UX corrections.
+ * Loaded after V10 only in the Android APK.
+ */
+
+/* ---------- Order panel: lower, safer two-row spacing ---------- */
+.bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) {
+  left: 50% !important;
+  top: 56.5% !important;
+  bottom: auto !important;
+  width: min(740px, 72vw) !important;
+  max-width: calc(100vw - var(--android-safe-left) - var(--android-safe-right) - 34px) !important;
+  padding: 18px 32px 25px !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-title {
+  margin-bottom: 13px !important;
+}
+
+.bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-options {
+  column-gap: clamp(12px, 1.55vw, 23px) !important;
+  row-gap: clamp(30px, 4.5vh, 42px) !important;
+}
+
+/* ---------- Human label belongs under the 0/order counter ---------- */
+.player-you .name {
+  position: absolute !important;
+  left: auto !important;
+  right: -46px !important;
+  top: 43px !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  margin: 0 !important;
+  padding: 3px 4px 4px !important;
+  display: grid !important;
+  place-items: center !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  transform: none !important;
+  white-space: nowrap !important;
+}
+
+/* ---------- Trump label: taller letters, not heavier ---------- */
+.android-trump-title {
+  font-size: clamp(14px, 1.38vw, 17px) !important;
+  font-weight: 760 !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0.01em !important;
+  transform: scaleY(1.10) !important;
+  transform-origin: center !important;
+}
+
+/* ---------- Joker announcement: 20% smaller and calm ---------- */
+.joker-announcement {
+  min-width: 184px !important;
+  padding: 10px 14px 12px !important;
+  border-width: 1.5px !important;
+  border-radius: 16px !important;
+  transform: translate(-50%, -8px) scale(0.96) !important;
+  transition: opacity 160ms ease, transform 180ms ease !important;
+}
+
+.joker-announcement.is-visible {
+  transform: translate(-50%, 0) scale(1) !important;
+}
+
+.joker-announcement::before,
+.joker-announcement.is-visible::before {
+  display: none !important;
+  animation: none !important;
+}
+
+.joker-announcement-player {
+  margin-bottom: 5px !important;
+  font-size: 12px !important;
+  letter-spacing: 0.055em !important;
+}
+
+.joker-announcement-action {
+  gap: 9px !important;
+  font-size: 23px !important;
+}
+
+.joker-announcement-suit {
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 29px !important;
+}
+
+.player.is-joker-announcer .avatar {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Remove the childish extra bounce when a Take Joker is played. */
+.played-card.is-joker-take,
+.played-card.is-joker-take .card {
+  animation-timing-function: ease-out !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* ---------- V11 deal: exact DOM targets and no ghost piles ---------- */
+.table.is-v11-dealing .hand .card.is-dealt {
+  animation: none !important;
+}
+
+.v11-deal-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+  z-index: 28 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+.v11-deal-deck {
+  position: absolute !important;
+  left: 50% !important;
+  top: 48% !important;
+  width: 50px !important;
+  height: 70px !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) rotate(-1deg) !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+}
+
+.v11-flying-card {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 50px !important;
+  height: 70px !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  animation: none !important;
+  transform: none !important;
+  transform-origin: center !important;
+  will-change: transform, opacity, filter;
+  z-index: 3 !important;
+}
+
+.hand .card.is-v11-deal-pending,
+.hidden-cards span.is-v11-deal-pending {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  animation: none !important;
+  pointer-events: none !important;
+}
+
+.hand .card.is-v11-deal-arrived,
+.hidden-cards span.is-v11-deal-arrived {
+  visibility: visible !important;
+  animation: v11-real-card-arrive 230ms cubic-bezier(0.16, 0.82, 0.22, 1) both !important;
+}
+
+@keyframes v11-real-card-arrive {
+  0% { opacity: 0; filter: brightness(1.12); }
+  72% { opacity: 1; filter: brightness(1.05); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
+@media (max-height: 430px) {
+  .bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) {
+    top: 57.5% !important;
+    width: min(680px, 74vw) !important;
+    padding: 11px 26px 16px !important;
+  }
+
+  .bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-title {
+    margin-bottom: 8px !important;
+  }
+
+  .bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-options {
+    row-gap: 24px !important;
+    column-gap: 11px !important;
+  }
+
+  .player-you .name {
+    top: 40px !important;
+  }
+
+  .android-trump-title {
+    font-size: 14px !important;
+  }
+
+  .joker-announcement {
+    min-width: 154px !important;
+    padding: 8px 11px 9px !important;
+    border-radius: 14px !important;
+  }
+
+  .joker-announcement-player {
+    font-size: 10px !important;
+  }
+
+  .joker-announcement-action {
+    font-size: 19px !important;
+  }
+
+  .joker-announcement-suit {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 24px !important;
+  }
+
+  .v11-deal-deck,
+  .v11-flying-card {
+    width: 46px !important;
+    height: 64px !important;
+  }
+}
