@@ -96,3 +96,169 @@
   style.textContent = V15_CSS;
   document.head.append(style);
 })();
+
+(() => {
+  /* Android V16 performance correction — no visual or gameplay changes. */
+  const previousPlaySound = typeof playSound === "function" ? playSound : null;
+  const noiseCacheByContext = new WeakMap();
+
+  function getAudioContext() {
+    if (state.audioContext) {
+      state.audioContext.resume?.().catch(() => {});
+      return state.audioContext;
+    }
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+
+    state.audioContext = new AudioContext();
+    state.audioContext.resume?.().catch(() => {});
+    return state.audioContext;
+  }
+
+  function getNoiseClip(ctx, duration) {
+    let cache = noiseCacheByContext.get(ctx);
+    if (!cache) {
+      cache = new Map();
+      noiseCacheByContext.set(ctx, cache);
+    }
+
+    const key = Math.max(1, Math.round(duration * 1000));
+    const existing = cache.get(key);
+    if (existing) return existing;
+
+    const variants = 4;
+    const framesPerVariant = Math.max(1, Math.ceil(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, framesPerVariant * variants, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let variant = 0; variant < variants; variant += 1) {
+      const offset = variant * framesPerVariant;
+      for (let index = 0; index < framesPerVariant; index += 1) {
+        const fade = 1 - index / framesPerVariant;
+        data[offset + index] = (Math.random() * 2 - 1) * fade;
+      }
+    }
+
+    const clip = { buffer, framesPerVariant, variants };
+    cache.set(key, clip);
+    return clip;
+  }
+
+  function playCachedNoise(ctx, time, { duration, volume, filter, q = 1.1, type = "bandpass" }) {
+    const clip = getNoiseClip(ctx, duration);
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    const biquad = ctx.createBiquadFilter();
+    const variant = Math.floor(Math.random() * clip.variants);
+    const offset = (variant * clip.framesPerVariant) / ctx.sampleRate;
+
+    source.buffer = clip.buffer;
+    biquad.type = type;
+    biquad.frequency.setValueAtTime(filter, time);
+    biquad.Q.value = q;
+    gain.gain.setValueAtTime(volume * 0.84 * 1.22, time);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+    source.connect(biquad);
+    biquad.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(time, offset, duration);
+    source.stop(time + duration + 0.02);
+  }
+
+  function playFastTone(ctx, time, { frequency, endFrequency, duration, volume }) {
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(frequency, time);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), time + duration);
+    gain.gain.setValueAtTime(volume * 0.84 * 1.22, time);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start(time);
+    oscillator.stop(time + duration + 0.02);
+  }
+
+  function playFastShuffle(ctx) {
+    const now = ctx.currentTime + 0.02;
+
+    for (let index = 0; index < 18; index += 1) {
+      const time = now + index * 0.044;
+      playCachedNoise(ctx, time, {
+        duration: 0.052,
+        volume: 0.07,
+        filter: 1500 + (index % 8) * 155,
+      });
+
+      if (index % 2 === 0) {
+        playFastTone(ctx, time, {
+          frequency: 150 + index * 5,
+          endFrequency: 90,
+          duration: 0.04,
+          volume: 0.012,
+        });
+      }
+    }
+  }
+
+  function playFastDeal(ctx) {
+    const now = ctx.currentTime;
+    playCachedNoise(ctx, now, {
+      duration: 0.038,
+      volume: 0.072,
+      filter: 2300,
+      q: 0.9,
+    });
+    playFastTone(ctx, now, {
+      frequency: 255,
+      endFrequency: 118,
+      duration: 0.034,
+      volume: 0.0075,
+    });
+  }
+
+  playSound = function androidV16PlaySound(type) {
+    if (type !== "shuffle" && type !== "deal") {
+      return previousPlaySound?.(type);
+    }
+
+    if (state.autoPlay) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) {
+      return previousPlaySound?.(type);
+    }
+
+    if (type === "shuffle") {
+      playFastShuffle(ctx);
+    } else {
+      playFastDeal(ctx);
+    }
+  };
+
+  if (typeof renderScoreSheet === "function" && typeof elements !== "undefined" && elements.scoreSheet) {
+    const fullRenderScoreSheet = renderScoreSheet;
+
+    renderScoreSheet = function androidV16RenderScoreSheet() {
+      if (elements.scoreSheet.hidden) return;
+      return fullRenderScoreSheet();
+    };
+
+    const refreshVisibleScore = () => {
+      requestAnimationFrame(() => {
+        if (!elements.scoreSheet.hidden) {
+          fullRenderScoreSheet();
+        }
+      });
+    };
+
+    elements.scoreButton?.addEventListener("click", refreshVisibleScore);
+    elements.scoreClose?.addEventListener("click", refreshVisibleScore);
+
+    if (!elements.scoreSheet.hidden) {
+      fullRenderScoreSheet();
+    }
+  }
+})();
