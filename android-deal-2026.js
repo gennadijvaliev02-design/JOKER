@@ -223,6 +223,8 @@
 
   function applyHumanVisibility() {
     humanNodes().forEach((card) => {
+      card.classList.remove("is-dealt");
+      card.style.removeProperty("--deal-delay");
       card.classList.toggle("is-deal-2026-human-pending", pendingHumanIds.has(card.dataset.card));
     });
   }
