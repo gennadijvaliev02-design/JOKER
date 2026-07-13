@@ -32,15 +32,12 @@ jobs:
         run: |
           node --check android-opponent-hands.js
           node --check android-runtime-v2.js
-          node --check android-deal-v3.js
-          node --check android-deal-v4.js
           node --check android-joker-v10.js
-          node --check android-deal-v5.js
           node --check android-runtime-v11.js
           node --check android-v12.js
           node --check android-v14.js
           node --check android-v15.js
-          node --check android-v17.js
+          node --check android-deal-2026.js
 
       - name: Install Capacitor dependencies
         run: npm install
@@ -60,28 +57,63 @@ jobs:
             --exclude 'capacitor.config.json'
 
           # Android-only cache busting and edge-to-edge viewport.
-          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=15/' www/index.html
+          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=19/' www/index.html
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
           sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0/' www/index.html
 
-          # Prevent the V13 HUD observer from observing its own class/data changes.
-          sed -i 's/observer.observe(hud, { subtree: true, childList: true, characterData: true, attributes: true });/observer.observe(hud, { subtree: true, childList: true, characterData: true, attributes: false });/' www/android-runtime-v11.js
+          # Keep visual/HUD layers, but disable every older ordinary-deal installer.
+          # Android Deal 2026 is the single owner, so asynchronous layers cannot steal it back.
+          python3 - <<'PY'
+          from pathlib import Path
 
-          # Android-only visual layers. V12 remains the last static stylesheet;
-          # V13–V17 inject their focused correction layers at runtime.
+          replacements = {
+              Path('www/android-v12.js'): (
+                  '    installDealOverride();',
+                  '    /* Ordinary deal disabled: android-deal-2026.js is the only owner. */',
+              ),
+              Path('www/android-runtime-v11.js'): (
+                  '    installV13Deal();',
+                  '    /* Ordinary deal disabled: android-deal-2026.js is the only owner. */',
+              ),
+              Path('www/android-v14.js'): (
+                  '    installDeal();',
+                  '    /* Ordinary deal disabled: android-deal-2026.js is the only owner. */',
+              ),
+          }
+
+          for path, (old, new) in replacements.items():
+              text = path.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'Expected deal installer not found in {path}: {old}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          runtime = Path('www/android-runtime-v11.js')
+          text = runtime.read_text(encoding='utf-8')
+          old_observer = 'observer.observe(hud, { subtree: true, childList: true, characterData: true, attributes: true });'
+          new_observer = 'observer.observe(hud, { subtree: true, childList: true, characterData: true, attributes: false });'
+          if old_observer in text:
+              runtime.write_text(text.replace(old_observer, new_observer, 1), encoding='utf-8')
+          PY
+
+          # Android-only visual layers. Older deal-only scripts are intentionally not loaded.
           sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n    <link rel="stylesheet" href="android-fullscreen.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v8.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v9.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v10.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v11.css?v=1" />\n    <link rel="stylesheet" href="android-calm-joker-v11.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v12.css?v=1" />\n  </head>#' www/index.html
 
-          # Runtime order: V14 owns the deal, V15/V16 keep glow and performance,
-          # then V17 applies only deck placement and visible human arrivals.
-          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-deal-v3.js?v=2"></script>\n    <script src="android-deal-v4.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n    <script src="android-deal-v5.js?v=1"></script>\n    <script src="android-runtime-v11.js?v=2"></script>\n    <script src="android-v12.js?v=1"></script>\n    <script src="android-v14.js?v=1"></script>\n    <script src="android-v15.js?v=1"></script>\n    <script src="android-v17.js?v=1"></script>\n  </body>#' www/index.html
+          # Deal 2026 loads last from a new URL, preventing stale WebView cache and ownership races.
+          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n    <script src="android-runtime-v11.js?v=3"></script>\n    <script src="android-v12.js?v=2"></script>\n    <script src="android-v14.js?v=2"></script>\n    <script src="android-v15.js?v=2"></script>\n    <script src="android-deal-2026.js?v=20260714-1"></script>\n  </body>#' www/index.html
 
           grep -q 'android-ui-v12.css?v=1' www/index.html
-          grep -q 'android-runtime-v11.js?v=2' www/index.html
-          grep -q 'android-v12.js?v=1' www/index.html
-          grep -q 'android-v14.js?v=1' www/index.html
-          grep -q 'android-v15.js?v=1' www/index.html
-          grep -q 'android-v17.js?v=1' www/index.html
-          grep -q 'attributes: false' www/android-runtime-v11.js
+          grep -q 'android-runtime-v11.js?v=3' www/index.html
+          grep -q 'android-v12.js?v=2' www/index.html
+          grep -q 'android-v14.js?v=2' www/index.html
+          grep -q 'android-v15.js?v=2' www/index.html
+          grep -q 'android-deal-2026.js?v=20260714-1' www/index.html
+          ! grep -q 'android-deal-v3.js' www/index.html
+          ! grep -q 'android-deal-v4.js' www/index.html
+          ! grep -q 'android-deal-v5.js' www/index.html
+          ! grep -q 'android-v17.js' www/index.html
+          grep -q 'android-deal-2026.js is the only owner' www/android-v12.js
+          grep -q 'android-deal-2026.js is the only owner' www/android-runtime-v11.js
+          grep -q 'android-deal-2026.js is the only owner' www/android-v14.js
 
       - name: Create Android project
         run: npx cap add android
