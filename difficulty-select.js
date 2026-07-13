@@ -105,31 +105,43 @@
     applyLanguage();
     updateSelectedState();
     overlay.hidden = false;
-    requestAnimationFrame(() => overlay.classList.add("is-visible"));
-    choices.find((button) => button.dataset.aiDifficultyChoice === getCurrentDifficulty())?.focus?.();
+
+    // Let the browser paint the overlay before focus/layout work starts.
+    requestAnimationFrame(() => {
+      overlay.classList.add("is-visible");
+      requestAnimationFrame(() => {
+        choices
+          .find((button) => button.dataset.aiDifficultyChoice === getCurrentDifficulty())
+          ?.focus?.({ preventScroll: true });
+      });
+    });
   }
 
-  function closeDifficultyDialog() {
+  function closeDifficultyDialog(restoreFocus = true) {
     overlay.classList.remove("is-visible");
     window.setTimeout(() => {
       if (!overlay.classList.contains("is-visible")) {
         overlay.hidden = true;
+        if (restoreFocus) {
+          startButton.focus?.({ preventScroll: true });
+        }
       }
     }, 190);
-    startButton.focus?.();
   }
 
   function startWithDifficulty(value) {
     setDifficulty(value);
     updateSelectedState();
-    closeDifficultyDialog();
+    closeDifficultyDialog(false);
+
+    // Start the heavy game setup only after the 190ms close animation is finished.
     window.setTimeout(() => {
       if (typeof window.startGame === "function") {
         window.startGame();
       } else {
         console.warn("Difficulty selector could not find startGame()");
       }
-    }, 120);
+    }, 220);
   }
 
   startButton.addEventListener("click", (event) => {
@@ -143,17 +155,17 @@
     });
   });
 
-  backButton.addEventListener("click", closeDifficultyDialog);
+  backButton.addEventListener("click", () => closeDifficultyDialog(true));
 
   overlay.addEventListener("click", (event) => {
     if (!modal.contains(event.target)) {
-      closeDifficultyDialog();
+      closeDifficultyDialog(true);
     }
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !overlay.hidden) {
-      closeDifficultyDialog();
+      closeDifficultyDialog(true);
     }
   });
 
