@@ -2,6 +2,9 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - android-app
 
 permissions:
   contents: read
@@ -32,6 +35,8 @@ jobs:
           node --check android-deal-v3.js
           node --check android-deal-v4.js
           node --check android-joker-v10.js
+          node --check android-deal-v5.js
+          node --check android-runtime-v11.js
 
       - name: Install Capacitor dependencies
         run: npm install
@@ -50,16 +55,21 @@ jobs:
             --exclude 'package-lock.json' \
             --exclude 'capacitor.config.json'
 
-          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=13/' www/index.html
+          # Android-only cache busting and edge-to-edge viewport.
+          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=14/' www/index.html
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
           sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0/' www/index.html
 
-          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n    <link rel="stylesheet" href="android-fullscreen.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v8.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v9.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v10.css?v=1" />\n  </head>#' www/index.html
-          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-deal-v3.js?v=2"></script>\n    <script src="android-deal-v4.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n  </body>#' www/index.html
+          # Android-only visual layers. V11 is deliberately last.
+          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n    <link rel="stylesheet" href="android-fullscreen.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v8.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v9.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v10.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v11.css?v=1" />\n    <link rel="stylesheet" href="android-calm-joker-v11.css?v=1" />\n  </head>#' www/index.html
 
-          grep -q 'android-ui-v10.css' www/index.html
-          grep -q 'android-deal-v4.js?v=1' www/index.html
-          grep -q 'android-joker-v10.js?v=1' www/index.html
+          # Android-only runtime overrides. V11 deal owns the final animation hook.
+          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-deal-v3.js?v=2"></script>\n    <script src="android-deal-v4.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n    <script src="android-deal-v5.js?v=1"></script>\n    <script src="android-runtime-v11.js?v=1"></script>\n  </body>#' www/index.html
+
+          grep -q 'android-ui-v11.css?v=1' www/index.html
+          grep -q 'android-calm-joker-v11.css?v=1' www/index.html
+          grep -q 'android-deal-v5.js?v=1' www/index.html
+          grep -q 'android-runtime-v11.js?v=1' www/index.html
 
       - name: Create Android project
         run: npx cap add android
