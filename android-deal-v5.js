@@ -194,7 +194,10 @@
         fill: "forwards",
       });
 
+      let finished = false;
       const finish = () => {
+        if (finished) return;
+        finished = true;
         revealTarget(target, seat);
         card.remove();
       };
