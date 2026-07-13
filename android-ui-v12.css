@@ -1,0 +1,404 @@
+/*
+ * Android UI V12 — only the approved real-device corrections.
+ * Loaded last in the APK. Web/main remains untouched.
+ */
+
+/* ---------- Raise only the human identity cluster ---------- */
+.player-you {
+  bottom: clamp(17px, 3.2vh, 27px) !important;
+}
+
+/* ---------- Shared premium glass language from the web build ---------- */
+.bid-panel.is-v12-order-panel,
+.bid-panel.is-v12-trump-panel,
+.bid-panel.is-v12-joker-suit-panel,
+.bid-panel.is-v12-joker-command-panel,
+.bid-panel.is-v12-joker-mode-panel {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: auto !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - var(--android-safe-left, 0px) - var(--android-safe-right, 0px) - 34px) !important;
+  overflow: visible !important;
+  border: 1.5px solid rgba(226, 194, 111, 0.78) !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.105), transparent 24%),
+    radial-gradient(circle at 50% -34%, rgba(222, 181, 88, 0.30), transparent 45%),
+    radial-gradient(circle at 15% 10%, rgba(56, 255, 205, 0.16), transparent 35%),
+    radial-gradient(circle at 88% 86%, rgba(20, 110, 86, 0.28), transparent 38%),
+    linear-gradient(145deg, rgba(15, 42, 37, 0.975), rgba(7, 11, 17, 0.99) 52%, rgba(17, 24, 29, 0.98)) !important;
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 24px rgba(220, 178, 77, 0.14),
+    0 0 28px rgba(29, 205, 164, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -22px 36px rgba(0, 0, 0, 0.31) !important;
+  backdrop-filter: blur(14px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+  transform: translate(-50%, -50%) !important;
+  animation: v12-panel-pop 190ms ease-out both !important;
+}
+
+.bid-panel.is-v12-order-panel::before,
+.bid-panel.is-v12-trump-panel::before,
+.bid-panel.is-v12-joker-suit-panel::before,
+.bid-panel.is-v12-joker-command-panel::before,
+.bid-panel.is-v12-joker-mode-panel::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 7px !important;
+  display: block !important;
+  border: 1px solid rgba(103, 255, 211, 0.12) !important;
+  border-radius: 18px !important;
+  pointer-events: none !important;
+}
+
+@keyframes v12-panel-pop {
+  from { opacity: 0; transform: translate(-50%, calc(-50% - 8px)) scale(0.985); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.bid-panel[class*="is-v12-"] .bid-title {
+  margin: 0 42px 15px !important;
+  color: #f2d48a !important;
+  font-size: clamp(18px, 1.75vw, 22px) !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.07em !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.78), 0 0 16px rgba(214, 164, 72, 0.30) !important;
+}
+
+.bid-panel[class*="is-v12-"] .bid-options {
+  display: grid !important;
+  margin: 0 !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+}
+
+.bid-panel[class*="is-v12-"] .bid-option {
+  width: 100% !important;
+  margin: 0 !important;
+  border: 1.4px solid rgba(91, 234, 204, 0.64) !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.095), transparent 32%),
+    radial-gradient(circle at 50% -20%, rgba(75, 255, 207, 0.17), transparent 42%),
+    linear-gradient(180deg, rgba(29, 67, 61, 0.97), rgba(12, 23, 26, 0.995)) !important;
+  color: #f8fff9 !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.75) !important;
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.42),
+    0 0 12px rgba(45, 224, 184, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -11px 18px rgba(0, 0, 0, 0.30) !important;
+  touch-action: manipulation !important;
+}
+
+/* ---------- Restore the stable old order window ---------- */
+.bid-panel.is-v12-order-panel {
+  top: 50% !important;
+  width: min(570px, 58vw) !important;
+  padding: 18px 24px 20px !important;
+}
+
+.bid-panel.is-v12-order-panel .bid-options {
+  grid-template-columns: repeat(5, minmax(72px, 1fr)) !important;
+  column-gap: 12px !important;
+  row-gap: 17px !important;
+}
+
+.bid-panel.is-v12-order-panel .bid-option {
+  min-width: 0 !important;
+  min-height: 58px !important;
+  padding: 9px 12px !important;
+  font-size: 21px !important;
+}
+
+.bid-panel.is-v12-order-panel .bid-option[data-bid="pass"] {
+  border-color: rgba(211, 93, 93, 0.72) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 32%),
+    radial-gradient(circle at 50% -20%, rgba(255, 91, 91, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(76, 25, 31, 0.97), rgba(25, 12, 16, 0.99)) !important;
+  color: #f4d7d7 !important;
+  font-size: 17px !important;
+}
+
+/* ---------- Trump selection: web version, one row of 4 suits + No Trump ---------- */
+.bid-panel.is-v12-trump-panel {
+  top: 51% !important;
+  width: min(720px, 72vw) !important;
+  padding: 21px 27px 23px !important;
+}
+
+.bid-panel.is-v12-trump-panel .bid-options {
+  grid-template-columns: repeat(5, minmax(82px, 1fr)) !important;
+  gap: 17px !important;
+}
+
+.bid-panel.is-v12-trump-panel .bid-option[data-trump] {
+  min-width: 0 !important;
+  min-height: 62px !important;
+  padding: 4px 14px 6px !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 39px !important;
+}
+
+.bid-panel.is-v12-trump-panel .bid-option[data-trump="hearts"],
+.bid-panel.is-v12-trump-panel .bid-option[data-trump="diamonds"] {
+  color: #ff6574 !important;
+}
+
+.bid-panel.is-v12-trump-panel .bid-option[data-trump="clubs"],
+.bid-panel.is-v12-trump-panel .bid-option[data-trump="spades"] {
+  color: #eef7f2 !important;
+}
+
+.bid-panel.is-v12-trump-panel .bid-option[data-trump="no-trump"] {
+  color: #f2d48a !important;
+  font-size: 24px !important;
+  letter-spacing: 0.02em !important;
+  border-color: rgba(226, 194, 111, 0.68) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 32%),
+    radial-gradient(circle at 50% -18%, rgba(226, 194, 111, 0.24), transparent 42%),
+    linear-gradient(180deg, rgba(70, 57, 31, 0.94), rgba(17, 18, 16, 0.99)) !important;
+}
+
+/* ---------- Joker High / Take: same window, exactly four equal suit buttons ---------- */
+.bid-panel.is-v12-joker-suit-panel {
+  top: 59% !important;
+  width: min(590px, 61vw) !important;
+  padding: 20px 26px 23px !important;
+}
+
+.bid-panel.is-v12-joker-suit-panel .bid-options {
+  grid-template-columns: repeat(4, minmax(92px, 1fr)) !important;
+  gap: 17px !important;
+}
+
+.bid-panel.is-v12-joker-suit-panel .android-joker-suit-option {
+  min-width: 0 !important;
+  min-height: 76px !important;
+  padding: 5px !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.bid-panel.is-v12-joker-suit-panel .android-joker-suit-symbol {
+  font-size: clamp(43px, 4.5vw, 56px) !important;
+  line-height: 0.9 !important;
+}
+
+.bid-panel.is-v12-joker-suit-panel .android-joker-suit-name {
+  display: none !important;
+}
+
+/* ---------- Take/High and Duck/Beat share the same glass family ---------- */
+.bid-panel.is-v12-joker-command-panel,
+.bid-panel.is-v12-joker-mode-panel {
+  top: 59% !important;
+  width: min(500px, 54vw) !important;
+  padding: 20px 25px 23px !important;
+}
+
+.bid-panel.is-v12-joker-command-panel .bid-options,
+.bid-panel.is-v12-joker-mode-panel .bid-options {
+  grid-template-columns: repeat(2, minmax(150px, 1fr)) !important;
+  gap: 22px !important;
+}
+
+.bid-panel.is-v12-joker-command-panel .bid-option,
+.bid-panel.is-v12-joker-mode-panel .bid-option {
+  min-height: 72px !important;
+  padding: 12px 18px !important;
+  font-size: clamp(18px, 1.8vw, 23px) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 31%),
+    radial-gradient(circle at 50% -12%, rgba(76, 255, 207, 0.25), transparent 48%),
+    linear-gradient(155deg, rgba(20, 103, 76, 0.98), rgba(4, 39, 32, 0.995)) !important;
+  border-color: rgba(101, 255, 211, 0.74) !important;
+  box-shadow:
+    0 12px 25px rgba(0, 0, 0, 0.43),
+    0 0 18px rgba(52, 238, 184, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.19),
+    inset 0 -12px 20px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* Cancel belongs only to Joker decisions, never to order or trump. */
+.bid-panel.is-v12-order-panel .android-joker-cancel,
+.bid-panel.is-v12-trump-panel .android-joker-cancel {
+  display: none !important;
+}
+
+/* ---------- New deal: real cards stay as backs, then lift together ---------- */
+.hand .card.is-dealt {
+  animation: none !important;
+}
+
+.v12-deal-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 30 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+.v12-deal-deck {
+  position: absolute !important;
+  left: 50% !important;
+  top: 47% !important;
+  width: 50px !important;
+  height: 70px !important;
+  transform: translate(-50%, -50%) rotate(-1deg) !important;
+  opacity: 1 !important;
+}
+
+.v12-flying-card {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 50px !important;
+  height: 70px !important;
+  margin: 0 !important;
+  animation: none !important;
+  transform: none !important;
+  transform-origin: center !important;
+  will-change: transform, opacity, filter;
+}
+
+.hand .card.is-v12-deal-pending,
+.hidden-cards span.is-v12-deal-pending {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  animation: none !important;
+  pointer-events: none !important;
+}
+
+.hand .card.is-v12-facedown {
+  position: relative !important;
+  overflow: hidden !important;
+  color: transparent !important;
+}
+
+.hand .card.is-v12-facedown > * {
+  opacity: 0 !important;
+}
+
+.hand .card.is-v12-facedown::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 20 !important;
+  display: block !important;
+  border: 1px solid #efe7d7 !important;
+  border-radius: inherit !important;
+  background-image: var(--card-back-image, url("cards/card_pack.png")) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 132% auto !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.42) !important;
+}
+
+.hand .card.is-v12-hand-lift {
+  animation: v12-hand-lift 430ms cubic-bezier(.16,.82,.22,1) both !important;
+  transform-origin: center bottom !important;
+}
+
+@keyframes v12-hand-lift {
+  0% { opacity: .94; transform: translateY(12px) rotateX(24deg) scale(.97); filter: brightness(.9); }
+  58% { opacity: 1; transform: translateY(-10px) rotateX(0) scale(1.025); filter: brightness(1.08); }
+  100% { opacity: 1; transform: translateY(0) rotateX(0) scale(1); filter: brightness(1); }
+}
+
+.table.is-v12-dealing > .deal-deck,
+.table.is-v12-dealing > .deal-flight-layer:not(.v12-deal-layer) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+@media (max-height: 430px) {
+  .player-you {
+    bottom: 14px !important;
+  }
+
+  .bid-panel.is-v12-order-panel {
+    top: 49% !important;
+    width: min(540px, 61vw) !important;
+    padding: 12px 19px 14px !important;
+  }
+
+  .bid-panel.is-v12-order-panel .bid-title {
+    margin-bottom: 9px !important;
+    font-size: 17px !important;
+  }
+
+  .bid-panel.is-v12-order-panel .bid-options {
+    column-gap: 10px !important;
+    row-gap: 13px !important;
+  }
+
+  .bid-panel.is-v12-order-panel .bid-option {
+    min-height: 48px !important;
+    font-size: 18px !important;
+  }
+
+  .bid-panel.is-v12-trump-panel {
+    top: 53% !important;
+    width: min(610px, 72vw) !important;
+    padding: 13px 19px 15px !important;
+  }
+
+  .bid-panel.is-v12-trump-panel .bid-options {
+    gap: 11px !important;
+  }
+
+  .bid-panel.is-v12-trump-panel .bid-option[data-trump] {
+    min-height: 52px !important;
+    font-size: 34px !important;
+  }
+
+  .bid-panel.is-v12-trump-panel .bid-option[data-trump="no-trump"] {
+    font-size: 19px !important;
+  }
+
+  .bid-panel.is-v12-joker-suit-panel,
+  .bid-panel.is-v12-joker-command-panel,
+  .bid-panel.is-v12-joker-mode-panel {
+    top: 60% !important;
+    padding: 12px 18px 14px !important;
+  }
+
+  .bid-panel.is-v12-joker-suit-panel {
+    width: min(550px, 67vw) !important;
+  }
+
+  .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option {
+    min-height: 58px !important;
+  }
+
+  .bid-panel.is-v12-joker-command-panel,
+  .bid-panel.is-v12-joker-mode-panel {
+    width: min(430px, 54vw) !important;
+  }
+
+  .bid-panel.is-v12-joker-command-panel .bid-option,
+  .bid-panel.is-v12-joker-mode-panel .bid-option {
+    min-height: 56px !important;
+    font-size: 17px !important;
+  }
+
+  .v12-deal-deck,
+  .v12-flying-card {
+    width: 46px !important;
+    height: 64px !important;
+  }
+}
