@@ -2,9 +2,6 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - android-app
 
 permissions:
   contents: read
@@ -53,12 +50,10 @@ jobs:
             --exclude 'package-lock.json' \
             --exclude 'capacitor.config.json'
 
-          # Android-only cache busting and full edge-to-edge viewport.
           sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=13/' www/index.html
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
           sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0/' www/index.html
 
-          # Consolidated Android-only table, composition, motion and fullscreen layers.
           sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n    <link rel="stylesheet" href="android-fullscreen.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v8.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v9.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v10.css?v=1" />\n  </head>#' www/index.html
           sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-deal-v3.js?v=2"></script>\n    <script src="android-deal-v4.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n  </body>#' www/index.html
 
@@ -89,7 +84,6 @@ jobs:
               )
           manifest_path.write_text(manifest, encoding='utf-8')
 
-          # Make the native theme draw behind status/navigation bars and cutouts.
           styles_path = Path('android/app/src/main/res/values/styles.xml')
           tree = ET.parse(styles_path)
           root = tree.getroot()
