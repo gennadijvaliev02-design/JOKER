@@ -40,6 +40,7 @@ jobs:
           node --check android-v12.js
           node --check android-v14.js
           node --check android-v15.js
+          node --check android-v17.js
 
       - name: Install Capacitor dependencies
         run: npm install
@@ -67,17 +68,19 @@ jobs:
           sed -i 's/observer.observe(hud, { subtree: true, childList: true, characterData: true, attributes: true });/observer.observe(hud, { subtree: true, childList: true, characterData: true, attributes: false });/' www/android-runtime-v11.js
 
           # Android-only visual layers. V12 remains the last static stylesheet;
-          # V13–V15 inject their focused correction layers at runtime.
+          # V13–V17 inject their focused correction layers at runtime.
           sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=1" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=1" />\n    <link rel="stylesheet" href="android-fullscreen.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v8.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v9.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v10.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v11.css?v=1" />\n    <link rel="stylesheet" href="android-calm-joker-v11.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v12.css?v=1" />\n  </head>#' www/index.html
 
-          # Runtime order: V14 keeps the deal animation; V15 loads last and changes only glow.
-          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-deal-v3.js?v=2"></script>\n    <script src="android-deal-v4.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n    <script src="android-deal-v5.js?v=1"></script>\n    <script src="android-runtime-v11.js?v=2"></script>\n    <script src="android-v12.js?v=1"></script>\n    <script src="android-v14.js?v=1"></script>\n    <script src="android-v15.js?v=1"></script>\n  </body>#' www/index.html
+          # Runtime order: V14 owns the deal, V15/V16 keep glow and performance,
+          # then V17 applies only deck placement and visible human arrivals.
+          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-deal-v3.js?v=2"></script>\n    <script src="android-deal-v4.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n    <script src="android-deal-v5.js?v=1"></script>\n    <script src="android-runtime-v11.js?v=2"></script>\n    <script src="android-v12.js?v=1"></script>\n    <script src="android-v14.js?v=1"></script>\n    <script src="android-v15.js?v=1"></script>\n    <script src="android-v17.js?v=1"></script>\n  </body>#' www/index.html
 
           grep -q 'android-ui-v12.css?v=1' www/index.html
           grep -q 'android-runtime-v11.js?v=2' www/index.html
           grep -q 'android-v12.js?v=1' www/index.html
           grep -q 'android-v14.js?v=1' www/index.html
           grep -q 'android-v15.js?v=1' www/index.html
+          grep -q 'android-v17.js?v=1' www/index.html
           grep -q 'attributes: false' www/android-runtime-v11.js
 
       - name: Create Android project
