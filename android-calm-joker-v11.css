@@ -12,3 +12,14 @@
   display: none !important;
   animation: none !important;
 }
+
+/* During the new deal only the centered V11 deck is visible. */
+.table.is-v11-dealing > .deal-deck {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.table.is-v11-dealing .v11-deal-layer .v11-deal-deck {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
