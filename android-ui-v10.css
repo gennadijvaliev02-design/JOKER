@@ -1,0 +1,289 @@
+/*
+ * Android UI V10 — unified Joker controls and synchronized two-stage deal.
+ * Loaded only by the Android APK after all earlier UI layers.
+ */
+
+/* ---------- Real dealt cards reveal only when the flying card lands ---------- */
+.hand .card.is-deal-pending,
+.hidden-cards span.is-deal-pending {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  animation: none !important;
+  pointer-events: none !important;
+}
+
+.hand .card.is-deal-arrived,
+.hidden-cards span.is-deal-arrived {
+  visibility: visible !important;
+  animation: android-real-card-arrive 300ms cubic-bezier(0.16, 0.82, 0.22, 1) both !important;
+}
+
+@keyframes android-real-card-arrive {
+  0% {
+    opacity: 0;
+    filter: brightness(1.18) blur(0.5px);
+  }
+  65% {
+    opacity: 1;
+    filter: brightness(1.08) blur(0);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1) blur(0);
+  }
+}
+
+/* ---------- Unified dark-green glass Joker flow ---------- */
+.bid-panel.is-android-joker-panel {
+  position: absolute !important;
+  left: 50% !important;
+  top: 62% !important;
+  bottom: auto !important;
+  width: min(610px, 66vw) !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - var(--android-safe-left) - var(--android-safe-right) - 34px) !important;
+  max-height: 49vh !important;
+  padding: 18px 24px 21px !important;
+  overflow: visible !important;
+  border: 1.5px solid rgba(108, 255, 211, 0.62) !important;
+  border-radius: 23px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 25%),
+    radial-gradient(circle at 18% 4%, rgba(62, 255, 194, 0.19), transparent 38%),
+    radial-gradient(circle at 86% 100%, rgba(0, 122, 88, 0.29), transparent 42%),
+    linear-gradient(145deg, rgba(12, 68, 52, 0.965), rgba(4, 31, 27, 0.982) 54%, rgba(2, 18, 19, 0.99)) !important;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.58),
+    0 0 24px rgba(47, 231, 177, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -18px 32px rgba(0, 0, 0, 0.27) !important;
+  backdrop-filter: blur(15px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(15px) saturate(1.08) !important;
+  transform: translate(-50%, -50%) !important;
+  animation: android-joker-panel-enter 210ms cubic-bezier(0.16, 0.82, 0.22, 1) both !important;
+  z-index: 22 !important;
+}
+
+.bid-panel.is-android-joker-panel::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(121, 255, 219, 0.13);
+  border-radius: 17px;
+  pointer-events: none;
+}
+
+.bid-panel.is-android-joker-panel .bid-title {
+  margin: 0 42px 15px !important;
+  color: #fff0ad !important;
+  font-size: clamp(17px, 1.75vw, 22px) !important;
+  font-weight: 950 !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: none !important;
+  text-align: center !important;
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.78),
+    0 0 16px rgba(255, 224, 117, 0.22) !important;
+}
+
+.bid-panel.is-android-joker-panel .bid-options {
+  display: grid !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+.bid-panel.is-joker-command-panel,
+.bid-panel.is-joker-mode-panel {
+  width: min(500px, 58vw) !important;
+}
+
+.bid-panel.is-joker-command-panel .bid-options,
+.bid-panel.is-joker-mode-panel .bid-options {
+  grid-template-columns: repeat(2, minmax(150px, 1fr)) !important;
+  gap: clamp(15px, 2vw, 24px) !important;
+}
+
+.bid-panel.is-joker-suit-panel .bid-options {
+  grid-template-columns: repeat(4, minmax(88px, 1fr)) !important;
+  gap: clamp(12px, 1.35vw, 18px) !important;
+}
+
+.bid-panel.is-android-joker-panel .bid-option {
+  width: 100% !important;
+  margin: 0 !important;
+  border: 1.4px solid rgba(89, 240, 198, 0.60) !important;
+  border-radius: 17px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 31%),
+    radial-gradient(circle at 50% -16%, rgba(70, 255, 202, 0.18), transparent 44%),
+    linear-gradient(160deg, rgba(23, 92, 71, 0.96), rgba(5, 31, 29, 0.99)) !important;
+  color: #f6fff9 !important;
+  box-shadow:
+    0 11px 22px rgba(0, 0, 0, 0.38),
+    0 0 13px rgba(46, 228, 178, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -10px 16px rgba(0, 0, 0, 0.23) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72) !important;
+  transition:
+    transform 130ms ease,
+    border-color 150ms ease,
+    filter 150ms ease,
+    box-shadow 150ms ease !important;
+  touch-action: manipulation;
+}
+
+.android-joker-command-option,
+.android-joker-mode-option {
+  min-width: 0 !important;
+  min-height: 72px !important;
+  padding: 12px 18px !important;
+  font-size: clamp(17px, 1.7vw, 22px) !important;
+  font-weight: 950 !important;
+}
+
+.android-joker-command-option.is-take {
+  border-color: rgba(255, 224, 116, 0.68) !important;
+  color: #fff0ad !important;
+}
+
+.android-joker-suit-option {
+  min-width: 0 !important;
+  min-height: 84px !important;
+  padding: 7px 8px 8px !important;
+  display: grid !important;
+  grid-template-rows: 49px auto !important;
+  place-items: center !important;
+  gap: 1px !important;
+}
+
+.android-joker-suit-symbol {
+  font-size: clamp(38px, 4.1vw, 52px);
+  font-weight: 900;
+  line-height: 0.92;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.34));
+}
+
+.android-joker-suit-name {
+  color: rgba(235, 255, 246, 0.78);
+  font-size: clamp(8px, 0.82vw, 11px);
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.android-joker-suit-option.is-red .android-joker-suit-symbol {
+  color: #ff5368;
+  text-shadow: 0 0 15px rgba(255, 60, 86, 0.22);
+}
+
+.android-joker-suit-option.is-black .android-joker-suit-symbol {
+  color: #ecf5f1;
+  text-shadow: 0 0 13px rgba(255, 255, 255, 0.12);
+}
+
+.bid-panel.is-android-joker-panel .bid-option:not(:disabled):active,
+.bid-panel.is-android-joker-panel .bid-option.is-confirming {
+  transform: translateY(2px) scale(0.97) !important;
+  border-color: rgba(255, 231, 141, 0.94) !important;
+  filter: brightness(1.12) !important;
+  box-shadow:
+    0 5px 13px rgba(0, 0, 0, 0.42),
+    0 0 22px rgba(255, 221, 104, 0.20),
+    inset 0 2px 7px rgba(0, 0, 0, 0.30) !important;
+}
+
+.android-joker-cancel {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(145, 255, 224, 0.42);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.14), transparent 36%),
+    rgba(4, 28, 27, 0.92);
+  color: rgba(244, 255, 250, 0.92);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow:
+    0 8px 17px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  z-index: 3;
+  touch-action: manipulation;
+}
+
+.android-joker-cancel:active {
+  transform: scale(0.92);
+  border-color: rgba(255, 230, 139, 0.80);
+  color: #fff0ad;
+}
+
+@keyframes android-joker-panel-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 13px)) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ---------- Compact landscape phones ---------- */
+@media (max-height: 430px) {
+  .bid-panel.is-android-joker-panel {
+    top: 61% !important;
+    width: min(560px, 72vw) !important;
+    max-height: 52vh !important;
+    padding: 12px 18px 14px !important;
+    border-radius: 19px !important;
+  }
+
+  .bid-panel.is-joker-command-panel,
+  .bid-panel.is-joker-mode-panel {
+    width: min(440px, 59vw) !important;
+  }
+
+  .bid-panel.is-android-joker-panel .bid-title {
+    margin-bottom: 9px !important;
+    font-size: 16px !important;
+  }
+
+  .android-joker-command-option,
+  .android-joker-mode-option {
+    min-height: 59px !important;
+    font-size: 17px !important;
+  }
+
+  .android-joker-suit-option {
+    min-height: 67px !important;
+    grid-template-rows: 39px auto !important;
+  }
+
+  .android-joker-suit-symbol {
+    font-size: 37px !important;
+  }
+
+  .android-joker-cancel {
+    top: 7px;
+    right: 8px;
+    width: 31px;
+    height: 31px;
+    font-size: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bid-panel.is-android-joker-panel,
+  .hand .card.is-deal-arrived,
+  .hidden-cards span.is-deal-arrived {
+    animation-duration: 1ms !important;
+  }
+}
