@@ -1,17 +1,16 @@
 (() => {
+  "use strict";
+
+  const SEATS = ["left", "top", "right"];
+  const stacksBySeat = Object.fromEntries(
+    SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]),
+  );
+  const renderedCounts = new WeakMap();
+
   function getStackMetrics(count) {
-    if (count >= 9) {
-      return { scale: 0.94, overlap: -7, angle: 1.05 };
-    }
-
-    if (count >= 7) {
-      return { scale: 0.98, overlap: -6, angle: 1.15 };
-    }
-
-    if (count >= 5) {
-      return { scale: 1.02, overlap: -5, angle: 1.3 };
-    }
-
+    if (count >= 9) return { scale: 0.94, overlap: -7, angle: 1.05 };
+    if (count >= 7) return { scale: 0.98, overlap: -6, angle: 1.15 };
+    if (count >= 5) return { scale: 1.02, overlap: -5, angle: 1.3 };
     return { scale: 1.06, overlap: -3, angle: 1.55 };
   }
 
@@ -22,15 +21,13 @@
       stack.append(card);
     }
 
-    while (stack.children.length > count) {
-      stack.lastElementChild?.remove();
-    }
+    while (stack.children.length > count) stack.lastElementChild?.remove();
   }
 
   function applyFanGeometry(stack, seat, count, angle) {
     const middle = (count - 1) / 2;
 
-    [...stack.children].forEach((card, index) => {
+    Array.from(stack.children).forEach((card, index) => {
       const offset = index - middle;
       const distance = Math.abs(offset);
       let shiftX = 0;
@@ -67,17 +64,22 @@
   }
 
   renderOpponentCardStacks = function renderResponsiveOpponentCardStacks() {
-    for (const seat of ["left", "top", "right"]) {
-      const player = state.players.find((candidate) => candidate.seat === seat);
-      const stack = document.querySelector(`.${seat}-stack`);
+    const playersBySeat = new Map(state.players.map((player) => [player.seat, player]));
 
-      if (!stack) {
-        continue;
-      }
+    for (const seat of SEATS) {
+      const stack = stacksBySeat[seat];
+      if (!stack) continue;
 
+      const player = playersBySeat.get(seat);
       const cardCount = player ? state.hands[player.id]?.length || 0 : 0;
+      const countIsCurrent = renderedCounts.get(stack) === cardCount
+        && stack.children.length === cardCount;
+
+      if (countIsCurrent) continue;
+
       syncStackChildren(stack, cardCount);
       updateStackPresentation(stack, seat, cardCount);
+      renderedCounts.set(stack, cardCount);
     }
   };
 
