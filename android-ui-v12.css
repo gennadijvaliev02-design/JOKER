@@ -3,6 +3,12 @@
  * Obsolete V12 ordinary-deal styles were removed.
  */
 
+/* Keep the felt highlight as a cheap gradient instead of a permanent full-table blur. */
+.felt-glow {
+  filter: none !important;
+  background: radial-gradient(ellipse at 50% 46%, rgba(0, 255, 181, 0.12), transparent 63%) !important;
+}
+
 /* ---------- Raise only the human identity cluster ---------- */
 .player-you {
   bottom: clamp(17px, 3.2vh, 27px) !important;
@@ -35,8 +41,8 @@
     0 0 28px rgba(29, 205, 164, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     inset 0 -22px 36px rgba(0, 0, 0, 0.31) !important;
-  backdrop-filter: blur(14px) saturate(1.08) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   transform: translate(-50%, -50%) !important;
   animation: v12-panel-pop 190ms ease-out both !important;
 }
@@ -267,7 +273,7 @@
   .bid-panel.is-v12-trump-panel {
     top: 53% !important;
     width: min(610px, 72vw) !important;
-    padding: 13px 19px 15px !important;
+    padding: 12px 18px 14px !important;
   }
 
   .bid-panel.is-v12-trump-panel .bid-options {
