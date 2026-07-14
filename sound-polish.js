@@ -4,6 +4,7 @@
   const MASTER_VOLUME = 0.84;
   const SFX_VOLUME = 1.22;
   const NOISE_VARIANTS = 4;
+  const MUTED_SOUND_TYPES = new Set(["joker", "jokerCollect"]);
   const noiseCacheByContext = new WeakMap();
 
   function getContext() {
@@ -140,36 +141,6 @@
     playTone(ctx, now + 0.095, { frequency: 660, endFrequency: 880, duration: 0.08, type: "sine", volume: 0.01 });
   }
 
-  function playJoker(ctx) {
-    const now = ctx.currentTime;
-    playNoise(ctx, now, { duration: 0.055, volume: 0.105, filter: 5200, q: 2.4, type: "highpass" });
-    playTone(ctx, now, { frequency: 196, endFrequency: 98, duration: 0.06, type: "sawtooth", volume: 0.018 });
-    playTone(ctx, now + 0.018, { frequency: 740, endFrequency: 1480, duration: 0.075, type: "square", volume: 0.018 });
-    playTone(ctx, now + 0.052, { frequency: 1480, endFrequency: 988, duration: 0.065, type: "triangle", volume: 0.012 });
-  }
-
-  function playJokerCollect(ctx) {
-    const now = ctx.currentTime;
-
-    playNoise(ctx, now, { duration: 0.34, volume: 0.155, filter: 7600, q: 3.2, type: "highpass" });
-    playNoise(ctx, now + 0.045, { duration: 0.22, volume: 0.085, filter: 11800, q: 4.6, type: "bandpass" });
-
-    for (let index = 0; index < 18; index += 1) {
-      const time = now + 0.018 + index * 0.014;
-      const frequency = 1450 + Math.random() * 4200;
-      playTone(ctx, time, {
-        frequency,
-        endFrequency: frequency * (1.35 + Math.random() * 0.65),
-        duration: 0.026 + Math.random() * 0.018,
-        type: index % 3 === 0 ? "square" : "triangle",
-        volume: 0.0065 + Math.random() * 0.007,
-      });
-    }
-
-    playTone(ctx, now + 0.035, { frequency: 880, endFrequency: 1760, duration: 0.13, type: "triangle", volume: 0.013 });
-    playTone(ctx, now + 0.12, { frequency: 1760, endFrequency: 988, duration: 0.17, type: "sine", volume: 0.009 });
-  }
-
   const SOUND_PLAYERS = {
     shuffle: playShuffle,
     deal: playDeal,
@@ -178,13 +149,11 @@
     trump: playTrump,
     bidSelect: playBidSelect,
     trumpSelect: playTrumpSelect,
-    joker: playJoker,
-    jokerCollect: playJokerCollect,
   };
 
   const originalPlaySound = playSound;
   playSound = function polishedPlaySound(type) {
-    if (state.autoPlay) return;
+    if (state.autoPlay || MUTED_SOUND_TYPES.has(type)) return;
 
     const ctx = getContext();
     if (!ctx) return originalPlaySound?.(type);
