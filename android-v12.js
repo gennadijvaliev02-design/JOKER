@@ -25,6 +25,11 @@
     elements?.bidPanel?.classList.remove(...PANEL_CLASSES);
   }
 
+  function clearLegacyJokerPanel() {
+    window.AndroidJokerPanel?.clearClasses?.();
+    window.AndroidJokerPanel?.hideCancel?.();
+  }
+
   function cleanSuitGlyph(value) {
     return String(value || "")
       .replace(/\uFE0F/g, "")
@@ -106,6 +111,10 @@
     const cancel = panel.querySelector("[data-joker-cancel]");
     if (cancel) cancel.hidden = kind === "order" || kind === "trump";
 
+    if (kind === "order" || kind === "trump") {
+      window.AndroidJokerPanel?.clearClasses?.();
+    }
+
     if (kind === "joker-suit") {
       elements.bidTitle.textContent = state.pendingJokerCommand === "take" ? "Берёт" : "Высший";
       elements.bidOptions.querySelectorAll(".android-joker-suit-name").forEach((name) => name.remove());
@@ -135,6 +144,7 @@
 
       if (!panel || panel.hidden || !kind) {
         clearV12PanelClasses();
+        clearLegacyJokerPanel();
         return result;
       }
 
