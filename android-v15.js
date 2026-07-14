@@ -54,8 +54,8 @@
     };
   }
 
-  window.setTimeout(installHandRenderCache, 520);
-  window.addEventListener("load", () => window.setTimeout(installHandRenderCache, 520), { once: true });
+  installHandRenderCache();
+  window.addEventListener("load", installHandRenderCache, { once: true });
 })();
 
 (() => {
