@@ -19,6 +19,7 @@
   ].join(",");
 
   let installed = false;
+  let lastPanelKey = null;
 
   function clearV12PanelClasses() {
     elements?.bidPanel?.classList.remove(...PANEL_CLASSES);
@@ -73,9 +74,31 @@
     });
   }
 
+  function getPanelKind() {
+    if (state.phase === "joker-lead-command" && state.activePlayerId === "human") return "joker-command";
+    if (state.phase === "joker-lead-suit" && state.activePlayerId === "human") return "joker-suit";
+    if (state.phase === "joker-mode" && state.activePlayerId === "human") return "joker-mode";
+    if (state.phase === "trump-select" && state.trumpChooserId === "human") return "trump";
+    if (state.phase === "bidding" && getCurrentBidderId?.() === "human") return "order";
+    return null;
+  }
+
+  function getPanelKey(kind) {
+    if (kind === "order") {
+      return `order:${state.biddingIndex}:${state.biddingOrder.length}:${getOrderedBidTotal?.() ?? ""}`;
+    }
+    if (kind === "trump") return `trump:${state.trumpChooserId || ""}`;
+    if (kind === "joker-suit") {
+      return `joker-suit:${state.pendingJokerCardId || ""}:${state.pendingJokerCommand || ""}`;
+    }
+    if (kind === "joker-command") return `joker-command:${state.pendingJokerCardId || ""}`;
+    if (kind === "joker-mode") return `joker-mode:${state.pendingJokerCardId || ""}`;
+    return `hidden:${state.phase}:${state.activePlayerId || ""}:${state.trumpChooserId || ""}`;
+  }
+
   function decoratePanel(kind) {
     const panel = elements?.bidPanel;
-    if (!panel) return;
+    if (!panel || !kind) return;
 
     clearV12PanelClasses();
     panel.classList.add(`is-v12-${kind}-panel`);
@@ -83,69 +106,39 @@
     const cancel = panel.querySelector("[data-joker-cancel]");
     if (cancel) cancel.hidden = kind === "order" || kind === "trump";
 
+    if (kind === "joker-suit") {
+      elements.bidTitle.textContent = state.pendingJokerCommand === "take" ? "Берёт" : "Высший";
+      elements.bidOptions.querySelectorAll(".android-joker-suit-name").forEach((name) => name.remove());
+    }
+
     if (kind === "trump" || kind === "joker-suit") {
       normalizeSuitGlyphs(panel);
       paintSilverSuits(panel);
     }
   }
 
-  function installPanelOverrides() {
-    const originalTrumpSelection = renderTrumpSelection;
-    const originalJokerSuitSelection = renderLeadJokerSuitSelection;
-    const originalJokerCommandSelection = renderLeadJokerCommandSelection;
-    const originalJokerModeSelection = renderJokerModeSelection;
+  function installPanelOverride() {
     const originalRenderBidding = renderBidding;
 
-    renderTrumpSelection = function renderV12TrumpSelection(...args) {
-      const result = originalTrumpSelection.apply(this, args);
-      decoratePanel("trump");
-      return result;
-    };
+    renderBidding = function renderCachedV12Bidding(...args) {
+      const panel = elements?.bidPanel;
+      const kind = getPanelKind();
+      const key = getPanelKey(kind);
+      const currentDomIsUsable = kind
+        ? Boolean(panel && !panel.hidden && elements.bidOptions?.childElementCount)
+        : Boolean(panel?.hidden && !elements.bidOptions?.childElementCount);
 
-    renderLeadJokerSuitSelection = function renderV12JokerSuitSelection(...args) {
-      const result = originalJokerSuitSelection.apply(this, args);
+      if (key === lastPanelKey && currentDomIsUsable) return;
 
-      elements.bidTitle.textContent = state.pendingJokerCommand === "take" ? "Берёт" : "Высший";
-      elements.bidOptions.querySelectorAll(".android-joker-suit-option").forEach((button) => {
-        button.querySelector(".android-joker-suit-name")?.remove();
-      });
-
-      decoratePanel("joker-suit");
-      return result;
-    };
-
-    renderLeadJokerCommandSelection = function renderV12JokerCommandSelection(...args) {
-      const result = originalJokerCommandSelection.apply(this, args);
-      decoratePanel("joker-command");
-      return result;
-    };
-
-    renderJokerModeSelection = function renderV12JokerModeSelection(...args) {
-      const result = originalJokerModeSelection.apply(this, args);
-      decoratePanel("joker-mode");
-      return result;
-    };
-
-    renderBidding = function renderV12Bidding(...args) {
       const result = originalRenderBidding.apply(this, args);
+      lastPanelKey = key;
 
-      if (!elements.bidPanel || elements.bidPanel.hidden) {
+      if (!panel || panel.hidden || !kind) {
         clearV12PanelClasses();
         return result;
       }
 
-      if (state.phase === "bidding") {
-        decoratePanel("order");
-      } else if (state.phase === "trump-select") {
-        decoratePanel("trump");
-      } else if (state.phase === "joker-lead-suit") {
-        decoratePanel("joker-suit");
-      } else if (state.phase === "joker-lead-command") {
-        decoratePanel("joker-command");
-      } else if (state.phase === "joker-mode") {
-        decoratePanel("joker-mode");
-      }
-
+      decoratePanel(kind);
       return result;
     };
   }
@@ -153,10 +146,13 @@
   function install() {
     if (installed) return;
     installed = true;
-    installPanelOverrides();
+    installPanelOverride();
   }
 
   window.addEventListener("joker-rules-adapters-ready", install, { once: true });
+  window.addEventListener("joker-language-change", () => {
+    lastPanelKey = null;
+  });
 
   if (document.documentElement.dataset.rulesReady === "true") install();
 })();
