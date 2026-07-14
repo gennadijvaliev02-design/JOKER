@@ -1,37 +1,7 @@
 /*
- * Android UI V10 — unified Joker controls and synchronized two-stage deal.
- * Loaded only by the Android APK after all earlier UI layers.
+ * Android UI V10 — unified Joker controls.
+ * Obsolete ordinary-deal reveal classes were removed.
  */
-
-/* ---------- Real dealt cards reveal only when the flying card lands ---------- */
-.hand .card.is-deal-pending,
-.hidden-cards span.is-deal-pending {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  animation: none !important;
-  pointer-events: none !important;
-}
-
-.hand .card.is-deal-arrived,
-.hidden-cards span.is-deal-arrived {
-  visibility: visible !important;
-  animation: android-real-card-arrive 300ms cubic-bezier(0.16, 0.82, 0.22, 1) both !important;
-}
-
-@keyframes android-real-card-arrive {
-  0% {
-    opacity: 0;
-    filter: brightness(1.18) blur(0.5px);
-  }
-  65% {
-    opacity: 1;
-    filter: brightness(1.08) blur(0);
-  }
-  100% {
-    opacity: 1;
-    filter: brightness(1) blur(0);
-  }
-}
 
 /* ---------- Unified dark-green glass Joker flow ---------- */
 .bid-panel.is-android-joker-panel {
@@ -281,9 +251,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bid-panel.is-android-joker-panel,
-  .hand .card.is-deal-arrived,
-  .hidden-cards span.is-deal-arrived {
+  .bid-panel.is-android-joker-panel {
     animation-duration: 1ms !important;
   }
 }
