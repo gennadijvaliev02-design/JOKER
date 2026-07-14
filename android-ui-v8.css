@@ -1,6 +1,6 @@
 /*
- * Android UI V8 — approved final polish batch.
- * Only Android APK loads this layer; main web layout stays untouched.
+ * Android UI V8 — active real-device geometry only.
+ * Removed old deal engines, permanent blur, infinite seat motion and duplicate keyframes.
  */
 
 :root {
@@ -10,12 +10,10 @@
   --android-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ---------- Approved seat correction: right player only ---------- */
 .player-right {
   right: max(clamp(25px, 2.45vw, 40px), calc(var(--android-safe-right) + 7px)) !important;
 }
 
-/* Keep menu and emoji together in one top-right rail. */
 .table-menu {
   top: max(clamp(15px, 2.8vh, 24px), calc(var(--android-safe-top) + 8px)) !important;
   right: max(clamp(13px, 1.25vw, 20px), calc(var(--android-safe-right) + 8px)) !important;
@@ -24,7 +22,6 @@
 .smile {
   top: max(clamp(23px, 4.1vh, 34px), calc(var(--android-safe-top) + 15px)) !important;
   right: max(clamp(61px, 5.35vw, 82px), calc(var(--android-safe-right) + 57px)) !important;
-  /* Size is intentionally inherited from the approved V6 layer. */
 }
 
 .emotion-panel {
@@ -32,7 +29,7 @@
   right: max(clamp(45px, 4vw, 62px), calc(var(--android-safe-right) + 40px)) !important;
 }
 
-/* ---------- Split HUD: compact round state left, compact trump beside it ---------- */
+/* ---------- Split HUD ---------- */
 .game-hud {
   position: absolute !important;
   inset: 0 !important;
@@ -55,11 +52,10 @@
   box-shadow:
     0 8px 20px rgba(0, 0, 0, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.09) !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-/* "Отнимается / пихается" moves into the empty upper-left lane. */
 #round-label {
   left: max(clamp(72px, 7.2vw, 110px), calc(var(--android-safe-left) + 55px)) !important;
   top: max(clamp(13px, 2.25vh, 20px), calc(var(--android-safe-top) + 7px)) !important;
@@ -77,7 +73,6 @@
   white-space: nowrap !important;
 }
 
-/* Trump stays framed, but loses the huge empty box. */
 .trump-pill {
   left: clamp(198px, 17.2vw, 263px) !important;
   top: max(clamp(9px, 1.7vh, 15px), calc(var(--android-safe-top) + 5px)) !important;
@@ -138,7 +133,7 @@
   height: 28px;
   display: grid;
   place-items: center;
-  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.18));
+  filter: none !important;
 }
 
 .android-trump-suit-art svg {
@@ -147,22 +142,10 @@
   overflow: visible;
 }
 
-.android-trump-suit-art.is-red {
-  color: #e1283f;
-}
+.android-trump-suit-art.is-red { color: #e1283f; }
+.android-trump-suit-art.is-black { color: #111923; }
 
-.android-trump-suit-art.is-black {
-  color: #111923;
-}
-
-.trump-pill:has(.trump-card.is-revealed)::before {
-  right: -4px !important;
-  width: 46px !important;
-  height: 46px !important;
-  opacity: 0.72 !important;
-}
-
-/* ---------- Opponent hands: larger real cards with adaptive fan ---------- */
+/* ---------- Opponent hands ---------- */
 .hidden-cards {
   gap: 0 !important;
   overflow: visible !important;
@@ -177,11 +160,8 @@
     scale(var(--opponent-scale, 1)) !important;
   transform-origin: var(--fan-origin, 50% 115%) !important;
   transition:
-    transform 260ms cubic-bezier(0.2, 0.76, 0.22, 1),
-    width 240ms ease,
-    height 240ms ease,
-    margin 240ms ease,
-    opacity 180ms ease !important;
+    transform 190ms cubic-bezier(0.2, 0.76, 0.22, 1),
+    opacity 160ms ease !important;
   box-shadow:
     0 2px 5px rgba(0, 0, 0, 0.32),
     inset 0 0 0 1px rgba(255, 255, 255, 0.34) !important;
@@ -201,9 +181,7 @@
   --fan-origin: 50% 125%;
 }
 
-.top-stack span:first-child {
-  margin-left: 0 !important;
-}
+.top-stack span:first-child { margin-left: 0 !important; }
 
 .left-stack,
 .right-stack {
@@ -221,24 +199,15 @@
 }
 
 .left-stack span:first-child,
-.right-stack span:first-child {
-  margin-top: 0 !important;
-}
+.right-stack span:first-child { margin-top: 0 !important; }
+.left-stack span { --fan-origin: 125% 50%; }
+.right-stack span { --fan-origin: -25% 50%; }
 
-.left-stack span {
-  --fan-origin: 125% 50%;
-}
-
-.right-stack span {
-  --fan-origin: -25% 50%;
-}
-
-/* ---------- Player hand selection ---------- */
+/* ---------- Human hand interaction ---------- */
 .hand .card {
   transition:
-    transform 180ms cubic-bezier(0.16, 0.82, 0.22, 1),
-    filter 180ms ease,
-    box-shadow 180ms ease !important;
+    transform 150ms cubic-bezier(0.16, 0.82, 0.22, 1),
+    box-shadow 150ms ease !important;
 }
 
 .hand .card:hover,
@@ -246,8 +215,8 @@
 .hand .card.is-touch-selected,
 .hand .card:focus-visible {
   z-index: 40 !important;
-  transform: translate3d(0, -17px, 0) rotate(0deg) scale(1.045) !important;
-  filter: brightness(1.035);
+  transform: translateY(-17px) rotate(0deg) scale(1.045) !important;
+  filter: none !important;
   box-shadow:
     0 0 0 2px rgba(73, 219, 255, 0.30),
     0 18px 30px rgba(0, 0, 0, 0.42) !important;
@@ -256,11 +225,11 @@
 .hand .card.is-disabled,
 .hand .card.is-disabled:hover,
 .hand .card.is-disabled:active {
-  transform: translate3d(0, 0, 0) rotate(0deg) !important;
+  transform: rotate(0deg) !important;
   filter: none !important;
 }
 
-/* ---------- Center cards become the visual focus ---------- */
+/* ---------- Center and tools ---------- */
 .played-card-slot {
   top: 32% !important;
   width: min(430px, 66vw) !important;
@@ -274,7 +243,6 @@
   box-shadow: 0 14px 25px rgba(0, 0, 0, 0.38) !important;
 }
 
-/* ---------- Score and last trick: same compact tool shape ---------- */
 .score,
 .last-trick-button {
   bottom: max(clamp(15px, 2.7vh, 22px), calc(var(--android-safe-bottom) + 8px)) !important;
@@ -327,7 +295,7 @@
   transform: translateY(1px) scale(0.975) !important;
 }
 
-/* ---------- Felt and rail depth ---------- */
+/* ---------- Felt and short panel motion ---------- */
 .table::before {
   background:
     linear-gradient(180deg, rgba(34, 42, 56, 0.99), rgba(7, 11, 18, 1)),
@@ -353,151 +321,34 @@
 
 .felt-glow {
   opacity: 0.80 !important;
-  filter: blur(22px) !important;
+  filter: none !important;
 }
 
-/* ---------- Smooth panels and dialogs ---------- */
-.bid-panel:not([hidden]),
 .game-dialog:not([hidden]),
 .emotion-panel:not([hidden]) {
-  animation: android-panel-enter 220ms cubic-bezier(0.16, 0.82, 0.22, 1) both;
+  animation: android-panel-enter 180ms cubic-bezier(0.16, 0.82, 0.22, 1) both;
 }
 
-.score-sheet:not([hidden]) .sheet-paper {
-  animation: android-sheet-enter 240ms cubic-bezier(0.16, 0.82, 0.22, 1) both;
+.score-sheet:not([hidden]) .sheet-paper,
+.last-trick-viewer.is-visible .last-trick-panel {
+  animation: android-sheet-enter 190ms cubic-bezier(0.16, 0.82, 0.22, 1) both;
 }
 
 .last-trick-viewer {
-  transition: opacity 180ms ease !important;
-}
-
-.last-trick-viewer.is-visible .last-trick-panel {
-  animation: android-sheet-enter 210ms cubic-bezier(0.16, 0.82, 0.22, 1) both;
+  transition: opacity 160ms ease !important;
 }
 
 @keyframes android-panel-enter {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 10px)) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(0.97); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes android-sheet-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ---------- Active player: subtle breathing, no flashing ---------- */
-.player.is-active .avatar {
-  animation: android-seat-breathe-v8 1.8s ease-in-out infinite !important;
-  transform-origin: center center;
-}
-
-@keyframes android-seat-breathe-v8 {
-  0%, 100% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  50% {
-    transform: scale(1.022);
-    filter: brightness(1.09);
-  }
-}
-
-/* ---------- Premium deal motion ---------- */
-.deal-flight-layer.is-premium-deal .flying-card-back {
-  animation-name: android-premium-card-flight !important;
-  animation-duration: 500ms !important;
-  animation-timing-function: cubic-bezier(0.16, 0.8, 0.22, 1) !important;
-  will-change: transform, opacity, filter;
-}
-
-.android-dealer-deck {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 29px;
-  height: 42px;
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 5px;
-  background:
-    repeating-linear-gradient(45deg, rgba(255,255,255,0.52) 0 2px, transparent 2px 4px),
-    linear-gradient(145deg, #e8efe9, #abb9b1);
-  box-shadow:
-    3px 3px 0 rgba(221, 230, 224, 0.85),
-    6px 6px 0 rgba(177, 188, 181, 0.76),
-    0 12px 18px rgba(0, 0, 0, 0.34);
-  transform: translate(var(--deck-x, 0px), var(--deck-y, 0px)) rotate(var(--deck-r, 0deg));
-  opacity: 0;
-  animation: android-deck-appear 260ms ease-out both;
-}
-
-.android-dealer-deck.is-finishing {
-  animation: android-deck-finish 300ms ease-in both;
-}
-
-@keyframes android-premium-card-flight {
-  0% {
-    opacity: 0;
-    filter: blur(1px) brightness(0.88);
-    transform:
-      translate(var(--flight-start-x), var(--flight-start-y))
-      scale(0.56)
-      rotate(var(--flight-start-r));
-  }
-  18% {
-    opacity: 1;
-  }
-  56% {
-    opacity: 1;
-    filter: blur(0) brightness(1.05);
-    transform:
-      translate(
-        calc(var(--flight-x) * 0.62 + var(--flight-start-x) * 0.38),
-        calc(var(--flight-y) * 0.62 + var(--flight-start-y) * 0.38 + var(--deal-arc-y, -16px))
-      )
-      scale(1.03)
-      rotate(calc(var(--flight-r) + var(--deal-turn, 6deg)));
-  }
-  84% {
-    opacity: 1;
-    filter: blur(0) brightness(1.015);
-    transform:
-      translate(
-        calc(var(--flight-x) * 0.96 + var(--flight-start-x) * 0.04),
-        calc(var(--flight-y) * 0.96 + var(--flight-start-y) * 0.04 - 2px)
-      )
-      scale(0.96)
-      rotate(calc(var(--flight-r) - 1deg));
-  }
-  100% {
-    opacity: 0.98;
-    filter: blur(0) brightness(1);
-    transform: translate(var(--flight-x), var(--flight-y)) scale(0.92) rotate(var(--flight-r));
-  }
-}
-
-@keyframes android-deck-appear {
-  from { opacity: 0; filter: blur(1px); }
-  to { opacity: 0.96; filter: blur(0); }
-}
-
-@keyframes android-deck-finish {
-  from { opacity: 0.96; }
-  to { opacity: 0; transform: translate(var(--deck-x, 0px), var(--deck-y, 0px)) scale(0.88); }
-}
-
-/* Ace deal remains clear and cinematic. */
+/* Ace deal sizes only; animation belongs to ace-deal-animation.css. */
 .ace-open-title {
   top: 10.5% !important;
   padding: 7px 15px !important;
@@ -511,10 +362,8 @@
 
 .ace-open-winner {
   top: 74% !important;
-  animation-duration: 580ms !important;
 }
 
-/* ---------- Compact landscape ---------- */
 @media (max-height: 430px) {
   #round-label {
     left: max(68px, calc(var(--android-safe-left) + 50px)) !important;
@@ -582,7 +431,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .player.is-active .avatar {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
   }
 }
