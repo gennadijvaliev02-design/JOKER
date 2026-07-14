@@ -1,18 +1,16 @@
 .played-card {
   backface-visibility: hidden;
   transform: translate3d(0, 0, 0) var(--played-transform);
-  will-change: transform, opacity;
 }
 
 .played-card .card,
 .played-card .card-face {
   backface-visibility: hidden;
-  transform: translateZ(0);
-  will-change: transform;
 }
 
 .played-card.is-entering {
   animation: card-enter-bottom-smooth 360ms cubic-bezier(0.2, 0.78, 0.24, 1) both;
+  will-change: transform, opacity;
 }
 
 .played-card.left.is-entering {
@@ -92,5 +90,11 @@
   100% {
     opacity: 1;
     transform: var(--played-transform);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .played-card.is-entering {
+    animation-duration: 1ms;
   }
 }
