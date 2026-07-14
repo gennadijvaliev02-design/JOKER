@@ -4,39 +4,34 @@
   const COLLECT_START_DELAY = 560;
   const COLLECT_ANIMATION_TIME = 980;
 
-  function getCenterInsideTable(element) {
-    const tableRect = elements.table.getBoundingClientRect();
+  function getCenterInsideTable(element, tableRect) {
     const rect = element.getBoundingClientRect();
-
     return {
       x: rect.left - tableRect.left + rect.width / 2,
       y: rect.top - tableRect.top + rect.height / 2,
     };
   }
 
-  function getWinnerTarget(seat) {
+  function getWinnerTarget(seat, tableRect) {
     const avatar = document.querySelector(`[data-seat="${seat}"]`);
-
-    if (avatar) {
-      return getCenterInsideTable(avatar);
-    }
+    if (avatar) return getCenterInsideTable(avatar, tableRect);
 
     const fallback = {
-      bottom: { x: elements.table.clientWidth * 0.5, y: elements.table.clientHeight * 0.84 },
-      left: { x: elements.table.clientWidth * 0.16, y: elements.table.clientHeight * 0.42 },
-      top: { x: elements.table.clientWidth * 0.5, y: elements.table.clientHeight * 0.16 },
-      right: { x: elements.table.clientWidth * 0.84, y: elements.table.clientHeight * 0.42 },
+      bottom: { x: tableRect.width * 0.5, y: tableRect.height * 0.84 },
+      left: { x: tableRect.width * 0.16, y: tableRect.height * 0.42 },
+      top: { x: tableRect.width * 0.5, y: tableRect.height * 0.16 },
+      right: { x: tableRect.width * 0.84, y: tableRect.height * 0.42 },
     };
 
     return fallback[seat] || fallback.bottom;
   }
 
   function getRenderedPlayedCards() {
-    return [...elements.playedCardSlot.querySelectorAll(".played-card")];
+    return Array.from(elements.playedCardSlot.querySelectorAll(".played-card"));
   }
 
-  function createCollectedCard(play, sourceNode, index, center, target, trickLength) {
-    const source = getCenterInsideTable(sourceNode);
+  function createCollectedCard(play, sourceNode, index, center, target, trickLength, tableRect) {
+    const source = getCenterInsideTable(sourceNode, tableRect);
     const wrapper = document.createElement("div");
     const card = createCardElement(play.card);
     const spread = index - (trickLength - 1) / 2;
@@ -60,36 +55,29 @@
   }
 
   function playTrickCollectAnimation(winnerSeat, trickCards, winnerPlay) {
-    if (state.autoPlay || !elements.table || !elements.playedCardSlot) {
-      return;
-    }
+    if (state.autoPlay || !elements.table || !elements.playedCardSlot) return;
 
     const renderedCards = getRenderedPlayedCards();
     if (!renderedCards.length) return;
 
-    const layer = document.createElement("div");
-    const center = getCenterInsideTable(elements.playedCardSlot);
-    const target = getWinnerTarget(winnerSeat);
+    const tableRect = elements.table.getBoundingClientRect();
+    const center = getCenterInsideTable(elements.playedCardSlot, tableRect);
+    const target = getWinnerTarget(winnerSeat, tableRect);
     const winnerJokerCard = winnerPlay?.card?.type === "joker" ? winnerPlay.card : null;
+    const layer = document.createElement("div");
 
-    /* Android already hides the old bubble/star trails. Do not build 14–16 invisible nodes. */
-    layer.className = `trick-collect-layer ${winnerJokerCard ? `is-joker-magic is-${winnerJokerCard.color}` : ""}`.trim();
+    layer.className = `trick-collect-layer ${winnerJokerCard ? `is-${winnerJokerCard.color}` : ""}`.trim();
     layer.style.contain = "layout paint style";
 
-    const flyingCards = trickCards.map((play, index) => {
-      return createCollectedCard(
-        play,
-        renderedCards[index] || renderedCards.at(-1),
-        index,
-        center,
-        target,
-        trickCards.length,
-      );
-    });
-
-    if (winnerJokerCard) {
-      playSound("jokerCollect");
-    }
+    const flyingCards = trickCards.map((play, index) => createCollectedCard(
+      play,
+      renderedCards[index] || renderedCards.at(-1),
+      index,
+      center,
+      target,
+      trickCards.length,
+      tableRect,
+    ));
 
     layer.append(...flyingCards);
     elements.table.append(layer);
@@ -129,7 +117,7 @@
           return;
         }
 
-        if (hasCardsLeft() && (state.autoPlay || state.activePlayerId !== "human")) {
+        if (state.autoPlay || state.activePlayerId !== "human") {
           continueBotTurns();
         }
       }, getDelay(COLLECT_ANIMATION_TIME));
