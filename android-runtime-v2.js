@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const SUIT_META = {
     hearts: {
       color: "red",
@@ -24,6 +26,11 @@
     "♠": "spades",
     "♣": "clubs",
   };
+
+  let lastTrumpCard = null;
+  let lastTrumpSignature = "";
+  let selectedCard = null;
+  let selectionTimer = 0;
 
   function getLanguage() {
     return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
@@ -86,12 +93,27 @@
     if (!pill) return;
 
     const trumpCard = pill.querySelector(".trump-card") || pill.querySelector(".card");
-    if (!trumpCard) return;
+    if (!trumpCard) {
+      lastTrumpCard = null;
+      lastTrumpSignature = "";
+      return;
+    }
+
+    const language = getLanguage();
+    const titleText = language === "en" ? "Trump" : "Козырь";
+    const suit = getCurrentSuit(trumpCard);
+    const signature = `${language}:${suit || "none"}`;
+    const currentTitle = pill.querySelector(".android-trump-title");
+    const currentArt = trumpCard.querySelector(".android-trump-suit-art");
+    const presentationIsCurrent = trumpCard === lastTrumpCard
+      && signature === lastTrumpSignature
+      && currentTitle?.textContent === titleText
+      && (suit ? currentArt?.dataset.suit === suit : !currentArt);
+
+    if (presentationIsCurrent) return;
 
     for (const node of [...pill.childNodes]) {
-      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-        node.remove();
-      }
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) node.remove();
     }
 
     let title = pill.querySelector(".android-trump-title");
@@ -100,65 +122,78 @@
       title.className = "android-trump-title";
       pill.insertBefore(title, trumpCard);
     }
-    title.textContent = getLanguage() === "en" ? "Trump" : "Козырь";
-
-    const suit = getCurrentSuit(trumpCard);
-    const previousSuit = trumpCard.dataset.androidSuit || "";
+    if (title.textContent !== titleText) title.textContent = titleText;
 
     if (!suit) {
       trumpCard.classList.remove("has-android-suit-art");
       trumpCard.removeAttribute("data-android-suit");
-      trumpCard.querySelector(".android-trump-suit-art")?.remove();
+      currentArt?.remove();
+      lastTrumpCard = trumpCard;
+      lastTrumpSignature = signature;
       return;
     }
 
-    if (previousSuit !== suit || !trumpCard.querySelector(".android-trump-suit-art")) {
-      trumpCard.querySelector(".android-trump-suit-art")?.remove();
+    if (currentArt?.dataset.suit !== suit) {
+      currentArt?.remove();
       const art = createSuitArt(suit);
       if (art) trumpCard.append(art);
     }
 
-    trumpCard.dataset.androidSuit = suit;
+    if (trumpCard.dataset.androidSuit !== suit) trumpCard.dataset.androidSuit = suit;
     trumpCard.classList.add("has-android-suit-art");
+    lastTrumpCard = trumpCard;
+    lastTrumpSignature = signature;
   }
 
-  function clearTouchSelection(except = null) {
-    document.querySelectorAll(".hand .card.is-touch-selected").forEach((card) => {
-      if (card !== except) card.classList.remove("is-touch-selected");
-    });
+  function clearTouchSelection() {
+    if (selectionTimer) {
+      window.clearTimeout(selectionTimer);
+      selectionTimer = 0;
+    }
+
+    selectedCard?.classList.remove("is-touch-selected");
+    selectedCard = null;
   }
 
   document.addEventListener("pointerdown", (event) => {
+    if (!(event.target instanceof Element)) return;
+
     const card = event.target.closest(".hand .card:not(.is-disabled):not(:disabled)");
     if (!card) return;
 
-    clearTouchSelection(card);
+    if (selectionTimer) {
+      window.clearTimeout(selectionTimer);
+      selectionTimer = 0;
+    }
+    if (selectedCard && selectedCard !== card) selectedCard.classList.remove("is-touch-selected");
+
+    selectedCard = card;
     card.classList.add("is-touch-selected");
   }, { passive: true });
 
   document.addEventListener("pointerup", () => {
-    window.setTimeout(() => clearTouchSelection(), 130);
+    if (selectionTimer) window.clearTimeout(selectionTimer);
+    selectionTimer = window.setTimeout(clearTouchSelection, 130);
   }, { passive: true });
 
-  document.addEventListener("pointercancel", () => clearTouchSelection(), { passive: true });
+  document.addEventListener("pointercancel", clearTouchSelection, { passive: true });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) clearTouchSelection();
   });
 
-  function syncAndroidV2() {
-    syncTrumpPresentation();
-    clearTouchSelection();
-  }
-
-  if (typeof render === "function") {
-    const originalRender = render;
-    render = function renderWithAndroidV2(...args) {
-      const result = originalRender.apply(this, args);
-      syncAndroidV2();
+  if (typeof renderHud === "function") {
+    const originalRenderHud = renderHud;
+    renderHud = function renderHudWithAndroidV2(...args) {
+      const result = originalRenderHud.apply(this, args);
+      syncTrumpPresentation();
       return result;
     };
   }
 
-  window.addEventListener("joker-language-change", syncTrumpPresentation);
-  syncAndroidV2();
+  window.addEventListener("joker-language-change", () => {
+    lastTrumpSignature = "";
+    syncTrumpPresentation();
+  });
+
+  syncTrumpPresentation();
 })();
