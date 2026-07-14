@@ -262,3 +262,37 @@
     }
   }
 })();
+
+(() => {
+  /* Deal 2026 duplicate guard: hide whole real-hand containers, not replaceable children. */
+  if (document.getElementById("android-deal-container-mask-style")) return;
+
+  const style = document.createElement("style");
+  style.id = "android-deal-container-mask-style";
+  style.textContent = `
+    .table.is-deal-2026-staging > .hand,
+    .table.is-deal-2026-staging > .hidden-cards {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .table.is-deal-2026-staging > .hand *,
+    .table.is-deal-2026-staging > .hidden-cards * {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .table.is-deal-2026-revealing > .hand,
+    .table.is-deal-2026-revealing > .hidden-cards {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+  `;
+
+  document.head.append(style);
+})();
