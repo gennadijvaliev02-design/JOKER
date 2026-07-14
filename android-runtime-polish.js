@@ -33,6 +33,7 @@
     }),
   );
 
+  const lastPlayerSignatures = Object.create(null);
   let lastPhase = null;
   let lastActiveSeat = null;
   let lastBusy = null;
@@ -68,11 +69,33 @@
     }
   }
 
+  function getPlayerSignature(player) {
+    const handCount = state.hands?.[player.id]?.length || 0;
+    const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";
+    const isThinking = isActivePlayer && state.busy && player.id !== "human";
+
+    return [
+      player.name,
+      player.seat,
+      player.order,
+      player.bid ?? "null",
+      player.tricks,
+      handCount,
+      state.phase,
+      isActivePlayer ? 1 : 0,
+      isThinking ? 1 : 0,
+    ].join("|");
+  }
+
   if (typeof renderPlayers === "function") {
     renderPlayers = function renderCachedAndroidPlayers() {
       for (const player of state.players) {
         const view = playerViews[player.seat];
         if (!view) continue;
+
+        const signature = getPlayerSignature(player);
+        if (lastPlayerSignatures[player.seat] === signature) continue;
+        lastPlayerSignatures[player.seat] = signature;
 
         setText(view.name, player.seat === "bottom" ? "Ты" : player.name);
         setText(view.avatarInitial, player.name.slice(0, 1).toUpperCase());
@@ -113,7 +136,10 @@
   }, { passive: true });
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) syncRuntimeState(true);
+    if (!document.hidden) {
+      Object.keys(lastPlayerSignatures).forEach((seat) => delete lastPlayerSignatures[seat]);
+      syncRuntimeState(true);
+    }
   });
 
   syncRuntimeState(true);
