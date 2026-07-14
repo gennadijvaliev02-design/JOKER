@@ -119,53 +119,6 @@
 (() => {
   "use strict";
 
-  /* Paint the actual generated black-suit buttons, not another generic CSS guess. */
-  let silverFrame = 0;
-
-  function paintSilverSuits() {
-    silverFrame = 0;
-    const buttons = document.querySelectorAll([
-      '.bid-option[data-trump="clubs"]',
-      '.bid-option[data-trump="spades"]',
-      '.bid-option[data-joker-lead-suit="clubs"]',
-      '.bid-option[data-joker-lead-suit="spades"]',
-      '.android-joker-suit-option[data-joker-lead-suit="clubs"]',
-      '.android-joker-suit-option[data-joker-lead-suit="spades"]',
-    ].join(","));
-
-    buttons.forEach((button) => {
-      button.classList.add("android-silver-suit");
-      button.style.setProperty("color", "#cbd3d0", "important");
-      button.style.setProperty("text-shadow", "0 1px 0 rgba(255,255,255,.28), 0 2px 4px rgba(0,0,0,.84)", "important");
-      button.style.setProperty("filter", "none", "important");
-      button.style.setProperty("border-color", "rgba(198,211,207,.58)", "important");
-      button.style.setProperty("box-shadow", "0 11px 23px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.16), inset 0 -11px 18px rgba(0,0,0,.34)", "important");
-
-      button.querySelectorAll(".android-joker-suit-symbol").forEach((symbol) => {
-        symbol.style.setProperty("color", "#cbd3d0", "important");
-        symbol.style.setProperty("text-shadow", "0 1px 0 rgba(255,255,255,.28), 0 2px 4px rgba(0,0,0,.84)", "important");
-        symbol.style.setProperty("filter", "none", "important");
-      });
-    });
-  }
-
-  function scheduleSilverPaint() {
-    if (silverFrame) return;
-    silverFrame = requestAnimationFrame(paintSilverSuits);
-  }
-
-  const bidPanel = document.getElementById("bid-panel");
-  if (bidPanel) {
-    const observer = new MutationObserver(scheduleSilverPaint);
-    observer.observe(bidPanel, { subtree: true, childList: true, characterData: true });
-  }
-
-  scheduleSilverPaint();
-})();
-
-(() => {
-  "use strict";
-
   /* Android V16 performance correction — preserve visuals, remove repeated work. */
   const previousPlaySound = typeof playSound === "function" ? playSound : null;
   const noiseCacheByContext = new WeakMap();
