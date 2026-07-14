@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const JOKER_PHASES = new Set([
     "joker-lead-command",
     "joker-lead-suit",
@@ -80,9 +82,10 @@
 
   renderLeadJokerCommandSelection = function renderAndroidLeadJokerCommandSelection() {
     prepareJokerPanel("command", "Команда джокера");
-    const takeButton = makeCommandButton("take", "Берёт");
-    const highButton = makeCommandButton("high", "Высший");
-    elements.bidOptions.replaceChildren(takeButton, highButton);
+    elements.bidOptions.replaceChildren(
+      makeCommandButton("take", "Берёт"),
+      makeCommandButton("high", "Высший"),
+    );
   };
 
   renderLeadJokerSuitSelection = function renderAndroidLeadJokerSuitSelection() {
@@ -99,9 +102,10 @@
 
   renderJokerModeSelection = function renderAndroidJokerModeSelection() {
     prepareJokerPanel("mode", "Как сыграть джокером?");
-    const duckButton = makeModeButton("duck", "Подсунуть");
-    const beatButton = makeModeButton("beat", "Перебить");
-    elements.bidOptions.replaceChildren(duckButton, beatButton);
+    elements.bidOptions.replaceChildren(
+      makeModeButton("duck", "Подсунуть"),
+      makeModeButton("beat", "Перебить"),
+    );
   };
 
   function cancelJokerChoice() {
@@ -114,37 +118,27 @@
     elements.bidPanel.hidden = true;
     elements.bidOptions.replaceChildren();
     clearJokerPanelClasses();
+    ensureCancelButton()?.setAttribute("hidden", "");
     hideNotice();
     render();
   }
 
   elements.bidPanel?.addEventListener("click", (event) => {
-    if (event.target.closest("[data-joker-cancel]")) {
-      event.preventDefault();
-      event.stopPropagation();
-      cancelJokerChoice();
-    }
+    if (!(event.target instanceof Element) || !event.target.closest("[data-joker-cancel]")) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    cancelJokerChoice();
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && JOKER_PHASES.has(state.phase)) {
-      cancelJokerChoice();
-    }
+    if (event.key === "Escape" && JOKER_PHASES.has(state.phase)) cancelJokerChoice();
   });
 
-  const originalRenderBidding = renderBidding;
-  renderBidding = function renderBiddingWithAndroidJokerStyle(...args) {
-    if (!JOKER_PHASES.has(state.phase)) {
-      clearJokerPanelClasses();
-      elements.bidPanel?.querySelector("[data-joker-cancel]")?.setAttribute("hidden", "");
-    }
-
-    const result = originalRenderBidding.apply(this, args);
-
-    if (JOKER_PHASES.has(state.phase)) {
-      ensureCancelButton()?.removeAttribute("hidden");
-    }
-
-    return result;
+  window.AndroidJokerPanel = {
+    clearClasses: clearJokerPanelClasses,
+    hideCancel() {
+      ensureCancelButton()?.setAttribute("hidden", "");
+    },
   };
 })();
