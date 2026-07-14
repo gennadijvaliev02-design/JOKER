@@ -1,10 +1,10 @@
 /*
  * Android UI V11 — real-device UX corrections only.
- * Obsolete V11 ordinary-deal styles were removed.
+ * Obsolete V11 ordinary-deal styles and :has() scans were removed.
  */
 
 /* ---------- Order panel: lower, safer two-row spacing ---------- */
-.bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) {
+.bid-panel.is-v12-order-panel {
   left: 50% !important;
   top: 56.5% !important;
   bottom: auto !important;
@@ -14,11 +14,11 @@
   transform: translate(-50%, -50%) !important;
 }
 
-.bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-title {
+.bid-panel.is-v12-order-panel .bid-title {
   margin-bottom: 13px !important;
 }
 
-.bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-options {
+.bid-panel.is-v12-order-panel .bid-options {
   column-gap: clamp(12px, 1.55vw, 23px) !important;
   row-gap: clamp(30px, 4.5vh, 42px) !important;
 }
@@ -94,7 +94,6 @@
   transform: none !important;
 }
 
-/* Remove the childish extra bounce when a Take Joker is played. */
 .played-card.is-joker-take,
 .played-card.is-joker-take .card {
   animation-timing-function: ease-out !important;
@@ -102,17 +101,17 @@
 }
 
 @media (max-height: 430px) {
-  .bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) {
+  .bid-panel.is-v12-order-panel {
     top: 57.5% !important;
     width: min(680px, 74vw) !important;
     padding: 11px 26px 16px !important;
   }
 
-  .bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-title {
+  .bid-panel.is-v12-order-panel .bid-title {
     margin-bottom: 8px !important;
   }
 
-  .bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) .bid-options {
+  .bid-panel.is-v12-order-panel .bid-options {
     row-gap: 24px !important;
     column-gap: 11px !important;
   }
