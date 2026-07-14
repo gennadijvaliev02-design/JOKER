@@ -1,4 +1,4 @@
-/* UI polish: clear Joker command buttons */
+/* Legacy/web Joker buttons. Android uses explicit panel classes, never :has() scans. */
 .joker-take-option,
 .joker-high-option,
 .joker-duck-option,
@@ -10,7 +10,6 @@
   border-radius: 15px !important;
   font-size: 16px !important;
   font-weight: 950 !important;
-  letter-spacing: 0.01em;
   line-height: 1.08 !important;
   white-space: nowrap !important;
   text-align: center !important;
@@ -23,70 +22,36 @@
 
 .joker-duck-option,
 .joker-take-option {
-  grid-column: 1 / span 2 !important;
   border-color: rgba(47, 230, 122, 0.95) !important;
   background:
     linear-gradient(180deg, rgba(67, 196, 119, 0.26), transparent 35%),
     linear-gradient(180deg, rgba(20, 119, 62, 0.98), rgba(5, 45, 28, 0.99)) !important;
   color: #d8ffe5 !important;
-  box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.38),
-    0 0 16px rgba(47, 230, 122, 0.22),
-    inset 0 2px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -9px 16px rgba(0, 0, 0, 0.22) !important;
 }
 
 .joker-beat-option,
 .joker-high-option {
-  grid-column: 4 / span 2 !important;
   border-color: rgba(255, 216, 87, 0.98) !important;
   background:
     linear-gradient(180deg, rgba(255, 223, 93, 0.26), transparent 35%),
     linear-gradient(180deg, rgba(132, 93, 21, 0.98), rgba(50, 29, 5, 0.99)) !important;
   color: #fff0b8 !important;
-  box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.38),
-    0 0 16px rgba(255, 216, 87, 0.24),
-    inset 0 2px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -9px 16px rgba(0, 0, 0, 0.22) !important;
 }
 
-.bid-options:has(.joker-take-option, .joker-high-option),
-.bid-options:has(.joker-duck-option, .joker-beat-option) {
-  grid-template-columns: repeat(5, minmax(56px, 1fr)) !important;
+.bid-panel.is-joker-command-panel .bid-options,
+.bid-panel.is-joker-mode-panel .bid-options {
+  grid-template-columns: repeat(2, minmax(150px, 1fr)) !important;
   gap: 16px !important;
   justify-content: center !important;
 }
 
-.bid-panel:has(.joker-take-option, .joker-high-option, .joker-duck-option, .joker-beat-option, .bid-option[data-joker-lead-suit])::after {
-  content: "×";
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  z-index: 2;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 232, 137, 0.5);
-  background: rgba(2, 10, 22, 0.62);
-  color: #ffe889;
-  font-size: 18px;
-  font-weight: 950;
-  line-height: 1;
-  box-shadow: 0 0 12px rgba(255, 216, 87, 0.16);
-  pointer-events: none;
-}
-
-/* Joker suit choice: wide rounded clouds for each suit */
-.bid-options:has(.bid-option[data-joker-lead-suit]) {
+.bid-panel.is-joker-suit-panel .bid-options {
   grid-template-columns: repeat(4, minmax(108px, 1fr)) !important;
   gap: 18px !important;
   justify-content: center !important;
 }
 
-.bid-option[data-joker-lead-suit] {
+.bid-panel.is-joker-suit-panel .bid-option[data-joker-lead-suit] {
   width: 100% !important;
   min-width: 108px !important;
   min-height: 60px !important;
@@ -96,38 +61,26 @@
   background:
     radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.16), transparent 42%),
     linear-gradient(180deg, rgba(0, 170, 255, 0.28), rgba(5, 31, 78, 0.92)) !important;
-  box-shadow:
-    0 0 18px rgba(0, 210, 255, 0.2),
-    inset 0 2px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.28) !important;
   font-size: 39px !important;
   line-height: 0.92 !important;
   display: grid !important;
   place-items: center !important;
   text-align: center !important;
   font-weight: 950 !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.32) !important;
 }
 
-.bid-option[data-joker-lead-suit="hearts"],
-.bid-option[data-joker-lead-suit="diamonds"] {
+.bid-panel.is-joker-suit-panel .bid-option[data-joker-lead-suit="hearts"],
+.bid-panel.is-joker-suit-panel .bid-option[data-joker-lead-suit="diamonds"] {
   color: #ff4c5f !important;
 }
 
-.bid-option[data-joker-lead-suit="clubs"],
-.bid-option[data-joker-lead-suit="spades"] {
-  color: #05070d !important;
+.bid-panel.is-joker-suit-panel .bid-option[data-joker-lead-suit="clubs"],
+.bid-panel.is-joker-suit-panel .bid-option[data-joker-lead-suit="spades"] {
+  color: #eef7f2 !important;
   background:
-    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.34), transparent 42%),
-    linear-gradient(180deg, rgba(177, 244, 255, 0.72), rgba(64, 165, 210, 0.88) 48%, rgba(18, 67, 124, 0.92)) !important;
-  border-color: rgba(214, 253, 255, 0.86) !important;
-  box-shadow:
-    0 0 18px rgba(124, 235, 255, 0.24),
-    inset 0 2px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.18) !important;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.36),
-    0 2px 4px rgba(0, 0, 0, 0.22) !important;
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(43, 57, 55, 0.97), rgba(10, 18, 20, 0.995)) !important;
+  border-color: rgba(198, 211, 207, 0.58) !important;
 }
 
 @media (max-width: 760px), (max-height: 430px) {
@@ -142,59 +95,21 @@
     font-size: 14.5px !important;
   }
 
-  .bid-options:has(.joker-take-option, .joker-high-option),
-  .bid-options:has(.joker-duck-option, .joker-beat-option) {
+  .bid-panel.is-joker-command-panel .bid-options,
+  .bid-panel.is-joker-mode-panel .bid-options {
     gap: 12px !important;
   }
 
-  .bid-panel:has(.joker-take-option, .joker-high-option, .joker-duck-option, .joker-beat-option, .bid-option[data-joker-lead-suit])::after {
-    top: 6px;
-    right: 8px;
-    width: 19px;
-    height: 19px;
-    font-size: 16px;
-  }
-
-  .bid-options:has(.bid-option[data-joker-lead-suit]) {
+  .bid-panel.is-joker-suit-panel .bid-options {
     grid-template-columns: repeat(4, minmax(76px, 1fr)) !important;
     gap: 13px !important;
   }
 
-  .bid-option[data-joker-lead-suit] {
+  .bid-panel.is-joker-suit-panel .bid-option[data-joker-lead-suit] {
     min-width: 76px !important;
     min-height: 52px !important;
     border-radius: 14px !important;
     font-size: 35px !important;
-    line-height: 0.9 !important;
     padding: 3px 12px 5px !important;
-  }
-}
-
-@media (max-width: 420px) {
-  .joker-take-option,
-  .joker-high-option,
-  .joker-duck-option,
-  .joker-beat-option {
-    min-width: 124px !important;
-    min-height: 42px !important;
-    padding: 8px 10px !important;
-    font-size: 13px !important;
-  }
-
-  .bid-options:has(.joker-take-option, .joker-high-option),
-  .bid-options:has(.joker-duck-option, .joker-beat-option) {
-    gap: 10px !important;
-  }
-
-  .bid-options:has(.bid-option[data-joker-lead-suit]) {
-    grid-template-columns: repeat(4, minmax(62px, 1fr)) !important;
-    gap: 10px !important;
-  }
-
-  .bid-option[data-joker-lead-suit] {
-    min-width: 62px !important;
-    min-height: 48px !important;
-    font-size: 33px !important;
-    padding: 2px 9px 4px !important;
   }
 }
