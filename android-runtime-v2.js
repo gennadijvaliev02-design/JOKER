@@ -27,8 +27,10 @@
     "♣": "clubs",
   };
 
+  const trumpPill = document.querySelector(".trump-pill");
   let lastTrumpCard = null;
   let lastTrumpSignature = "";
+  let lastTrickSignature = null;
   let selectedCard = null;
   let selectionTimer = 0;
 
@@ -87,12 +89,9 @@
   }
 
   function syncTrumpPresentation() {
-    if (typeof state === "undefined") return;
+    if (typeof state === "undefined" || !trumpPill) return;
 
-    const pill = document.querySelector(".trump-pill");
-    if (!pill) return;
-
-    const trumpCard = pill.querySelector(".trump-card") || pill.querySelector(".card");
+    const trumpCard = trumpPill.querySelector(".trump-card") || trumpPill.querySelector(".card");
     if (!trumpCard) {
       lastTrumpCard = null;
       lastTrumpSignature = "";
@@ -103,7 +102,7 @@
     const titleText = language === "en" ? "Trump" : "Козырь";
     const suit = getCurrentSuit(trumpCard);
     const signature = `${language}:${suit || "none"}`;
-    const currentTitle = pill.querySelector(".android-trump-title");
+    const currentTitle = trumpPill.querySelector(".android-trump-title");
     const currentArt = trumpCard.querySelector(".android-trump-suit-art");
     const presentationIsCurrent = trumpCard === lastTrumpCard
       && signature === lastTrumpSignature
@@ -112,15 +111,15 @@
 
     if (presentationIsCurrent) return;
 
-    for (const node of [...pill.childNodes]) {
+    for (const node of Array.from(trumpPill.childNodes)) {
       if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) node.remove();
     }
 
-    let title = pill.querySelector(".android-trump-title");
+    let title = trumpPill.querySelector(".android-trump-title");
     if (!title) {
       title = document.createElement("span");
       title.className = "android-trump-title";
-      pill.insertBefore(title, trumpCard);
+      trumpPill.insertBefore(title, trumpCard);
     }
     if (title.textContent !== titleText) title.textContent = titleText;
 
@@ -143,6 +142,20 @@
     trumpCard.classList.add("has-android-suit-art");
     lastTrumpCard = trumpCard;
     lastTrumpSignature = signature;
+  }
+
+  function getTrickSignature() {
+    const plays = state.currentTrick.map((play) => [
+      play.player?.id || "",
+      play.player?.seat || "",
+      play.card?.id || "",
+      play.jokerMode || "",
+      play.jokerCommand || "",
+      play.jokerSuit || "",
+      play.order ?? "",
+    ].join(":"));
+
+    return `${state.collectingTrickWinnerSeat || ""}|${plays.join("|")}`;
   }
 
   function clearTouchSelection() {
@@ -186,6 +199,18 @@
     renderHud = function renderHudWithAndroidV2(...args) {
       const result = originalRenderHud.apply(this, args);
       syncTrumpPresentation();
+      return result;
+    };
+  }
+
+  if (typeof renderTrick === "function") {
+    const originalRenderTrick = renderTrick;
+    renderTrick = function renderCachedAndroidTrick(...args) {
+      const signature = getTrickSignature();
+      if (signature === lastTrickSignature) return;
+
+      const result = originalRenderTrick.apply(this, args);
+      lastTrickSignature = signature;
       return result;
     };
   }
