@@ -82,7 +82,7 @@ const state = {
   autoPlay: false,
   devTarget: null,
   started: false,
-  timeoutIds: [],
+  timeoutIds: new Set(),
   audioContext: null,
   dealAnimationKey: 0,
   renderedDealAnimationKey: 0,
@@ -2137,17 +2137,17 @@ function finishMatch() {
 
 function scheduleGameTask(callback, delay) {
   const timeoutId = window.setTimeout(() => {
-    state.timeoutIds = state.timeoutIds.filter((id) => id !== timeoutId);
+    state.timeoutIds.delete(timeoutId);
     callback();
   }, delay);
 
-  state.timeoutIds.push(timeoutId);
+  state.timeoutIds.add(timeoutId);
   return timeoutId;
 }
 
 function clearGameTasks() {
   state.timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
-  state.timeoutIds = [];
+  state.timeoutIds.clear();
 }
 
 function resetGameState() {

@@ -464,42 +464,50 @@
 
   function transferAllToHands(token) {
     clearNativeDealEffects();
-    const promises = [];
+    const transferJobs = [];
+    const humanTargetNodes = humanNodes();
+    const humanTargetsById = new Map(humanTargetNodes.map((node) => [node.dataset.card, node]));
     let globalIndex = 0;
 
+    // Read every target rectangle before starting any animation. This avoids
+    // alternating layout reads and animation writes for up to 36 cards.
     for (const seat of ["left", "top", "right", "bottom"]) {
       const records = stageCards[seat];
-      const targets = seat === "bottom"
-        ? new Map(humanNodes().map((node) => [node.dataset.card, node]))
-        : opponentNodes(seat);
+      const targets = seat === "bottom" ? humanTargetsById : opponentNodes(seat);
 
       records.forEach((record, index) => {
-        const target = targetForRecord(record, targets, index);
+        const target = record.seat === "bottom"
+          ? (targets.get(record.cardId) || humanTargetNodes[index] || null)
+          : (targets[index] || null);
         if (!target?.isConnected || !record.node?.isConnected) return;
-        const end = transferTransform(target, seat);
-        const delay = globalIndex * TRANSFER_STAGGER;
+
+        transferJobs.push({
+          record,
+          end: transferTransform(target, seat),
+          delay: globalIndex * TRANSFER_STAGGER,
+        });
         globalIndex += 1;
-
-        promises.push(new Promise((resolve) => {
-          if (token !== activeToken || !record.node.isConnected) {
-            resolve();
-            return;
-          }
-
-          const animation = record.node.animate([
-            { opacity: 1, transform: record.node.style.transform },
-            { opacity: 1, transform: end },
-            { opacity: 0.10, transform: end },
-          ], {
-            delay: safeDelay(delay),
-            duration: safeDelay(TRANSFER_DURATION),
-            easing: "cubic-bezier(.16,.82,.22,1)",
-            fill: "both",
-          });
-          trackAnimation(animation, resolve);
-        }));
       });
     }
+
+    const promises = transferJobs.map(({ record, end, delay }) => new Promise((resolve) => {
+      if (token !== activeToken || !record.node.isConnected) {
+        resolve();
+        return;
+      }
+
+      const animation = record.node.animate([
+        { opacity: 1, transform: record.node.style.transform },
+        { opacity: 1, transform: end },
+        { opacity: 0.10, transform: end },
+      ], {
+        delay: safeDelay(delay),
+        duration: safeDelay(TRANSFER_DURATION),
+        easing: "cubic-bezier(.16,.82,.22,1)",
+        fill: "both",
+      });
+      trackAnimation(animation, resolve);
+    }));
 
     return Promise.all(promises).then(() => {
       if (token !== activeToken) return;
