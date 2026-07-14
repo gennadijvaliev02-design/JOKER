@@ -1,6 +1,10 @@
 (() => {
+  "use strict";
+
   const MASTER_VOLUME = 0.84;
   const SFX_VOLUME = 1.22;
+  const NOISE_VARIANTS = 4;
+  const noiseCacheByContext = new WeakMap();
 
   function getContext() {
     if (state.audioContext) {
@@ -9,10 +13,7 @@
     }
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-
-    if (!AudioContext) {
-      return null;
-    }
+    if (!AudioContext) return null;
 
     state.audioContext = new AudioContext();
     state.audioContext.resume?.().catch(() => {});
@@ -37,19 +38,43 @@
     oscillator.stop(time + duration + 0.02);
   }
 
-  function playNoise(ctx, time, { duration, volume = 0.04, filter = 2600, q = 1.1, type = "bandpass", destination }) {
-    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    for (let index = 0; index < data.length; index += 1) {
-      const fade = 1 - index / data.length;
-      data[index] = (Math.random() * 2 - 1) * fade;
+  function getNoiseClip(ctx, duration) {
+    let cache = noiseCacheByContext.get(ctx);
+    if (!cache) {
+      cache = new Map();
+      noiseCacheByContext.set(ctx, cache);
     }
 
+    const key = Math.max(1, Math.round(duration * 1000));
+    const existing = cache.get(key);
+    if (existing) return existing;
+
+    const framesPerVariant = Math.max(1, Math.ceil(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, framesPerVariant * NOISE_VARIANTS, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let variant = 0; variant < NOISE_VARIANTS; variant += 1) {
+      const offset = variant * framesPerVariant;
+      for (let index = 0; index < framesPerVariant; index += 1) {
+        const fade = 1 - index / framesPerVariant;
+        data[offset + index] = (Math.random() * 2 - 1) * fade;
+      }
+    }
+
+    const clip = { buffer, framesPerVariant };
+    cache.set(key, clip);
+    return clip;
+  }
+
+  function playNoise(ctx, time, { duration, volume = 0.04, filter = 2600, q = 1.1, type = "bandpass", destination }) {
+    const clip = getNoiseClip(ctx, duration);
     const source = ctx.createBufferSource();
     const gain = ctx.createGain();
     const biquad = ctx.createBiquadFilter();
-    source.buffer = buffer;
+    const variant = Math.floor(Math.random() * NOISE_VARIANTS);
+    const offset = (variant * clip.framesPerVariant) / ctx.sampleRate;
+
+    source.buffer = clip.buffer;
     biquad.type = type;
     biquad.frequency.setValueAtTime(filter, time);
     biquad.Q.value = q;
@@ -58,7 +83,7 @@
     source.connect(biquad);
     biquad.connect(gain);
     gain.connect(destination || ctx.destination);
-    source.start(time);
+    source.start(time, offset, duration);
     source.stop(time + duration + 0.02);
   }
 
@@ -145,38 +170,26 @@
     playTone(ctx, now + 0.12, { frequency: 1760, endFrequency: 988, duration: 0.17, type: "sine", volume: 0.009 });
   }
 
+  const SOUND_PLAYERS = {
+    shuffle: playShuffle,
+    deal: playDeal,
+    card: playCard,
+    trick: playTrick,
+    trump: playTrump,
+    bidSelect: playBidSelect,
+    trumpSelect: playTrumpSelect,
+    joker: playJoker,
+    jokerCollect: playJokerCollect,
+  };
+
   const originalPlaySound = playSound;
   playSound = function polishedPlaySound(type) {
-    if (state.autoPlay) {
-      return;
-    }
+    if (state.autoPlay) return;
 
     const ctx = getContext();
+    if (!ctx) return originalPlaySound?.(type);
 
-    if (!ctx) {
-      originalPlaySound?.(type);
-      return;
-    }
-
-    const sounds = {
-      shuffle: playShuffle,
-      deal: playDeal,
-      card: playCard,
-      trick: playTrick,
-      trump: playTrump,
-      bidSelect: playBidSelect,
-      trumpSelect: playTrumpSelect,
-      joker: playJoker,
-      jokerCollect: playJokerCollect,
-    };
-
-    const sound = sounds[type];
-
-    if (!sound) {
-      return;
-    }
-
-    sound(ctx);
+    SOUND_PLAYERS[type]?.(ctx);
   };
 
   const originalStartGame = startGame;
