@@ -24,6 +24,7 @@ jobs:
         run: |
           python3 .github/scripts/apply_runtime_cleanup_code_only.py
           python3 .github/scripts/apply_deal_timeline_cleanup.py
+          python3 .github/scripts/apply_scheduler_transfer_cleanup.py
 
       - name: Commit runtime cleanup patches
         if: github.head_ref == 'android-runtime-cleanup-2'
@@ -34,8 +35,8 @@ jobs:
             git config user.name 'Joker Cleanup Bot'
             git config user.email 'actions@users.noreply.github.com'
             git add rules/rules-engine.js android-deal-2026.js high-joker-legal-fix.js \
-              android-runtime-polish.js android-runtime-v2.js index.html
-            git commit -m 'Optimize Android deal timeline'
+              android-runtime-polish.js android-runtime-v2.js script.js index.html
+            git commit -m 'Batch deal transfer reads and simplify task scheduler'
             git push origin HEAD:android-runtime-cleanup-2
           fi
 
@@ -122,4 +123,8 @@ jobs:
           grep -q 'const activeAnimations = new Set' android-deal-2026.js
           grep -q 'const activeSoundSources = new Set' android-deal-2026.js
           grep -q 'const cardFragment = document.createDocumentFragment' android-deal-2026.js
+          grep -q 'const transferJobs = \[\]' android-deal-2026.js
+          grep -q 'timeoutIds: new Set()' script.js
+          grep -q 'state.timeoutIds.delete(timeoutId)' script.js
+          ! grep -q 'state.timeoutIds = state.timeoutIds.filter' script.js
           test "$(grep -o 'setTimeout' android-deal-2026.js | wc -l)" -le 3
