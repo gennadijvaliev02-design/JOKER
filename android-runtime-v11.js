@@ -220,17 +220,6 @@
       .replace(/♠️/g, "♠");
   }
 
-  function normalizeSuitGlyphs() {
-    document
-      .querySelectorAll(
-        '.bid-panel.is-v12-trump-panel .bid-option[data-trump]:not([data-trump="no-trump"]), .android-joker-suit-symbol',
-      )
-      .forEach((node) => {
-        const next = cleanSuitGlyph(node.textContent);
-        if (node.textContent !== next) node.textContent = next;
-      });
-  }
-
   function bidsAreFinished() {
     if (typeof state === "undefined" || !state?.players?.length) return false;
     return state.players.every((player) => player.bid !== null && player.bid !== undefined);
@@ -262,52 +251,27 @@
         || round.classList.contains("is-take");
       setHiddenState(round, !(bidsAreFinished() && isPushNotice));
     }
-
-    normalizeSuitGlyphs();
   }
 
   let installed = false;
-  let hudObserver = null;
-  let bidObserver = null;
 
-  function installHudObservers() {
-    if (installed) return;
+  function installHudHook() {
+    if (installed || typeof renderHud !== "function") return;
     installed = true;
 
-    const hud = document.querySelector(".game-hud");
-    if (hud) {
-      hudObserver = new MutationObserver(syncHudVisibility);
-      hudObserver.observe(hud, {
-        subtree: true,
-        childList: true,
-        characterData: true,
-        attributes: false,
-      });
-    }
-
-    const bidPanel = document.getElementById("bid-panel");
-    if (bidPanel) {
-      bidObserver = new MutationObserver(normalizeSuitGlyphs);
-      bidObserver.observe(bidPanel, {
-        subtree: true,
-        childList: true,
-        characterData: true,
-        attributes: false,
-      });
-    }
+    const originalRenderHud = renderHud;
+    renderHud = function renderHudWithAndroidV13(...args) {
+      const result = originalRenderHud.apply(this, args);
+      syncHudVisibility();
+      return result;
+    };
 
     syncHudVisibility();
   }
 
-  function installAfterRules() {
-    window.setTimeout(installHudObservers, 0);
-  }
-
   injectV13Styles();
-  window.addEventListener("joker-rules-adapters-ready", installAfterRules, { once: true });
-  window.addEventListener("load", installAfterRules, { once: true });
+  window.addEventListener("joker-rules-adapters-ready", installHudHook, { once: true });
+  window.addEventListener("joker-language-change", syncHudVisibility);
 
-  if (document.documentElement.dataset.rulesReady === "true") {
-    installAfterRules();
-  }
+  if (document.documentElement.dataset.rulesReady === "true") installHudHook();
 })();
