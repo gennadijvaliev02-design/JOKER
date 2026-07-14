@@ -1,6 +1,8 @@
 (() => {
+  "use strict";
+
   let announcementElement = null;
-  let announcerSeat = null;
+  let highlightedPlayer = null;
 
   function getLang() {
     return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
@@ -19,9 +21,7 @@
     announcementElement.className = "joker-announcement";
     announcementElement.setAttribute("aria-live", "polite");
     announcementElement.setAttribute("aria-hidden", "true");
-
-    const table = document.querySelector(".table");
-    table?.append(announcementElement);
+    document.querySelector(".table")?.append(announcementElement);
     return announcementElement;
   }
 
@@ -40,18 +40,15 @@
     };
   }
 
-  function setJokerAnnouncerHighlight(seat) {
-    clearJokerAnnouncerHighlight();
-    announcerSeat = seat;
-    const avatar = document.querySelector(`[data-seat="${seat}"]`);
-    avatar?.closest(".player")?.classList.add("is-joker-announcer");
+  function clearJokerAnnouncerHighlight() {
+    highlightedPlayer?.classList.remove("is-joker-announcer");
+    highlightedPlayer = null;
   }
 
-  function clearJokerAnnouncerHighlight() {
-    document.querySelectorAll(".player.is-joker-announcer").forEach((player) => {
-      player.classList.remove("is-joker-announcer");
-    });
-    announcerSeat = null;
+  function setJokerAnnouncerHighlight(seat) {
+    clearJokerAnnouncerHighlight();
+    highlightedPlayer = document.querySelector(`[data-seat="${seat}"]`)?.closest(".player") || null;
+    highlightedPlayer?.classList.add("is-joker-announcer");
   }
 
   function showJokerAnnouncement(play) {
@@ -80,9 +77,10 @@
   }
 
   function hideJokerAnnouncement() {
-    const element = ensureJokerAnnouncementElement();
-    element.classList.remove("is-visible");
-    element.setAttribute("aria-hidden", "true");
+    if (announcementElement) {
+      announcementElement.classList.remove("is-visible");
+      announcementElement.setAttribute("aria-hidden", "true");
+    }
     clearJokerAnnouncerHighlight();
   }
 
@@ -90,21 +88,20 @@
   playCard = function patchedPlayCard(playerId, cardId, options = {}) {
     const result = originalPlayCard(playerId, cardId, options);
 
-    if (result) {
-      const lastPlay = state.currentTrick.at(-1);
-      showJokerAnnouncement(lastPlay);
-    }
-
+    if (result) showJokerAnnouncement(state.currentTrick.at(-1));
     return result;
   };
 
-  window.setInterval(() => {
-    if (announcementElement?.classList.contains("is-visible") && state.currentTrick.length === 0) {
-      hideJokerAnnouncement();
-    }
+  const originalRenderTrick = renderTrick;
+  renderTrick = function renderTrickWithJokerAnnouncementCleanup(...args) {
+    const result = originalRenderTrick.apply(this, args);
+    if (state.currentTrick.length === 0) hideJokerAnnouncement();
+    return result;
+  };
 
-    if (announcerSeat && state.currentTrick.length === 0) {
-      clearJokerAnnouncerHighlight();
-    }
-  }, 120);
+  const originalStartDeal = startDeal;
+  startDeal = function startDealWithoutStaleJokerAnnouncement(...args) {
+    hideJokerAnnouncement();
+    return originalStartDeal.apply(this, args);
+  };
 })();
