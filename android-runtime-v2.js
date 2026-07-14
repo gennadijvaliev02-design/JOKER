@@ -146,6 +146,21 @@
     lastTrumpSignature = signature;
   }
 
+  function syncHudClasses(bidBalance) {
+    const hasTrump = Boolean(state.trump);
+    const suitKind = state.trump?.type === "standard"
+      ? (state.trump.color === "red" || state.trump.suit === "hearts" || state.trump.suit === "diamonds" ? "red" : "black")
+      : "special";
+
+    elements.trumpLabel.classList.toggle("v13-hud-hidden", !hasTrump);
+    elements.trumpLabel.classList.toggle("v13-trump-ready", hasTrump);
+    if (elements.trumpLabel.dataset.v13Suit !== suitKind) {
+      elements.trumpLabel.dataset.v13Suit = suitKind;
+    }
+
+    elements.roundLabel.classList.toggle("v13-hud-hidden", !bidBalance);
+  }
+
   function renderCachedHud() {
     const chooser = getPlayerById(state.trumpChooserId);
     const bidBalance = getBidBalance();
@@ -175,6 +190,7 @@
       }
 
       syncTrumpPresentation();
+      syncHudClasses(bidBalance);
       return;
     }
 
@@ -192,6 +208,7 @@
     }
 
     syncTrumpPresentation();
+    syncHudClasses(bidBalance);
   }
 
   function getTrickSignature() {
