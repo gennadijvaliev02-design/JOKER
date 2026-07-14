@@ -119,27 +119,6 @@
 (() => {
   "use strict";
 
-  /* Prevent the legacy 240ms HUD polling loop before its delayed installer runs. */
-  if (!window.__JOKER_ANDROID_INTERVAL_GUARD__) {
-    window.__JOKER_ANDROID_INTERVAL_GUARD__ = true;
-    const nativeSetInterval = window.setInterval.bind(window);
-
-    window.setInterval = function androidGuardedSetInterval(handler, delay, ...args) {
-      if (
-        Number(delay) === 240
-        && typeof handler === "function"
-        && handler.name === "syncHudVisibility"
-      ) {
-        requestAnimationFrame(() => {
-          if (!document.hidden) handler();
-        });
-        return 0;
-      }
-
-      return nativeSetInterval(handler, delay, ...args);
-    };
-  }
-
   /* Paint the actual generated black-suit buttons, not another generic CSS guess. */
   let silverFrame = 0;
 
