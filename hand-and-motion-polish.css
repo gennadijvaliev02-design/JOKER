@@ -1,4 +1,17 @@
-/* Clean hand cards and one final owner for played-card motion. */
+/* Clean hand cards and one final owner for table motion. */
+
+/* Static states communicate the turn without permanent repaints. */
+.player.is-active .avatar::before {
+  opacity: 0.58 !important;
+  transform: scale(1) !important;
+  animation: none !important;
+}
+
+.player.is-thinking .avatar::after {
+  opacity: 0.82 !important;
+  transform: translateX(-50%) !important;
+  animation: none !important;
+}
 
 .hand {
   bottom: 0.45% !important;
