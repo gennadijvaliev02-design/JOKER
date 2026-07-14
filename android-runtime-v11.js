@@ -133,7 +133,7 @@
       height: 45% !important;
       border-radius: 14px 14px 50% 50% !important;
       background: linear-gradient(180deg, rgba(255,255,255,.17), transparent) !important;
-      filter: blur(.4px) !important;
+      filter: none !important;
       pointer-events: none !important;
     }
 
@@ -223,75 +223,10 @@
     }
   `;
 
-  function injectV13Styles() {
-    if (document.getElementById("android-v13-style")) return;
+  if (!document.getElementById("android-v13-style")) {
     const style = document.createElement("style");
     style.id = "android-v13-style";
     style.textContent = V13_CSS;
     document.head.append(style);
   }
-
-  function cleanSuitGlyph(value) {
-    return String(value || "")
-      .replace(/\uFE0F/g, "")
-      .replace(/❤️/g, "♥")
-      .replace(/♦️/g, "♦")
-      .replace(/♣️/g, "♣")
-      .replace(/♠️/g, "♠");
-  }
-
-  function bidsAreFinished() {
-    if (typeof state === "undefined" || !state?.players?.length) return false;
-    return state.players.every((player) => player.bid !== null && player.bid !== undefined);
-  }
-
-  function setHiddenState(node, hidden) {
-    if (!node) return;
-    node.classList.toggle("v13-hud-hidden", Boolean(hidden));
-  }
-
-  function syncHudVisibility() {
-    const trump = document.getElementById("trump-label");
-    const round = document.getElementById("round-label");
-
-    if (trump) {
-      const card = trump.querySelector(".trump-card");
-      const suitText = cleanSuitGlyph(card?.textContent || "");
-      const hasRealTrump = Boolean(card);
-
-      setHiddenState(trump, !hasRealTrump);
-      trump.classList.toggle("v13-trump-ready", hasRealTrump);
-      trump.dataset.v13Suit = /[♥♦]/.test(suitText) ? "red" : /[♣♠]/.test(suitText) ? "black" : "special";
-    }
-
-    if (round) {
-      const text = round.textContent.trim();
-      const isPushNotice = /пихается|отнимается|push|take/i.test(text)
-        || round.classList.contains("is-push")
-        || round.classList.contains("is-take");
-      setHiddenState(round, !(bidsAreFinished() && isPushNotice));
-    }
-  }
-
-  let installed = false;
-
-  function installHudHook() {
-    if (installed || typeof renderHud !== "function") return;
-    installed = true;
-
-    const originalRenderHud = renderHud;
-    renderHud = function renderHudWithAndroidV13(...args) {
-      const result = originalRenderHud.apply(this, args);
-      syncHudVisibility();
-      return result;
-    };
-
-    syncHudVisibility();
-  }
-
-  injectV13Styles();
-  window.addEventListener("joker-rules-adapters-ready", installHudHook, { once: true });
-  window.addEventListener("joker-language-change", syncHudVisibility);
-
-  if (document.documentElement.dataset.rulesReady === "true") installHudHook();
 })();
