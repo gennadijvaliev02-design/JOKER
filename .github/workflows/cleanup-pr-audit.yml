@@ -1,0 +1,95 @@
+name: Cleanup Source Audit
+
+on:
+  pull_request:
+    branches:
+      - android-app
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check every JavaScript file
+        run: |
+          find . \
+            -path './.git' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './android' -prune -o \
+            -path './www' -prune -o \
+            -name '*.js' -type f -print0 \
+            | sort -z \
+            | xargs -0 -n1 node --check
+
+      - name: Check local web assets
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class Assets(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.paths = []
+
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  if tag == 'script' and attrs.get('src'):
+                      self.paths.append(attrs['src'])
+                  if tag == 'link' and attrs.get('rel') == 'stylesheet' and attrs.get('href'):
+                      self.paths.append(attrs['href'])
+
+          parser = Assets()
+          parser.feed(Path('index.html').read_text(encoding='utf-8'))
+          missing = []
+          for reference in parser.paths:
+              if reference.startswith(('http://', 'https://', 'data:', '//')):
+                  continue
+              path = reference.split('?', 1)[0].split('#', 1)[0]
+              if path and not Path(path).is_file():
+                  missing.append(reference)
+          if missing:
+              raise SystemExit('Missing local assets: ' + ', '.join(missing))
+          PY
+
+      - name: Check removed owners and performance guards
+        run: |
+          test ! -e android-calm-joker-v11.css
+          test ! -e joker-image-cards.js
+          test ! -e joker-panel-cancel.js
+          test ! -e played-card-motion.css
+          ! grep -q 'MutationObserver' android-runtime-v11.js
+          ! grep -q 'MutationObserver' android-v12.js
+          ! grep -q 'MutationObserver' android-v15.js
+          ! grep -q 'setInterval' joker-announcement.js
+          ! grep -q 'document.createElement("script")' preload.js
+          grep -q 'PRELOAD_CONCURRENCY = 6' preload.js
+          ! grep -q 'playCardDealAnimation =' ace-deal-animation.js
+          ! grep -q ':has(' joker-buttons-polish.css
+          ! grep -q ':has(' android-ui-v9.css
+          ! grep -q ':has(' android-ui-v11.css
+          ! grep -q 'is-premium-deal' android-ui-v8.css
+          ! grep -q 'is-premium-deal' android-ui-v9.css
+          ! grep -q 'infinite' android-motion-v2.css
+          ! grep -q 'infinite' android-ui-v8.css
+          ! grep -q 'filter: blur' android-motion-v2.css
+          ! grep -q 'filter: blur' android-ui-v8.css
+          ! grep -q 'filter: blur' android-ui-v10.css
+          ! grep -q 'backdrop-filter: blur' android-ui-v7.css
+          ! grep -q 'backdrop-filter: blur' android-ui-v10.css
+          ! grep -q 'backdrop-filter: blur' android-ui-v12.css
+          ! grep -q 'joker-bubble-trail' trick-collect-animation.css
+          ! grep -q 'joker-star-burst' trick-collect-animation.css
+          ! grep -q 'paintSilverSuits' android-v12.js
+          grep -q 'markSilverSuits' android-v12.js
