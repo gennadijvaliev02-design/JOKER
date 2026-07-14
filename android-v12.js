@@ -50,32 +50,9 @@
       });
   }
 
-  function paintSilverSuits(panel) {
+  function markSilverSuits(panel) {
     panel?.querySelectorAll(SILVER_BUTTON_SELECTOR).forEach((button) => {
       button.classList.add("android-silver-suit");
-      button.style.setProperty("color", "#cbd3d0", "important");
-      button.style.setProperty(
-        "text-shadow",
-        "0 1px 0 rgba(255,255,255,.28), 0 2px 4px rgba(0,0,0,.84)",
-        "important",
-      );
-      button.style.setProperty("filter", "none", "important");
-      button.style.setProperty("border-color", "rgba(198,211,207,.58)", "important");
-      button.style.setProperty(
-        "box-shadow",
-        "0 11px 23px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.16), inset 0 -11px 18px rgba(0,0,0,.34)",
-        "important",
-      );
-
-      button.querySelectorAll(".android-joker-suit-symbol").forEach((symbol) => {
-        symbol.style.setProperty("color", "#cbd3d0", "important");
-        symbol.style.setProperty(
-          "text-shadow",
-          "0 1px 0 rgba(255,255,255,.28), 0 2px 4px rgba(0,0,0,.84)",
-          "important",
-        );
-        symbol.style.setProperty("filter", "none", "important");
-      });
     });
   }
 
@@ -122,7 +99,7 @@
 
     if (kind === "trump" || kind === "joker-suit") {
       normalizeSuitGlyphs(panel);
-      paintSilverSuits(panel);
+      markSilverSuits(panel);
     }
   }
 
