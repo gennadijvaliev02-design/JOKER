@@ -3,10 +3,43 @@
 
   const table = document.querySelector(".table");
   const reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
+  const PLAYER_SEATS = ["left", "top", "right", "bottom"];
+
+  const playerViews = Object.fromEntries(
+    PLAYER_SEATS.map((seat) => {
+      const avatar = document.querySelector(`[data-seat="${seat}"]`);
+      const currentEmotion = avatar?.querySelector(":scope > .avatar-emotion") || null;
+      let avatarInitial = avatar?.querySelector(":scope > .avatar-initial") || null;
+
+      if (avatar && !avatarInitial) {
+        avatarInitial = document.createElement("span");
+        avatarInitial.className = "avatar-initial";
+        avatar.replaceChildren(avatarInitial);
+        if (currentEmotion) avatar.append(currentEmotion);
+      }
+
+      const taken = document.querySelector(`[data-taken="${seat}"]`);
+      return [seat, {
+        playerElement: avatar?.closest(".player") || null,
+        name: document.querySelector(`[data-name="${seat}"]`),
+        avatar,
+        avatarInitial,
+        orderBadge: document.querySelector(`[data-order-badge="${seat}"]`),
+        order: document.querySelector(`[data-order="${seat}"]`),
+        bid: document.querySelector(`[data-bid="${seat}"]`),
+        taken,
+        stats: taken?.closest(".player-stats") || null,
+      }];
+    }),
+  );
 
   let lastPhase = null;
   let lastActiveSeat = null;
   let lastBusy = null;
+
+  function setText(node, value) {
+    if (node && node.textContent !== value) node.textContent = value;
+  }
 
   function syncRuntimeState(force = false) {
     if (!table || typeof state === "undefined") return;
@@ -35,13 +68,32 @@
     }
   }
 
-  if (typeof render === "function") {
-    const originalRender = render;
+  if (typeof renderPlayers === "function") {
+    renderPlayers = function renderCachedAndroidPlayers() {
+      for (const player of state.players) {
+        const view = playerViews[player.seat];
+        if (!view) continue;
 
-    render = function renderWithAndroidRuntimePolish(...args) {
-      const result = originalRender.apply(this, args);
+        setText(view.name, player.seat === "bottom" ? "Ты" : player.name);
+        setText(view.avatarInitial, player.name.slice(0, 1).toUpperCase());
+        setText(view.orderBadge, String(player.order));
+        setText(view.order, String(player.order));
+        setText(view.bid, formatBid(player.bid));
+        setText(view.taken, String(player.tricks));
+
+        view.bid?.classList.toggle("is-pass", player.bid === "pass");
+        view.taken?.classList.toggle("is-danger", isBidBroken(player));
+        view.stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
+
+        const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";
+        view.playerElement?.classList.toggle("is-active", isActivePlayer);
+        view.playerElement?.classList.toggle(
+          "is-thinking",
+          isActivePlayer && state.busy && player.id !== "human",
+        );
+      }
+
       syncRuntimeState();
-      return result;
     };
   }
 
@@ -57,7 +109,6 @@
     );
 
     if (!interactive || !canVibrate()) return;
-
     navigator.vibrate(interactive.matches(".card") ? 7 : 10);
   }, { passive: true });
 
