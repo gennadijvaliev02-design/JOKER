@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   let lastAceDeal = null;
   const ACE_CARD_DELAY = 440;
   const ACE_END_PAUSE = 1900;
@@ -20,11 +22,7 @@
 
   function drawCardByRule(deck, rule) {
     const index = deck.findIndex(rule);
-
-    if (index === -1) {
-      return deck.pop();
-    }
-
+    if (index === -1) return deck.pop();
     return deck.splice(index, 1)[0];
   }
 
@@ -43,12 +41,7 @@
       revealedCards.push({ playerId: player.id, card });
 
       if (shouldRevealAce) {
-        const result = {
-          winnerId: player.id,
-          card,
-          revealedCards,
-        };
-
+        const result = { winnerId: player.id, card, revealedCards };
         lastAceDeal = result;
         return result;
       }
@@ -64,7 +57,7 @@
   }
 
   function scheduleDealSound(delay, loud = false) {
-    window.setTimeout(() => playSound(loud ? "trump" : "deal"), getDelay(delay));
+    scheduleGameTask(() => playSound(loud ? "trump" : "deal"), getDelay(delay));
   }
 
   function createOpenAceDealCard(deal, index, seatPileCount) {
@@ -87,7 +80,6 @@
 
     const cardElement = createCardElement(deal.card);
     cardElement.disabled = true;
-
     wrapper.append(label, cardElement);
     return wrapper;
   }
@@ -95,11 +87,12 @@
   function playOpenAceDealAnimation(aceDeal) {
     if (state.autoPlay || !elements.table) return;
 
+    document.querySelector(".deal-flight-layer.is-ace-open-deal")?.remove();
+
     const copy = getAceCopy();
     const layer = createDealLayer("is-ace-open-deal");
     if (!layer) return;
 
-    // Show the entire sequence through the real winning ace. No truncation.
     const revealedCards = aceDeal?.revealedCards || lastAceDeal?.revealedCards || [];
     const winner = getPlayerById(aceDeal?.winnerId || lastAceDeal?.winnerId);
     const seatPileCount = {};
@@ -122,9 +115,7 @@
     window.setTimeout(() => layer.remove(), getDelay(getAceDealDuration(aceDeal)));
   }
 
-  playAceDealAnimation = function patchedPlayAceDealAnimation(aceDeal) {
-    playOpenAceDealAnimation(aceDeal);
-  };
+  playAceDealAnimation = playOpenAceDealAnimation;
 
   startAceDeal = function cinematicStartAceDeal() {
     state.phase = "ace-deal";
@@ -149,65 +140,9 @@
     playAceDealAnimation(aceDeal);
 
     const waitBeforeRealDeal = state.autoPlay ? 900 : getAceDealDuration(aceDeal) + 450;
-
     scheduleGameTask(() => {
       startDeal();
       render();
     }, getDelay(waitBeforeRealDeal));
-  };
-
-  function getDealerForCurrentGame() {
-    const dealerOrder = state.currentGame === 1 ? 4 : state.currentGame - 1;
-    return state.players.find((player) => player.order === dealerOrder) || getPlayerById(getGameLeaderId()) || state.players[0];
-  }
-
-  function getDealerFlightStart(seat) {
-    const target = getSeatDealTarget(seat);
-
-    if (seat === "top") {
-      return { x: -108, y: -128, rotate: 4 };
-    }
-
-    return target;
-  }
-
-  playCardDealAnimation = function dealerSeatCardDealAnimation(handCount) {
-    if (state.autoPlay || !elements.table) return;
-
-    const layer = createDealLayer("is-hand-deal is-dealer-seat-deal");
-    if (!layer) return;
-
-    const dealer = getDealerForCurrentGame();
-    const dealerTarget = getDealerFlightStart(dealer?.seat || "bottom");
-    const cardsPerPlayer = Math.max(3, Math.min(handCount || 9, 9));
-    const playersInDealOrder = getPlayerOrderFrom(dealer?.id || getGameLeaderId());
-    const cards = [];
-    let dealStep = 0;
-
-    for (let cardIndex = 0; cardIndex < cardsPerPlayer; cardIndex += 1) {
-      for (const playerId of playersInDealOrder) {
-        const player = getPlayerById(playerId);
-        if (!player) continue;
-
-        const target = getSeatDealTarget(player.seat);
-        const targetWithSpread = {
-          ...target,
-          x: target.x + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "top" || player.seat === "bottom" ? 9 : 2),
-          y: target.y + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),
-        };
-
-        const delay = dealStep * 115;
-        const card = createFlyingBack(targetWithSpread, delay, dealStep);
-        card.style.setProperty("--flight-start-x", `${dealerTarget.x}px`);
-        card.style.setProperty("--flight-start-y", `${dealerTarget.y}px`);
-        card.style.setProperty("--flight-start-r", `${dealerTarget.rotate || 0}deg`);
-        cards.push(card);
-        scheduleDealSound(delay + 30);
-        dealStep += 1;
-      }
-    }
-
-    layer.replaceChildren(...cards);
-    window.setTimeout(() => layer.remove(), getDelay(5200));
   };
 })();
