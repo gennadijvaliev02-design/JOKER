@@ -59,6 +59,7 @@ jobs:
           # Android-only cache busting and edge-to-edge viewport.
           sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=19/' www/index.html
           sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
+          sed -i 's/table-language.js?v=4/table-language.js?v=5/' www/index.html
           sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0/' www/index.html
 
           # V12 and V14 still contain visual/UI code, but their obsolete deal installers
@@ -90,6 +91,7 @@ jobs:
           # Deal 2026 loads last and is the only ordinary-deal owner.
           sed -i 's#</body>#    <script src="android-opponent-hands.js?v=2"></script>\n    <script src="android-menu-motion.js?v=1"></script>\n    <script src="android-runtime-polish.js?v=1"></script>\n    <script src="android-runtime-v2.js?v=1"></script>\n    <script src="android-joker-v10.js?v=1"></script>\n    <script src="android-runtime-v11.js?v=4"></script>\n    <script src="android-v12.js?v=2"></script>\n    <script src="android-v14.js?v=2"></script>\n    <script src="android-v15.js?v=2"></script>\n    <script src="android-deal-2026.js?v=20260714-3"></script>\n  </body>#' www/index.html
 
+          grep -q 'table-language.js?v=5' www/index.html
           grep -q 'android-ui-v12.css?v=1' www/index.html
           grep -q 'android-runtime-v11.js?v=4' www/index.html
           grep -q 'android-v12.js?v=2' www/index.html
