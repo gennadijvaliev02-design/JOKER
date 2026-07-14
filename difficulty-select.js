@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const startScreen = document.getElementById("start-screen");
   const originalStartButton = document.getElementById("start-game");
 
@@ -10,6 +12,13 @@
   // Replacing the node removes that old listener, so the selector becomes the only entry point.
   const startButton = originalStartButton.cloneNode(true);
   originalStartButton.replaceWith(startButton);
+
+  // Every later layer must point to the real button, not the detached original node.
+  if (typeof elements !== "undefined" && elements.startGame === originalStartButton) {
+    elements.startGame = startButton;
+  }
+
+  let starting = false;
 
   function getCurrentDifficulty() {
     if (typeof window.getAiDifficulty === "function") {
@@ -101,7 +110,16 @@
     });
   }
 
+  function setStartingState(value) {
+    starting = value;
+    choices.forEach((button) => {
+      button.disabled = value;
+    });
+    backButton.disabled = value;
+  }
+
   function openDifficultyDialog() {
+    if (starting) return;
     applyLanguage();
     updateSelectedState();
     overlay.hidden = false;
@@ -129,19 +147,31 @@
     }, 190);
   }
 
-  function startWithDifficulty(value) {
+  async function startWithDifficulty(value) {
+    if (starting || state.started) return;
+
+    setStartingState(true);
     setDifficulty(value);
     updateSelectedState();
     closeDifficultyDialog(false);
 
-    // Start the heavy game setup only after the 190ms close animation is finished.
-    window.setTimeout(() => {
-      if (typeof window.startGame === "function") {
-        window.startGame();
-      } else {
-        console.warn("Difficulty selector could not find startGame()");
-      }
-    }, 220);
+    const closeAnimation = new Promise((resolve) => window.setTimeout(resolve, 220));
+    const preload = window.JokerCardPreload?.ensureReady?.({ showProgress: false })
+      || Promise.resolve(true);
+
+    const [, ready] = await Promise.all([closeAnimation, preload]);
+
+    if (!ready) {
+      console.warn("Карты не успели полностью предзагрузиться; запускаем с браузерным fallback");
+    }
+
+    if (typeof window.startGame === "function") {
+      window.startGame();
+      return;
+    }
+
+    console.warn("Difficulty selector could not find startGame()");
+    setStartingState(false);
   }
 
   startButton.addEventListener("click", (event) => {
@@ -158,13 +188,13 @@
   backButton.addEventListener("click", () => closeDifficultyDialog(true));
 
   overlay.addEventListener("click", (event) => {
-    if (!modal.contains(event.target)) {
+    if (!starting && !modal.contains(event.target)) {
       closeDifficultyDialog(true);
     }
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !overlay.hidden) {
+    if (event.key === "Escape" && !overlay.hidden && !starting) {
       closeDifficultyDialog(true);
     }
   });
