@@ -151,7 +151,7 @@ jobs:
               for item_name, item_value in fullscreen_items.items():
                   item = existing.get(item_name)
                   if item is None:
-                      item = ET.SubElement(style, {'name': item_name})
+                      item = ET.SubElement(style, 'item', {'name': item_name})
                   item.text = item_value
 
           tree.write(styles_path, encoding='utf-8', xml_declaration=True)
