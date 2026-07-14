@@ -21,7 +21,7 @@ jobs:
 
       - name: Apply runtime cleanup patch
         if: github.head_ref == 'android-runtime-cleanup-2'
-        run: python3 .github/scripts/apply_runtime_cleanup_2.py
+        run: python3 .github/scripts/apply_runtime_cleanup_code_only.py
 
       - name: Commit runtime cleanup patch
         if: github.head_ref == 'android-runtime-cleanup-2'
@@ -32,8 +32,7 @@ jobs:
             git config user.name 'Joker Cleanup Bot'
             git config user.email 'actions@users.noreply.github.com'
             git add rules/rules-engine.js android-deal-2026.js high-joker-legal-fix.js \
-              android-runtime-polish.js android-runtime-v2.js index.html \
-              .github/workflows/android-apk.yml
+              android-runtime-polish.js android-runtime-v2.js index.html
             git commit -m 'Remove remaining Android runtime owners'
             git push origin HEAD:android-runtime-cleanup-2
           fi
