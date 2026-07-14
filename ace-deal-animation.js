@@ -112,7 +112,7 @@
     });
 
     layer.replaceChildren(title, ...cards, winnerText);
-    window.setTimeout(() => layer.remove(), getDelay(getAceDealDuration(aceDeal)));
+    scheduleGameTask(() => layer.remove(), getDelay(getAceDealDuration(aceDeal)));
   }
 
   playAceDealAnimation = playOpenAceDealAnimation;

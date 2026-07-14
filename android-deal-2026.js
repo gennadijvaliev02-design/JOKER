@@ -705,7 +705,7 @@
 
       if (!finalBatch) {
         lastDuration = flightEnd + CLEANUP_PAD;
-        window.setTimeout(() => {
+        scheduleGameTask(() => {
           if (token !== activeToken) return;
           deck.remove();
           if (total === Math.min(3, handSize)) revealBottomPreview();
@@ -716,7 +716,7 @@
       const stagedCount = Object.values(stageCards).reduce((sum, cards) => sum + cards.length, 0);
       const transferSpan = Math.max(0, stagedCount - 1) * TRANSFER_STAGGER + TRANSFER_DURATION;
       lastDuration = flightEnd + TRANSFER_DELAY + transferSpan + CLEANUP_PAD;
-      window.setTimeout(() => {
+      scheduleGameTask(() => {
         if (token !== activeToken) return;
         deck.remove();
         transferAllToHands(token);
