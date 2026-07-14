@@ -19,11 +19,13 @@ jobs:
           ref: ${{ github.head_ref || 'android-runtime-cleanup-2' }}
           fetch-depth: 0
 
-      - name: Apply runtime cleanup patch
+      - name: Apply runtime cleanup patches
         if: github.head_ref == 'android-runtime-cleanup-2'
-        run: python3 .github/scripts/apply_runtime_cleanup_code_only.py
+        run: |
+          python3 .github/scripts/apply_runtime_cleanup_code_only.py
+          python3 .github/scripts/apply_deal_timeline_cleanup.py
 
-      - name: Commit runtime cleanup patch
+      - name: Commit runtime cleanup patches
         if: github.head_ref == 'android-runtime-cleanup-2'
         run: |
           if git diff --quiet; then
@@ -33,7 +35,7 @@ jobs:
             git config user.email 'actions@users.noreply.github.com'
             git add rules/rules-engine.js android-deal-2026.js high-joker-legal-fix.js \
               android-runtime-polish.js android-runtime-v2.js index.html
-            git commit -m 'Remove remaining Android runtime owners'
+            git commit -m 'Optimize Android deal timeline'
             git push origin HEAD:android-runtime-cleanup-2
           fi
 
@@ -117,3 +119,7 @@ jobs:
           grep -q '__JOKER_ANDROID_DEAL_2026_STAGE__' rules/rules-engine.js
           ! grep -q 'setTimeout(install' android-deal-2026.js
           ! grep -q 'originalRender = render' high-joker-legal-fix.js
+          grep -q 'const activeAnimations = new Set' android-deal-2026.js
+          grep -q 'const activeSoundSources = new Set' android-deal-2026.js
+          grep -q 'const cardFragment = document.createDocumentFragment' android-deal-2026.js
+          test "$(grep -o 'setTimeout' android-deal-2026.js | wc -l)" -le 3
