@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const texts = {
     ru: {
       yourTurn: "ТВОЙ ХОД",
@@ -92,7 +94,7 @@
 
   function setText(selector, value) {
     const element = document.querySelector(selector);
-    if (element) element.textContent = value;
+    if (element && element.textContent !== value) element.textContent = value;
   }
 
   function translateMessage(text, copy) {
@@ -158,7 +160,7 @@
   function translatePlayerNames(copy) {
     document.querySelectorAll("[data-name]").forEach((name) => {
       if (name.dataset.name === "bottom" || name.textContent === "Ты" || name.textContent === "You") {
-        name.textContent = copy.you;
+        if (name.textContent !== copy.you) name.textContent = copy.you;
       }
     });
   }
@@ -166,7 +168,8 @@
   function translateThinkingBadges(copy) {
     document.querySelectorAll(".player.is-thinking .name").forEach((name) => {
       const base = name.dataset.name === "bottom" ? copy.you : name.textContent.replace(/\s+(думает|is thinking)$/i, "");
-      name.textContent = `${base} ${copy.thinking}`;
+      const value = `${base} ${copy.thinking}`;
+      if (name.textContent !== value) name.textContent = value;
     });
   }
 
@@ -175,24 +178,30 @@
     if (!label) return;
 
     if (!label.dataset.trumpKey) {
-      label.textContent = translateMessage(label.textContent, copy).replace(/^Козырь$/i, copy.trump).replace(/^Trump$/i, copy.trump);
+      const value = translateMessage(label.textContent, copy).replace(/^Козырь$/i, copy.trump).replace(/^Trump$/i, copy.trump);
+      if (label.textContent !== value) label.textContent = value;
       return;
     }
 
     const firstText = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-    if (firstText) {
+    if (firstText && firstText.textContent !== copy.trump) {
       firstText.textContent = copy.trump;
     }
   }
 
   function translateBidPanel(copy) {
-    const title = document.querySelector(".bid-title");
+    const panel = document.getElementById("bid-panel");
+    if (!panel || panel.hidden) return;
+
+    const title = panel.querySelector(".bid-title");
     if (title) {
-      title.textContent = translatePanelText(title.textContent, copy);
+      const value = translatePanelText(title.textContent, copy);
+      if (title.textContent !== value) title.textContent = value;
     }
 
-    document.querySelectorAll(".bid-option").forEach((button) => {
-      button.textContent = translatePanelText(button.textContent, copy);
+    panel.querySelectorAll(".bid-option").forEach((button) => {
+      const value = translatePanelText(button.textContent, copy);
+      if (button.textContent !== value) button.textContent = value;
     });
   }
 
@@ -200,41 +209,51 @@
     const label = document.getElementById("round-label");
     if (!label || label.hidden) return;
 
-    label.textContent = label.textContent
+    const value = label.textContent
       .replace(/^пихается\s+(\d+)/i, `${copy.push} $1`)
       .replace(/^отнимается\s+(\d+)/i, `${copy.take} $1`)
       .replace(/^push\s+(\d+)/i, `${copy.push} $1`)
       .replace(/^take away\s+(\d+)/i, `${copy.take} $1`);
+    if (label.textContent !== value) label.textContent = value;
   }
 
   function translatePlayedLabels(copy) {
     document.querySelectorAll(".played-label").forEach((label) => {
-      label.textContent = label.textContent.replace(/^Ты/, copy.you).replace(/^You/, copy.you);
+      const value = label.textContent.replace(/^Ты/, copy.you).replace(/^You/, copy.you);
+      if (label.textContent !== value) label.textContent = value;
     });
   }
 
   function translateSummary(copy) {
-    document.querySelectorAll(".summary-title").forEach((title) => {
-      title.textContent = title.textContent
+    const summary = document.getElementById("game-summary");
+    if (!summary || summary.hidden) return;
+
+    summary.querySelectorAll(".summary-title").forEach((title) => {
+      const value = title.textContent
         .replace(/^Игра\s+(\d+)\s+·\s+пулька\s+(\d+)/i, `${copy.game} $1 · ${copy.pulka} $2`)
         .replace(/^Game\s+(\d+)\s+·\s+bullet\s+(\d+)/i, `${copy.game} $1 · ${copy.pulka} $2`);
+      if (title.textContent !== value) title.textContent = value;
     });
 
-    document.querySelectorAll(".summary-name").forEach((name) => {
-      if (name.textContent === "Ты" || name.textContent === "You") {
+    summary.querySelectorAll(".summary-name").forEach((name) => {
+      if ((name.textContent === "Ты" || name.textContent === "You") && name.textContent !== copy.you) {
         name.textContent = copy.you;
       }
     });
   }
 
   function translateDialog(copy) {
+    const dialog = document.getElementById("game-dialog");
+    if (!dialog || dialog.hidden) return;
+
     const dialogTitle = document.getElementById("game-dialog-title");
     if (dialogTitle && dialogTitle.children.length === 0) {
-      dialogTitle.textContent = translateMessage(dialogTitle.textContent, copy);
+      const value = translateMessage(dialogTitle.textContent, copy);
+      if (dialogTitle.textContent !== value) dialogTitle.textContent = value;
     }
 
-    document.querySelectorAll(".dialog-action").forEach((button) => {
-      button.textContent = button.textContent
+    dialog.querySelectorAll(".dialog-action").forEach((button) => {
+      const value = button.textContent
         .replace(/^Продолжить$/i, copy.continue)
         .replace(/^Continue$/i, copy.continue)
         .replace(/^В меню$/i, copy.toMenu)
@@ -243,12 +262,18 @@
         .replace(/^Main menu$/i, copy.mainMenu)
         .replace(/^Новая партия$/i, copy.newGame)
         .replace(/^New game$/i, copy.newGame);
+      if (button.textContent !== value) button.textContent = value;
     });
   }
 
   function translateScoreSheet(copy) {
+    const sheet = document.getElementById("score-sheet");
+    if (!sheet || sheet.hidden) return;
     setText(".sheet-title", copy.scoreCap);
   }
+
+  let lastAppliedLanguage = "";
+  let languageFrame = 0;
 
   function applyTableLanguage() {
     const copy = t();
@@ -258,7 +283,8 @@
 
     const notice = document.getElementById("table-notice");
     if (notice && !notice.hidden) {
-      notice.textContent = translateMessage(notice.textContent, copy);
+      const value = translateMessage(notice.textContent, copy);
+      if (notice.textContent !== value) notice.textContent = value;
     }
 
     translatePlayerNames(copy);
@@ -270,13 +296,28 @@
     translateSummary(copy);
     translateDialog(copy);
     translateScoreSheet(copy);
+    lastAppliedLanguage = getLang();
+  }
+
+  function scheduleTableLanguage(force = false) {
+    const language = getLang();
+
+    // Core game text is Russian already. Once Russian is applied, repeated full-table
+    // scans after every render only waste time and can trigger extra mutations.
+    if (!force && language === "ru" && lastAppliedLanguage === "ru") return;
+    if (languageFrame) return;
+
+    languageFrame = requestAnimationFrame(() => {
+      languageFrame = 0;
+      applyTableLanguage();
+    });
   }
 
   const originalRender = window.render;
   if (typeof originalRender === "function") {
     window.render = function translatedRender(...args) {
       const result = originalRender.apply(this, args);
-      applyTableLanguage();
+      scheduleTableLanguage(false);
       return result;
     };
   }
@@ -301,7 +342,7 @@
     };
   }
 
-  window.addEventListener("joker-language-change", applyTableLanguage);
+  window.addEventListener("joker-language-change", () => scheduleTableLanguage(true));
   window.JokerApplyTableLanguage = applyTableLanguage;
   window.JokerTranslateTableMessage = (message) => translateMessage(message, t());
   applyTableLanguage();
