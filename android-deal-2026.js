@@ -246,7 +246,7 @@
     Object.values(stageCards).forEach((cards) => cards.splice(0).forEach((record) => record.node.remove()));
   }
 
-  function removeLegacyArtifacts() {
+  function clearLegacyArtifactsOnce() {
     document.querySelectorAll(
       ".deal-flight-layer.is-hand-deal, .deal-flight-layer.is-premium-deal, .v11-deal-layer, .v12-deal-layer, .v13-deal-layer, .v14-deal-layer, .v17-deal-layer, .v18-deal-layer, .android-dealer-deck",
     ).forEach((node) => node.remove());
@@ -263,6 +263,7 @@
     elements?.table?.classList.remove(
       "is-dealing", "is-v11-dealing", "is-v12-dealing", "is-v13-dealing",
       "is-v14-dealing", "is-v18-dealing", "is-deal-2026-running",
+      "is-deal-2026-staging", "is-deal-2026-revealing",
     );
   }
 
@@ -273,8 +274,7 @@
     clearStageCards();
     layer?.remove();
     layer = null;
-    elements?.table?.classList.remove("is-deal-2026-staging");
-    removeLegacyArtifacts();
+    elements?.table?.classList.remove("is-deal-2026-staging", "is-deal-2026-revealing");
   }
 
   function getBatch(total) {
@@ -447,12 +447,6 @@
     });
   }
 
-  function targetForRecord(record, seatTargets, index) {
-    if (record.seat === "bottom") {
-      return seatTargets.get(record.cardId) || humanNodes()[index] || null;
-    }
-    return seatTargets[index] || null;
-  }
 
   function transferTransform(target, seat) {
     const rect = rectInTable(target);
@@ -542,7 +536,6 @@
         transform: translate3d(-50%, -50%, 0) rotate(-2deg) !important;
         transform-origin: center !important;
         contain: strict !important;
-        animation: deal-2026-deck-breathe 2.1s ease-in-out infinite alternate !important;
       }
       .deal-2026-stage-deck-card,
       .deal-2026-stage-card {
@@ -582,12 +575,25 @@
       .deal-2026-stage-card.card.is-preview-face .card-corner { font-size: 10px !important; line-height: .9 !important; }
       .deal-2026-stage-card.card.is-preview-face .card-center { font-size: 27px !important; }
       .deal-2026-stage-card.card.is-preview-face .joker-word { font-size: 6px !important; }
-      .is-deal-2026-staging .hand .card,
-      .is-deal-2026-staging .hidden-cards span {
+      .table.is-deal-2026-staging > .hand,
+      .table.is-deal-2026-staging > .hidden-cards {
         opacity: 0 !important;
         visibility: hidden !important;
         pointer-events: none !important;
         animation: none !important;
+        transition: none !important;
+      }
+      .table.is-deal-2026-staging > .hand *,
+      .table.is-deal-2026-staging > .hidden-cards * {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        animation: none !important;
+        transition: none !important;
+      }
+      .table.is-deal-2026-revealing > .hand,
+      .table.is-deal-2026-revealing > .hidden-cards {
+        opacity: 1 !important;
+        visibility: visible !important;
       }
       .is-deal-2026-revealing .hand .card,
       .is-deal-2026-revealing .hidden-cards span {
@@ -599,10 +605,6 @@
       @keyframes deal-2026-real-card-reveal {
         from { opacity: .25; transform: translate3d(0,8px,0) scale(.985); }
         to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
-      }
-      @keyframes deal-2026-deck-breathe {
-        from { transform: translate3d(-50%,-50%,0) rotate(-3deg) scale(.992); }
-        to { transform: translate3d(-50%,-50%,0) rotate(1deg) scale(1.012); }
       }
       @media (max-height: 430px) {
         .deal-2026-stage-deck,
@@ -633,6 +635,7 @@
     }
 
     installed = true;
+    clearLegacyArtifactsOnce();
     injectStyles();
 
     playCardDealAnimation = function playAndroidStagingDeal(handCount) {
@@ -647,7 +650,6 @@
       cancelActiveMotion();
       activeToken += 1;
       const token = activeToken;
-      removeLegacyArtifacts();
       ensureLayer();
       elements.table.classList.add("is-deal-2026-staging");
       clearNativeDealEffects();

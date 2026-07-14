@@ -599,9 +599,10 @@ function renderHand() {
 
   if (shouldAnimateDeal) {
     state.renderedDealAnimationKey = state.dealAnimationKey;
-    elements.table?.classList.add("is-dealing");
+    const usesAndroidDeal = Boolean(window.__JOKER_ANDROID_DEAL_2026_STAGE__);
+    if (!usesAndroidDeal) elements.table?.classList.add("is-dealing");
     playCardDealAnimation(hand.length);
-    if (!window.__JOKER_ANDROID_DEAL_2026_STAGE__) {
+    if (!usesAndroidDeal) {
       scheduleGameTask(() => {
         elements.table?.classList.remove("is-dealing");
       }, getDelay(5600));
