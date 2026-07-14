@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   const GAME_EMOTIONS = [
     { id: "laugh", label: "Смех" },
     { id: "cool", label: "Красава" },
@@ -9,6 +11,9 @@
     { id: "silent", label: "Молчу" },
     { id: "barrel", label: "Штанга" },
   ];
+
+  const emotionTimersBySeat = new Map();
+  const emotionBubblesBySeat = new Map();
 
   function createGameEmotionIcon(id) {
     const icon = document.createElement("span");
@@ -35,9 +40,7 @@
   }
 
   function renderCustomEmotionPanel() {
-    if (!elements.emotionPanel) {
-      return;
-    }
+    if (!elements.emotionPanel || elements.emotionPanel.childElementCount === GAME_EMOTIONS.length) return;
 
     const buttons = GAME_EMOTIONS.map((emotion) => {
       const button = document.createElement("button");
@@ -53,35 +56,41 @@
     elements.emotionPanel.replaceChildren(...buttons);
   }
 
+  function clearSeatEmotion(seat, expectedBubble = null) {
+    const timer = emotionTimersBySeat.get(seat);
+    if (timer) window.clearTimeout(timer);
+    emotionTimersBySeat.delete(seat);
+
+    const bubble = emotionBubblesBySeat.get(seat);
+    if (!expectedBubble || bubble === expectedBubble) {
+      bubble?.remove();
+      emotionBubblesBySeat.delete(seat);
+    }
+  }
+
   showPlayerEmotion = function showCustomPlayerEmotion(seat, emotionId) {
     const avatar = document.querySelector(`[data-seat="${seat}"]`);
+    if (!avatar) return;
 
-    if (!avatar) {
-      return;
-    }
-
+    clearSeatEmotion(seat);
     avatar.querySelector(".avatar-emotion")?.remove();
 
     const bubble = document.createElement("span");
     bubble.className = "avatar-emotion";
     bubble.append(createGameEmotionIcon(emotionId || "laugh"));
     avatar.append(bubble);
+    emotionBubblesBySeat.set(seat, bubble);
 
-    if (state.emotionTimeoutId) {
-      window.clearTimeout(state.emotionTimeoutId);
-    }
-
-    state.emotionTimeoutId = window.setTimeout(() => {
-      bubble.remove();
-      state.emotionTimeoutId = null;
+    const timer = window.setTimeout(() => {
+      clearSeatEmotion(seat, bubble);
     }, 3000);
+    emotionTimersBySeat.set(seat, timer);
   };
 
   renderEmotionPanel = renderCustomEmotionPanel;
 
   if (elements.emotionButton) {
-    elements.emotionButton.innerHTML = "";
-    elements.emotionButton.append(createGameEmotionIcon("laugh"));
+    elements.emotionButton.replaceChildren(createGameEmotionIcon("laugh"));
     elements.emotionButton.setAttribute("aria-label", "Эмоции");
   }
 
