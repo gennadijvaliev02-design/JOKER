@@ -1,104 +1,193 @@
 (() => {
-  const V15_CSS = String.raw`
-    /* Android V15 — glow only. No layout, sizing, colour or gameplay changes. */
+  "use strict";
 
-    /* Trump card: keep the glass card, reduce only its glow by about 40%. */
+  const V15_CSS = String.raw`
+    /* Android V15 — final glow owner and low-cost panel rendering. */
+
     .trump-pill.v13-trump-ready .trump-card {
       box-shadow:
         0 0 0 1px rgba(255,255,255,.36),
-        0 0 10px rgba(255,216,102,.17),
+        0 0 8px rgba(255,216,102,.14),
         0 8px 18px rgba(0,0,0,.34),
-        inset 0 0 12px rgba(255,255,255,.35) !important;
+        inset 0 0 10px rgba(255,255,255,.30) !important;
     }
 
     .trump-pill.v13-trump-ready[data-v13-suit="red"] .trump-card {
       box-shadow:
         0 0 0 1px rgba(255,255,255,.38),
-        0 0 7px rgba(255,255,255,.19),
-        0 0 14px rgba(255,73,96,.23),
+        0 0 6px rgba(255,255,255,.16),
+        0 0 11px rgba(255,73,96,.18),
         0 8px 18px rgba(0,0,0,.34),
-        inset 0 0 13px rgba(255,255,255,.38) !important;
+        inset 0 0 11px rgba(255,255,255,.32) !important;
     }
 
     .trump-pill.v13-trump-ready[data-v13-suit="black"] .trump-card {
       box-shadow:
-        0 0 0 1px rgba(255,255,255,.45),
-        0 0 8px rgba(255,255,255,.37),
-        0 0 14px rgba(190,234,255,.15),
+        0 0 0 1px rgba(226,234,231,.52),
+        0 0 5px rgba(226,234,231,.15),
         0 8px 18px rgba(0,0,0,.34),
-        inset 0 0 14px rgba(255,255,255,.44) !important;
+        inset 0 0 10px rgba(255,255,255,.30) !important;
     }
 
-    /* Trump choice and Joker High/Take panels: reduce only luminous halos by about 70%. */
+    .bid-panel.is-v12-trump-panel,
+    .bid-panel.is-v12-joker-suit-panel,
+    .bid-panel.is-v12-joker-command-panel,
+    .bid-panel.is-v12-joker-mode-panel,
+    .bid-panel.is-v12-order-panel {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
     .bid-panel.is-v12-trump-panel,
     .bid-panel.is-v12-joker-suit-panel {
       box-shadow:
-        0 28px 66px rgba(0,0,0,.64),
-        0 0 0 1px rgba(255,255,255,.07),
-        0 0 16px rgba(226,185,83,.066),
-        0 0 20px rgba(42,234,183,.045),
-        inset 0 1px 0 rgba(255,255,255,.20),
-        inset 0 -25px 42px rgba(0,0,0,.35) !important;
+        0 24px 54px rgba(0,0,0,.62),
+        0 0 0 1px rgba(255,255,255,.065),
+        0 0 11px rgba(226,185,83,.05),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -22px 36px rgba(0,0,0,.34) !important;
     }
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump],
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option {
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option,
+    .bid-panel.is-v12-joker-suit-panel .bid-option[data-joker-lead-suit] {
       box-shadow:
-        0 13px 27px rgba(0,0,0,.45),
-        0 0 10px rgba(48,229,185,.048),
-        inset 0 1px 0 rgba(255,255,255,.22),
-        inset 0 -13px 21px rgba(0,0,0,.33),
-        inset 0 0 14px rgba(67,242,199,.018) !important;
+        0 11px 23px rgba(0,0,0,.43),
+        inset 0 1px 0 rgba(255,255,255,.17),
+        inset 0 -11px 18px rgba(0,0,0,.31) !important;
     }
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="hearts"],
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="diamonds"],
     .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="hearts"] .android-joker-suit-symbol,
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="diamonds"] .android-joker-suit-symbol {
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="diamonds"] .android-joker-suit-symbol,
+    .bid-panel.is-v12-joker-suit-panel .bid-option[data-joker-lead-suit="hearts"],
+    .bid-panel.is-v12-joker-suit-panel .bid-option[data-joker-lead-suit="diamonds"] {
       text-shadow:
-        0 1px 0 rgba(255,255,255,.35),
-        0 0 5px rgba(255,255,255,.075),
-        0 0 8px rgba(255,72,95,.216),
-        0 0 14px rgba(255,44,75,.102),
-        0 3px 5px rgba(0,0,0,.66) !important;
-      filter: drop-shadow(0 0 3px rgba(255,73,96,.12)) !important;
+        0 1px 0 rgba(255,255,255,.30),
+        0 0 5px rgba(255,72,95,.18),
+        0 3px 5px rgba(0,0,0,.68) !important;
+      filter: none !important;
     }
 
-    .bid-panel.is-v12-trump-panel .bid-option[data-trump="clubs"],
-    .bid-panel.is-v12-trump-panel .bid-option[data-trump="spades"],
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="clubs"] .android-joker-suit-symbol,
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="spades"] .android-joker-suit-symbol {
+    .bid-panel .android-silver-suit {
+      color: #cbd3d0 !important;
+      border-color: rgba(198,211,207,.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.085), transparent 32%),
+        linear-gradient(180deg, rgba(43,57,55,.97), rgba(10,18,20,.995)) !important;
       text-shadow:
-        0 1px 0 rgba(255,255,255,.42),
-        0 0 4px rgba(255,255,255,.288),
-        0 0 8px rgba(255,255,255,.216),
-        0 0 14px rgba(186,229,255,.12),
-        0 3px 5px rgba(0,0,0,.76) !important;
-      filter: drop-shadow(0 0 3px rgba(255,255,255,.186)) !important;
+        0 1px 0 rgba(255,255,255,.28),
+        0 2px 4px rgba(0,0,0,.84) !important;
+      filter: none !important;
+      box-shadow:
+        0 11px 23px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -11px 18px rgba(0,0,0,.34) !important;
+    }
+
+    .bid-panel .android-silver-suit::before {
+      background: linear-gradient(180deg, rgba(255,255,255,.085), transparent) !important;
+      filter: none !important;
+    }
+
+    .bid-panel .android-silver-suit .android-joker-suit-symbol {
+      color: #cbd3d0 !important;
+      text-shadow:
+        0 1px 0 rgba(255,255,255,.28),
+        0 2px 4px rgba(0,0,0,.84) !important;
+      filter: none !important;
     }
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="no-trump"] {
-      text-shadow:
-        0 2px 4px rgba(0,0,0,.74),
-        0 0 9px rgba(238,199,100,.075) !important;
+      text-shadow: 0 2px 4px rgba(0,0,0,.74), 0 0 7px rgba(238,199,100,.06) !important;
       box-shadow:
-        0 13px 27px rgba(0,0,0,.46),
-        0 0 10px rgba(233,195,95,.057),
-        inset 0 1px 0 rgba(255,255,255,.18),
-        inset 0 -13px 21px rgba(0,0,0,.34) !important;
+        0 11px 23px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -11px 18px rgba(0,0,0,.33) !important;
     }
   `;
 
-  if (document.getElementById("android-v15-style")) return;
-
-  const style = document.createElement("style");
-  style.id = "android-v15-style";
-  style.textContent = V15_CSS;
-  document.head.append(style);
+  if (!document.getElementById("android-v15-style")) {
+    const style = document.createElement("style");
+    style.id = "android-v15-style";
+    style.textContent = V15_CSS;
+    document.head.append(style);
+  }
 })();
 
 (() => {
-  /* Android V16 performance correction — no visual or gameplay changes. */
+  "use strict";
+
+  /* Prevent the legacy 240ms HUD polling loop before its delayed installer runs. */
+  if (!window.__JOKER_ANDROID_INTERVAL_GUARD__) {
+    window.__JOKER_ANDROID_INTERVAL_GUARD__ = true;
+    const nativeSetInterval = window.setInterval.bind(window);
+
+    window.setInterval = function androidGuardedSetInterval(handler, delay, ...args) {
+      if (
+        Number(delay) === 240
+        && typeof handler === "function"
+        && handler.name === "syncHudVisibility"
+      ) {
+        requestAnimationFrame(() => {
+          if (!document.hidden) handler();
+        });
+        return 0;
+      }
+
+      return nativeSetInterval(handler, delay, ...args);
+    };
+  }
+
+  /* Paint the actual generated black-suit buttons, not another generic CSS guess. */
+  let silverFrame = 0;
+
+  function paintSilverSuits() {
+    silverFrame = 0;
+    const buttons = document.querySelectorAll([
+      '.bid-option[data-trump="clubs"]',
+      '.bid-option[data-trump="spades"]',
+      '.bid-option[data-joker-lead-suit="clubs"]',
+      '.bid-option[data-joker-lead-suit="spades"]',
+      '.android-joker-suit-option[data-joker-lead-suit="clubs"]',
+      '.android-joker-suit-option[data-joker-lead-suit="spades"]',
+    ].join(","));
+
+    buttons.forEach((button) => {
+      button.classList.add("android-silver-suit");
+      button.style.setProperty("color", "#cbd3d0", "important");
+      button.style.setProperty("text-shadow", "0 1px 0 rgba(255,255,255,.28), 0 2px 4px rgba(0,0,0,.84)", "important");
+      button.style.setProperty("filter", "none", "important");
+      button.style.setProperty("border-color", "rgba(198,211,207,.58)", "important");
+      button.style.setProperty("box-shadow", "0 11px 23px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.16), inset 0 -11px 18px rgba(0,0,0,.34)", "important");
+
+      button.querySelectorAll(".android-joker-suit-symbol").forEach((symbol) => {
+        symbol.style.setProperty("color", "#cbd3d0", "important");
+        symbol.style.setProperty("text-shadow", "0 1px 0 rgba(255,255,255,.28), 0 2px 4px rgba(0,0,0,.84)", "important");
+        symbol.style.setProperty("filter", "none", "important");
+      });
+    });
+  }
+
+  function scheduleSilverPaint() {
+    if (silverFrame) return;
+    silverFrame = requestAnimationFrame(paintSilverSuits);
+  }
+
+  const bidPanel = document.getElementById("bid-panel");
+  if (bidPanel) {
+    const observer = new MutationObserver(scheduleSilverPaint);
+    observer.observe(bidPanel, { subtree: true, childList: true, characterData: true });
+  }
+
+  scheduleSilverPaint();
+})();
+
+(() => {
+  "use strict";
+
+  /* Android V16 performance correction — preserve visuals, remove repeated work. */
   const previousPlaySound = typeof playSound === "function" ? playSound : null;
   const noiseCacheByContext = new WeakMap();
 
@@ -157,7 +246,7 @@
     biquad.type = type;
     biquad.frequency.setValueAtTime(filter, time);
     biquad.Q.value = q;
-    gain.gain.setValueAtTime(volume * 0.84 * 1.22, time);
+    gain.gain.setValueAtTime(volume * 1.0248, time);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
     source.connect(biquad);
     biquad.connect(gain);
@@ -173,7 +262,7 @@
     oscillator.type = "triangle";
     oscillator.frequency.setValueAtTime(frequency, time);
     oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), time + duration);
-    gain.gain.setValueAtTime(volume * 0.84 * 1.22, time);
+    gain.gain.setValueAtTime(volume * 1.0248, time);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
     oscillator.connect(gain);
     gain.connect(ctx.destination);
@@ -248,22 +337,56 @@
 
     const refreshVisibleScore = () => {
       requestAnimationFrame(() => {
-        if (!elements.scoreSheet.hidden) {
-          fullRenderScoreSheet();
-        }
+        if (!elements.scoreSheet.hidden) fullRenderScoreSheet();
       });
     };
 
     elements.scoreButton?.addEventListener("click", refreshVisibleScore);
     elements.scoreClose?.addEventListener("click", refreshVisibleScore);
-
-    if (!elements.scoreSheet.hidden) {
-      fullRenderScoreSheet();
-    }
   }
+
+  let handCacheInstalled = false;
+
+  function installHandRenderCache() {
+    if (handCacheInstalled || typeof renderHand !== "function" || !elements?.playerHand) return;
+    handCacheInstalled = true;
+    const fullRenderHand = renderHand;
+
+    renderHand = function androidV16CachedHand(...args) {
+      const hand = state.hands?.human || [];
+      const nodes = [...elements.playerHand.querySelectorAll(":scope > .card")];
+      const shouldAnimateDeal = state.dealAnimationKey !== state.renderedDealAnimationKey;
+      const domMatches = nodes.length === hand.length
+        && nodes.every((node, index) => node.dataset.card === hand[index]?.id);
+
+      if (!domMatches || shouldAnimateDeal) {
+        return fullRenderHand.apply(this, args);
+      }
+
+      const middle = (hand.length - 1) / 2;
+      nodes.forEach((node, index) => {
+        const card = hand[index];
+        const playable = typeof canHumanPlay === "function" ? canHumanPlay(card) : true;
+        const offset = index - middle;
+        const lift = Math.round(Math.abs(offset) * 2.2);
+
+        node.disabled = !playable;
+        node.classList.toggle("is-disabled", !playable);
+        node.classList.remove("is-dealt");
+        node.style.removeProperty("--deal-delay");
+        node.style.setProperty("--hand-rotate", `${offset * 1.8}deg`);
+        node.style.setProperty("--hand-lift", `${lift}px`);
+      });
+    };
+  }
+
+  window.setTimeout(installHandRenderCache, 520);
+  window.addEventListener("load", () => window.setTimeout(installHandRenderCache, 520), { once: true });
 })();
 
 (() => {
+  "use strict";
+
   /* Deal 2026 duplicate guard: hide whole real-hand containers, not replaceable children. */
   if (document.getElementById("android-deal-container-mask-style")) return;
 
