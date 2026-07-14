@@ -9,7 +9,9 @@
 
   function getContext() {
     if (state.audioContext) {
-      state.audioContext.resume?.().catch(() => {});
+      if (state.audioContext.state === "suspended") {
+        state.audioContext.resume?.().catch(() => {});
+      }
       return state.audioContext;
     }
 
@@ -17,7 +19,9 @@
     if (!AudioContext) return null;
 
     state.audioContext = new AudioContext();
-    state.audioContext.resume?.().catch(() => {});
+    if (state.audioContext.state === "suspended") {
+      state.audioContext.resume?.().catch(() => {});
+    }
     return state.audioContext;
   }
 

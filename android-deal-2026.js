@@ -243,7 +243,9 @@
   }
 
   function clearStageCards() {
-    Object.values(stageCards).forEach((cards) => cards.splice(0).forEach((record) => record.node.remove()));
+    Object.values(stageCards).forEach((cards) => {
+      cards.length = 0;
+    });
   }
 
   function clearLegacyArtifactsOnce() {
@@ -437,13 +439,14 @@
       if (actual.classList.contains("black")) record.node.classList.add("black");
       if (actual.classList.contains("joker-card")) record.node.classList.add("joker-card");
       clearBack(record.node);
-      record.node.animate([
+      const animation = record.node.animate([
         { transform: `${record.node.style.transform} rotateY(90deg)`, opacity: 0.72 },
         { transform: record.node.style.transform, opacity: 1 },
       ], {
         duration: safeDelay(PREVIEW_FLIP_DURATION),
         easing: "cubic-bezier(.2,.72,.22,1)",
       });
+      trackAnimation(animation);
     });
   }
 
@@ -508,7 +511,10 @@
       clearNativeDealEffects();
       elements.table.classList.remove("is-deal-2026-staging");
       elements.table.classList.add("is-deal-2026-revealing");
-      window.setTimeout(() => elements.table.classList.remove("is-deal-2026-revealing"), 430);
+      scheduleGameTask(
+        () => elements.table.classList.remove("is-deal-2026-revealing"),
+        safeDelay(430),
+      );
       clearStageCards();
       layer?.remove();
       layer = null;
