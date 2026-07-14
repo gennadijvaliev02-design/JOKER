@@ -119,146 +119,7 @@
 (() => {
   "use strict";
 
-  /* Android V16 performance correction — preserve visuals, remove repeated work. */
-  const previousPlaySound = typeof playSound === "function" ? playSound : null;
-  const noiseCacheByContext = new WeakMap();
-
-  function getAudioContext() {
-    if (state.audioContext) {
-      state.audioContext.resume?.().catch(() => {});
-      return state.audioContext;
-    }
-
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return null;
-
-    state.audioContext = new AudioContext();
-    state.audioContext.resume?.().catch(() => {});
-    return state.audioContext;
-  }
-
-  function getNoiseClip(ctx, duration) {
-    let cache = noiseCacheByContext.get(ctx);
-    if (!cache) {
-      cache = new Map();
-      noiseCacheByContext.set(ctx, cache);
-    }
-
-    const key = Math.max(1, Math.round(duration * 1000));
-    const existing = cache.get(key);
-    if (existing) return existing;
-
-    const variants = 4;
-    const framesPerVariant = Math.max(1, Math.ceil(ctx.sampleRate * duration));
-    const buffer = ctx.createBuffer(1, framesPerVariant * variants, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    for (let variant = 0; variant < variants; variant += 1) {
-      const offset = variant * framesPerVariant;
-      for (let index = 0; index < framesPerVariant; index += 1) {
-        const fade = 1 - index / framesPerVariant;
-        data[offset + index] = (Math.random() * 2 - 1) * fade;
-      }
-    }
-
-    const clip = { buffer, framesPerVariant, variants };
-    cache.set(key, clip);
-    return clip;
-  }
-
-  function playCachedNoise(ctx, time, { duration, volume, filter, q = 1.1, type = "bandpass" }) {
-    const clip = getNoiseClip(ctx, duration);
-    const source = ctx.createBufferSource();
-    const gain = ctx.createGain();
-    const biquad = ctx.createBiquadFilter();
-    const variant = Math.floor(Math.random() * clip.variants);
-    const offset = (variant * clip.framesPerVariant) / ctx.sampleRate;
-
-    source.buffer = clip.buffer;
-    biquad.type = type;
-    biquad.frequency.setValueAtTime(filter, time);
-    biquad.Q.value = q;
-    gain.gain.setValueAtTime(volume * 1.0248, time);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
-    source.connect(biquad);
-    biquad.connect(gain);
-    gain.connect(ctx.destination);
-    source.start(time, offset, duration);
-    source.stop(time + duration + 0.02);
-  }
-
-  function playFastTone(ctx, time, { frequency, endFrequency, duration, volume }) {
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(frequency, time);
-    oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), time + duration);
-    gain.gain.setValueAtTime(volume * 1.0248, time);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-    oscillator.start(time);
-    oscillator.stop(time + duration + 0.02);
-  }
-
-  function playFastShuffle(ctx) {
-    const now = ctx.currentTime + 0.02;
-
-    for (let index = 0; index < 18; index += 1) {
-      const time = now + index * 0.044;
-      playCachedNoise(ctx, time, {
-        duration: 0.052,
-        volume: 0.07,
-        filter: 1500 + (index % 8) * 155,
-      });
-
-      if (index % 2 === 0) {
-        playFastTone(ctx, time, {
-          frequency: 150 + index * 5,
-          endFrequency: 90,
-          duration: 0.04,
-          volume: 0.012,
-        });
-      }
-    }
-  }
-
-  function playFastDeal(ctx) {
-    const now = ctx.currentTime;
-    playCachedNoise(ctx, now, {
-      duration: 0.038,
-      volume: 0.072,
-      filter: 2300,
-      q: 0.9,
-    });
-    playFastTone(ctx, now, {
-      frequency: 255,
-      endFrequency: 118,
-      duration: 0.034,
-      volume: 0.0075,
-    });
-  }
-
-  playSound = function androidV16PlaySound(type) {
-    if (type !== "shuffle" && type !== "deal") {
-      return previousPlaySound?.(type);
-    }
-
-    if (state.autoPlay) return;
-
-    const ctx = getAudioContext();
-    if (!ctx) {
-      return previousPlaySound?.(type);
-    }
-
-    if (type === "shuffle") {
-      playFastShuffle(ctx);
-    } else {
-      playFastDeal(ctx);
-    }
-  };
-
+  /* Android render caches — no sound ownership here. */
   if (typeof renderScoreSheet === "function" && typeof elements !== "undefined" && elements.scoreSheet) {
     const fullRenderScoreSheet = renderScoreSheet;
 
@@ -267,14 +128,11 @@
       return fullRenderScoreSheet();
     };
 
-    const refreshVisibleScore = () => {
+    elements.scoreButton?.addEventListener("click", () => {
       requestAnimationFrame(() => {
         if (!elements.scoreSheet.hidden) fullRenderScoreSheet();
       });
-    };
-
-    elements.scoreButton?.addEventListener("click", refreshVisibleScore);
-    elements.scoreClose?.addEventListener("click", refreshVisibleScore);
+    });
   }
 
   let handCacheInstalled = false;
@@ -286,10 +144,10 @@
 
     renderHand = function androidV16CachedHand(...args) {
       const hand = state.hands?.human || [];
-      const nodes = [...elements.playerHand.querySelectorAll(":scope > .card")];
+      const nodes = Array.from(elements.playerHand.children);
       const shouldAnimateDeal = state.dealAnimationKey !== state.renderedDealAnimationKey;
       const domMatches = nodes.length === hand.length
-        && nodes.every((node, index) => node.dataset.card === hand[index]?.id);
+        && nodes.every((node, index) => node.classList.contains("card") && node.dataset.card === hand[index]?.id);
 
       if (!domMatches || shouldAnimateDeal) {
         return fullRenderHand.apply(this, args);
@@ -299,15 +157,17 @@
       nodes.forEach((node, index) => {
         const card = hand[index];
         const playable = typeof canHumanPlay === "function" ? canHumanPlay(card) : true;
+        const disabled = !playable;
         const offset = index - middle;
-        const lift = Math.round(Math.abs(offset) * 2.2);
+        const rotate = `${offset * 1.8}deg`;
+        const lift = `${Math.round(Math.abs(offset) * 2.2)}px`;
 
-        node.disabled = !playable;
-        node.classList.toggle("is-disabled", !playable);
-        node.classList.remove("is-dealt");
-        node.style.removeProperty("--deal-delay");
-        node.style.setProperty("--hand-rotate", `${offset * 1.8}deg`);
-        node.style.setProperty("--hand-lift", `${lift}px`);
+        if (node.disabled !== disabled) node.disabled = disabled;
+        node.classList.toggle("is-disabled", disabled);
+        if (node.classList.contains("is-dealt")) node.classList.remove("is-dealt");
+        if (node.style.getPropertyValue("--deal-delay")) node.style.removeProperty("--deal-delay");
+        if (node.style.getPropertyValue("--hand-rotate") !== rotate) node.style.setProperty("--hand-rotate", rotate);
+        if (node.style.getPropertyValue("--hand-lift") !== lift) node.style.setProperty("--hand-lift", lift);
       });
     };
   }
