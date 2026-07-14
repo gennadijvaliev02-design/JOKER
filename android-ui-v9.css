@@ -1,7 +1,4 @@
-/*
- * Android UI V9 — focused corrections after real-device testing.
- * Keeps approved V8 design and fixes only spacing, overlap and deal residue.
- */
+/* Android UI V9 — focused real-device spacing corrections only. */
 
 /* ---------- Top lane: separate state, trump and top player ---------- */
 #round-label {
@@ -14,103 +11,32 @@
   width: clamp(100px, 9.2vw, 118px) !important;
 }
 
-/* Move only the top avatar/name/order cluster. The approved top hand stays put. */
 .player-top {
   left: 46% !important;
   transform: translateX(-50%) !important;
 }
 
-/* Keep the right seat close to the physical table edge. */
 .player-right {
   right: max(clamp(14px, 1.35vw, 23px), calc(var(--android-safe-right) + 6px)) !important;
 }
 
-/* ---------- Bid panel: more room between the two rows, same buttons ---------- */
-.bid-panel:not(:has(.bid-option[data-trump])) {
+/* ---------- Order panel spacing uses the explicit V12 owner class ---------- */
+.bid-panel.is-v12-order-panel {
   width: min(720px, 70vw) !important;
   max-width: calc(100vw - var(--android-safe-left) - var(--android-safe-right) - 34px) !important;
   padding: 16px 30px 21px !important;
 }
 
-.bid-panel:not(:has(.bid-option[data-trump])) .bid-title {
+.bid-panel.is-v12-order-panel .bid-title {
   margin-bottom: 12px !important;
 }
 
-.bid-panel:not(:has(.bid-option[data-trump])) .bid-options {
+.bid-panel.is-v12-order-panel .bid-options {
   column-gap: clamp(10px, 1.35vw, 20px) !important;
   row-gap: clamp(18px, 3.1vh, 29px) !important;
   align-items: center !important;
 }
 
-.bid-panel:not(:has(.bid-option[data-trump])) .bid-option {
-  /* Preserve the approved button dimensions; only panel breathing room changes. */
-  touch-action: manipulation;
-}
-
-/* ---------- Deal cards must not remain as duplicate piles ---------- */
-.deal-flight-layer.is-premium-deal .flying-card-back {
-  animation-fill-mode: both !important;
-  pointer-events: none !important;
-}
-
-@keyframes android-premium-card-flight {
-  0% {
-    opacity: 0;
-    filter: blur(1px) brightness(0.88);
-    transform:
-      translate(var(--flight-start-x), var(--flight-start-y))
-      scale(0.56)
-      rotate(var(--flight-start-r));
-  }
-
-  18% {
-    opacity: 1;
-  }
-
-  56% {
-    opacity: 1;
-    filter: blur(0) brightness(1.05);
-    transform:
-      translate(
-        calc(var(--flight-x) * 0.62 + var(--flight-start-x) * 0.38),
-        calc(var(--flight-y) * 0.62 + var(--flight-start-y) * 0.38 + var(--deal-arc-y, -16px))
-      )
-      scale(1.03)
-      rotate(calc(var(--flight-r) + var(--deal-turn, 6deg)));
-  }
-
-  84% {
-    opacity: 1;
-    filter: blur(0) brightness(1.015);
-    transform:
-      translate(
-        calc(var(--flight-x) * 0.96 + var(--flight-start-x) * 0.04),
-        calc(var(--flight-y) * 0.96 + var(--flight-start-y) * 0.04 - 2px)
-      )
-      scale(0.96)
-      rotate(calc(var(--flight-r) - 1deg));
-  }
-
-  96% {
-    opacity: 1;
-    filter: blur(0) brightness(1);
-    transform:
-      translate(var(--flight-x), var(--flight-y))
-      scale(0.92)
-      rotate(var(--flight-r));
-  }
-
-  100% {
-    opacity: 0;
-    filter: blur(0) brightness(1);
-    transform:
-      translate(var(--flight-x), var(--flight-y))
-      scale(0.92)
-      rotate(var(--flight-r));
-  }
-}
-
-/* ---------- Small landscape phones ---------- */
 @media (max-height: 430px) {
   #round-label {
     left: max(10px, calc(var(--android-safe-left) + 7px)) !important;
@@ -130,16 +56,16 @@
     right: max(11px, calc(var(--android-safe-right) + 5px)) !important;
   }
 
-  .bid-panel:not(:has(.bid-option[data-trump])) {
+  .bid-panel.is-v12-order-panel {
     width: min(650px, 72vw) !important;
     padding: 10px 25px 14px !important;
   }
 
-  .bid-panel:not(:has(.bid-option[data-trump])) .bid-title {
+  .bid-panel.is-v12-order-panel .bid-title {
     margin-bottom: 7px !important;
   }
 
-  .bid-panel:not(:has(.bid-option[data-trump])) .bid-options {
+  .bid-panel.is-v12-order-panel .bid-options {
     row-gap: 16px !important;
     column-gap: 10px !important;
   }
