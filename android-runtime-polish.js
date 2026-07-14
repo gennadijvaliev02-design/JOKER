@@ -1,19 +1,38 @@
 (() => {
-  const table = document.querySelector(".table");
+  "use strict";
 
-  function syncRuntimeState() {
-    if (!table || typeof state === "undefined") {
-      return;
+  const table = document.querySelector(".table");
+  const reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
+
+  let lastPhase = null;
+  let lastActiveSeat = null;
+  let lastBusy = null;
+
+  function syncRuntimeState(force = false) {
+    if (!table || typeof state === "undefined") return;
+
+    const phase = state.phase || "idle";
+    const activePlayer = state.players?.find?.((player) => player.id === state.activePlayerId);
+    const activeSeat = activePlayer?.seat || "";
+    const busy = Boolean(state.busy);
+
+    if (force || phase !== lastPhase) {
+      if (table.dataset.phase !== phase) table.dataset.phase = phase;
+      table.classList.toggle("is-runtime-playing", phase === "playing");
+      table.classList.toggle("is-runtime-bidding", phase === "bidding");
+      table.classList.toggle("is-runtime-ace-deal", phase === "ace-deal");
+      lastPhase = phase;
     }
 
-    table.dataset.phase = state.phase || "idle";
+    if (force || activeSeat !== lastActiveSeat) {
+      if (table.dataset.activeSeat !== activeSeat) table.dataset.activeSeat = activeSeat;
+      lastActiveSeat = activeSeat;
+    }
 
-    const activePlayer = state.players?.find?.((player) => player.id === state.activePlayerId);
-    table.dataset.activeSeat = activePlayer?.seat || "";
-    table.classList.toggle("is-runtime-busy", Boolean(state.busy));
-    table.classList.toggle("is-runtime-playing", state.phase === "playing");
-    table.classList.toggle("is-runtime-bidding", state.phase === "bidding");
-    table.classList.toggle("is-runtime-ace-deal", state.phase === "ace-deal");
+    if (force || busy !== lastBusy) {
+      table.classList.toggle("is-runtime-busy", busy);
+      lastBusy = busy;
+    }
   }
 
   if (typeof render === "function") {
@@ -27,28 +46,24 @@
   }
 
   function canVibrate() {
-    return typeof navigator.vibrate === "function"
-      && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    return typeof navigator.vibrate === "function" && !reducedMotionQuery?.matches;
   }
 
   document.addEventListener("pointerdown", (event) => {
+    if (!(event.target instanceof Element)) return;
+
     const interactive = event.target.closest(
       "button:not(:disabled), .card:not(.is-disabled), [role='button']",
     );
 
-    if (!interactive || !canVibrate()) {
-      return;
-    }
+    if (!interactive || !canVibrate()) return;
 
-    const duration = interactive.matches(".card") ? 7 : 10;
-    navigator.vibrate(duration);
+    navigator.vibrate(interactive.matches(".card") ? 7 : 10);
   }, { passive: true });
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      syncRuntimeState();
-    }
+    if (!document.hidden) syncRuntimeState(true);
   });
 
-  syncRuntimeState();
+  syncRuntimeState(true);
 })();
