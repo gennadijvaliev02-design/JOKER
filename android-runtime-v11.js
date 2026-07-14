@@ -1,16 +1,6 @@
 (() => {
   "use strict";
 
-  /* Keep the approved calm Joker sound behaviour. */
-  const originalPlaySound = typeof playSound === "function" ? playSound : null;
-
-  if (originalPlaySound) {
-    playSound = function playCalmAndroidSound(type) {
-      if (type === "joker" || type === "jokerCollect") return;
-      return originalPlaySound(type);
-    };
-  }
-
   const V13_CSS = String.raw`
     /* Final Android HUD and selection-panel owner. */
     .v13-hud-hidden {
