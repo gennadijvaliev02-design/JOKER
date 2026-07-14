@@ -1,4 +1,4 @@
-/* Opening animation: deal cards openly until the first ace is found */
+/* Opening animation: deal cards openly until the first ace is found. */
 .ace-deal-overlay {
   display: none !important;
 }
@@ -14,10 +14,7 @@
   z-index: 18 !important;
   pointer-events: none;
   transform: none !important;
-}
-
-.deal-flight-layer.is-dealer-seat-deal .flying-card-back {
-  animation-name: flying-card-from-dealer !important;
+  contain: layout paint style;
 }
 
 .ace-open-title {
@@ -34,9 +31,7 @@
   font-weight: 950;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72);
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.38),
-    0 0 18px rgba(255, 214, 41, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38), 0 0 18px rgba(255, 214, 41, 0.18);
 }
 
 .ace-open-winner {
@@ -48,17 +43,13 @@
   padding: 9px 15px;
   border: 1px solid rgba(255, 232, 137, 0.66);
   border-radius: 14px;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255, 232, 137, 0.24), transparent 46%),
-    rgba(3, 14, 28, 0.84);
+  background: radial-gradient(circle at 50% 0%, rgba(255, 232, 137, 0.24), transparent 46%), rgba(3, 14, 28, 0.84);
   color: #fff4b5;
   font-size: 16px;
   font-weight: 950;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72);
-  box-shadow:
-    0 16px 32px rgba(0, 0, 0, 0.44),
-    0 0 22px rgba(255, 214, 41, 0.22);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.44), 0 0 22px rgba(255, 214, 41, 0.22);
   opacity: 0;
   transform: translate(-50%, 12px) scale(0.94);
   animation: ace-open-winner-pop 520ms ease-out var(--winner-delay, 1600ms) both;
@@ -74,6 +65,9 @@
   opacity: 0;
   transform: var(--ace-start-transform) scale(0.82);
   animation: ace-open-card-in 400ms ease-out var(--ace-delay, 0ms) both;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  contain: layout paint style;
 }
 
 .ace-open-played-card.left {
@@ -119,32 +113,7 @@
 }
 
 .ace-open-played-card.is-winning-ace .card {
-  box-shadow:
-    0 0 0 3px rgba(255, 221, 87, 0.98),
-    0 0 24px rgba(255, 221, 87, 0.52),
-    0 16px 28px rgba(0, 0, 0, 0.42) !important;
-  animation: ace-open-ace-pulse 900ms ease-in-out calc(var(--ace-delay, 0ms) + 430ms) infinite alternate;
-}
-
-@keyframes flying-card-from-dealer {
-  0% {
-    opacity: 0;
-    transform: translate(var(--flight-start-x), var(--flight-start-y)) scale(0.55) rotate(var(--flight-start-r));
-  }
-
-  18% {
-    opacity: 1;
-  }
-
-  72% {
-    opacity: 1;
-    transform: translate(calc(var(--flight-x) * 0.92 + var(--flight-start-x) * 0.08), calc(var(--flight-y) * 0.92 + var(--flight-start-y) * 0.08)) scale(1.03) rotate(calc(var(--flight-r) + 5deg));
-  }
-
-  100% {
-    opacity: 0.96;
-    transform: translate(var(--flight-x), var(--flight-y)) scale(0.92) rotate(var(--flight-r));
-  }
+  box-shadow: 0 0 0 3px rgba(255, 221, 87, 0.98), 0 0 20px rgba(255, 221, 87, 0.42), 0 16px 28px rgba(0, 0, 0, 0.42) !important;
 }
 
 @keyframes ace-open-card-in {
@@ -161,16 +130,6 @@
   100% {
     opacity: 1;
     transform: var(--ace-final-transform) scale(1);
-  }
-}
-
-@keyframes ace-open-ace-pulse {
-  from {
-    filter: brightness(1);
-  }
-
-  to {
-    filter: brightness(1.12);
   }
 }
 
@@ -225,5 +184,13 @@
 
   .ace-open-played-card.right {
     --ace-final-transform: translate3d(calc(25% + var(--pile-x)), calc(-18% + var(--pile-y)), 0) rotate(calc(6deg + var(--pile-r)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ace-open-played-card,
+  .ace-open-winner {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
   }
 }
