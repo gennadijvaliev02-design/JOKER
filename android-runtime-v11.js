@@ -12,7 +12,7 @@
   }
 
   const V13_CSS = String.raw`
-    /* Android V13 — focused real-device HUD and suit correction layer. */
+    /* Final Android HUD and selection-panel owner. */
     .v13-hud-hidden {
       opacity: 0 !important;
       visibility: hidden !important;
@@ -56,27 +56,35 @@
       border-color: rgba(255,255,255,.72) !important;
       box-shadow:
         0 0 0 1px rgba(255,255,255,.36),
-        0 0 17px rgba(255, 216, 102, .28),
+        0 0 8px rgba(255,216,102,.14),
         0 8px 18px rgba(0,0,0,.34),
-        inset 0 0 12px rgba(255,255,255,.35) !important;
+        inset 0 0 10px rgba(255,255,255,.30) !important;
     }
 
     .trump-pill.v13-trump-ready[data-v13-suit="red"] .trump-card {
       box-shadow:
         0 0 0 1px rgba(255,255,255,.38),
-        0 0 12px rgba(255,255,255,.32),
-        0 0 24px rgba(255, 73, 96, .38),
+        0 0 6px rgba(255,255,255,.16),
+        0 0 11px rgba(255,73,96,.18),
         0 8px 18px rgba(0,0,0,.34),
-        inset 0 0 13px rgba(255,255,255,.38) !important;
+        inset 0 0 11px rgba(255,255,255,.32) !important;
     }
 
     .trump-pill.v13-trump-ready[data-v13-suit="black"] .trump-card {
       box-shadow:
-        0 0 0 1px rgba(255,255,255,.45),
-        0 0 13px rgba(255,255,255,.62),
-        0 0 24px rgba(190, 234, 255, .25),
+        0 0 0 1px rgba(226,234,231,.52),
+        0 0 5px rgba(226,234,231,.15),
         0 8px 18px rgba(0,0,0,.34),
-        inset 0 0 14px rgba(255,255,255,.44) !important;
+        inset 0 0 10px rgba(255,255,255,.30) !important;
+    }
+
+    .bid-panel.is-v12-trump-panel,
+    .bid-panel.is-v12-joker-suit-panel,
+    .bid-panel.is-v12-joker-command-panel,
+    .bid-panel.is-v12-joker-mode-panel,
+    .bid-panel.is-v12-order-panel {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
 
     .bid-panel.is-v12-trump-panel,
@@ -89,16 +97,16 @@
         radial-gradient(circle at 88% 86%, rgba(12, 126, 91, .34), transparent 42%),
         linear-gradient(145deg, rgba(13, 48, 41, .985), rgba(5, 11, 16, .995) 58%, rgba(17, 29, 31, .985)) !important;
       box-shadow:
-        0 28px 66px rgba(0,0,0,.64),
-        0 0 0 1px rgba(255,255,255,.07),
-        0 0 26px rgba(226, 185, 83, .22),
-        0 0 35px rgba(42, 234, 183, .15),
-        inset 0 1px 0 rgba(255,255,255,.20),
-        inset 0 -25px 42px rgba(0,0,0,.35) !important;
+        0 24px 54px rgba(0,0,0,.62),
+        0 0 0 1px rgba(255,255,255,.065),
+        0 0 11px rgba(226,185,83,.05),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -22px 36px rgba(0,0,0,.34) !important;
     }
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump],
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option {
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option,
+    .bid-panel.is-v12-joker-suit-panel .bid-option[data-joker-lead-suit] {
       position: relative !important;
       overflow: hidden !important;
       display: grid !important;
@@ -112,11 +120,9 @@
         radial-gradient(circle at 50% 38%, rgba(94,255,216,.18), transparent 48%),
         linear-gradient(180deg, rgba(25, 65, 58, .98), rgba(7, 19, 23, .995)) !important;
       box-shadow:
-        0 13px 27px rgba(0,0,0,.45),
-        0 0 16px rgba(48, 229, 185, .16),
-        inset 0 1px 0 rgba(255,255,255,.22),
-        inset 0 -13px 21px rgba(0,0,0,.33),
-        inset 0 0 20px rgba(67, 242, 199, .06) !important;
+        0 11px 23px rgba(0,0,0,.43),
+        inset 0 1px 0 rgba(255,255,255,.17),
+        inset 0 -11px 18px rgba(0,0,0,.31) !important;
     }
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump]::before,
@@ -146,29 +152,44 @@
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="hearts"],
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="diamonds"],
     .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="hearts"] .android-joker-suit-symbol,
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="diamonds"] .android-joker-suit-symbol {
+    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="diamonds"] .android-joker-suit-symbol,
+    .bid-panel.is-v12-joker-suit-panel .bid-option[data-joker-lead-suit="hearts"],
+    .bid-panel.is-v12-joker-suit-panel .bid-option[data-joker-lead-suit="diamonds"] {
       color: #ff5b70 !important;
       text-shadow:
-        0 1px 0 rgba(255,255,255,.35),
-        0 0 7px rgba(255,255,255,.25),
-        0 0 13px rgba(255, 72, 95, .72),
-        0 0 24px rgba(255, 44, 75, .34),
-        0 3px 5px rgba(0,0,0,.66) !important;
-      filter: drop-shadow(0 0 5px rgba(255, 73, 96, .40)) !important;
+        0 1px 0 rgba(255,255,255,.30),
+        0 0 5px rgba(255,72,95,.18),
+        0 3px 5px rgba(0,0,0,.68) !important;
+      filter: none !important;
     }
 
-    .bid-panel.is-v12-trump-panel .bid-option[data-trump="clubs"],
-    .bid-panel.is-v12-trump-panel .bid-option[data-trump="spades"],
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="clubs"] .android-joker-suit-symbol,
-    .bid-panel.is-v12-joker-suit-panel .android-joker-suit-option[data-joker-lead-suit="spades"] .android-joker-suit-symbol {
-      color: #f8fcff !important;
+    .bid-panel .android-silver-suit {
+      color: #cbd3d0 !important;
+      border-color: rgba(198,211,207,.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.085), transparent 32%),
+        linear-gradient(180deg, rgba(43,57,55,.97), rgba(10,18,20,.995)) !important;
       text-shadow:
-        0 1px 0 #fff,
-        0 0 5px rgba(255,255,255,.96),
-        0 0 12px rgba(255,255,255,.72),
-        0 0 23px rgba(186, 229, 255, .40),
-        0 3px 5px rgba(0,0,0,.76) !important;
-      filter: drop-shadow(0 0 6px rgba(255,255,255,.62)) !important;
+        0 1px 0 rgba(255,255,255,.28),
+        0 2px 4px rgba(0,0,0,.84) !important;
+      filter: none !important;
+      box-shadow:
+        0 11px 23px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -11px 18px rgba(0,0,0,.34) !important;
+    }
+
+    .bid-panel .android-silver-suit::before {
+      background: linear-gradient(180deg, rgba(255,255,255,.085), transparent) !important;
+      filter: none !important;
+    }
+
+    .bid-panel .android-silver-suit .android-joker-suit-symbol {
+      color: #cbd3d0 !important;
+      text-shadow:
+        0 1px 0 rgba(255,255,255,.28),
+        0 2px 4px rgba(0,0,0,.84) !important;
+      filter: none !important;
     }
 
     .bid-panel.is-v12-trump-panel .bid-option[data-trump="no-trump"] {
@@ -179,12 +200,11 @@
         linear-gradient(180deg, rgba(255,255,255,.14), transparent 30%),
         radial-gradient(circle at 50% 30%, rgba(238, 199, 100, .25), transparent 48%),
         linear-gradient(180deg, rgba(72, 57, 28, .98), rgba(15, 17, 16, .995)) !important;
-      text-shadow: 0 2px 4px rgba(0,0,0,.74), 0 0 15px rgba(238,199,100,.25) !important;
+      text-shadow: 0 2px 4px rgba(0,0,0,.74), 0 0 7px rgba(238,199,100,.06) !important;
       box-shadow:
-        0 13px 27px rgba(0,0,0,.46),
-        0 0 18px rgba(233, 195, 95, .19),
-        inset 0 1px 0 rgba(255,255,255,.18),
-        inset 0 -13px 21px rgba(0,0,0,.34) !important;
+        0 11px 23px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -11px 18px rgba(0,0,0,.33) !important;
     }
 
     @media (max-height: 430px) {
