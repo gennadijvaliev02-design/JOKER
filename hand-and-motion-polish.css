@@ -1,4 +1,4 @@
-/* Restore clean hand cards and calmer table motion after animation experiments */
+/* Clean hand cards and one final owner for played-card motion. */
 
 .hand {
   bottom: 0.45% !important;
@@ -10,7 +10,7 @@
   width: clamp(72px, 9.2vw, 96px) !important;
   height: clamp(101px, 12.9vw, 135px) !important;
   border-radius: 10px !important;
-  transform: translate3d(0, 0, 0) rotate(0deg) !important;
+  transform: rotate(0deg) !important;
   transform-origin: 50% 100% !important;
   align-self: flex-end !important;
   margin-bottom: 0 !important;
@@ -26,27 +26,28 @@
 
 .hand .card:hover {
   z-index: 8;
-  transform: translate3d(0, -13px, 0) rotate(0deg) scale(1.042) !important;
+  transform: translateY(-13px) rotate(0deg) scale(1.042) !important;
 }
 
 .hand .card.is-disabled:hover {
-  transform: translate3d(0, 0, 0) rotate(0deg) !important;
+  transform: rotate(0deg) !important;
 }
 
 .hand .card.is-dealt {
   animation: hand-card-soft-deal 360ms ease-out both !important;
   animation-delay: calc(var(--deal-delay, 0ms) * 0.08) !important;
+  will-change: transform, opacity;
 }
 
 @keyframes hand-card-soft-deal {
   0% {
     opacity: 0;
-    transform: translate3d(0, -8px, 0) scale(0.99) rotate(0deg);
+    transform: translateY(-8px) scale(0.99) rotate(0deg);
   }
 
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    transform: translateY(0) scale(1) rotate(0deg);
   }
 }
 
@@ -65,6 +66,12 @@
   top: 50% !important;
   transform: var(--played-transform);
   transform-origin: center center !important;
+  backface-visibility: hidden;
+}
+
+.played-card .card,
+.played-card .card-face {
+  backface-visibility: hidden;
 }
 
 .played-card .played-label {
@@ -93,6 +100,7 @@
 .played-card.right.is-entering,
 .played-card.bottom.is-entering {
   animation: played-card-slide-from-seat 360ms ease-out both !important;
+  will-change: transform, opacity;
 }
 
 .played-card.left.is-entering {
@@ -139,6 +147,7 @@
 .played-card.is-collecting {
   animation: played-card-winner-outline 620ms ease-out both !important;
   opacity: 1 !important;
+  will-change: transform;
 }
 
 @keyframes played-card-winner-outline {
@@ -191,5 +200,14 @@
 
   .played-card.right {
     --played-transform: translate3d(22%, -18%, 0) rotate(6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hand .card.is-dealt,
+  .played-card.is-entering,
+  .played-card.is-collecting {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
   }
 }
