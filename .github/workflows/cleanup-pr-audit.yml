@@ -19,11 +19,11 @@ jobs:
           ref: ${{ github.head_ref || 'android-runtime-cleanup-2' }}
           fetch-depth: 0
 
-      - name: Apply audio lifecycle cleanup
+      - name: Apply Deal owner consolidation
         if: github.head_ref == 'android-runtime-cleanup-2'
-        run: python3 .github/scripts/apply_audio_lifecycle_cleanup.py
+        run: python3 .github/scripts/apply_deal_owner_consolidation.py
 
-      - name: Commit audio lifecycle cleanup
+      - name: Commit Deal owner consolidation
         if: github.head_ref == 'android-runtime-cleanup-2'
         run: |
           if git diff --quiet; then
@@ -31,8 +31,8 @@ jobs:
           else
             git config user.name 'Joker Cleanup Bot'
             git config user.email 'actions@users.noreply.github.com'
-            git add script.js trick-collect-animation.js sound-polish.js index.html
-            git commit -m 'Clean audio and gameplay timer lifecycle'
+            git add script.js android-deal-2026.js android-v15.js index.html
+            git commit -m 'Consolidate Android deal ownership'
             git push origin HEAD:android-runtime-cleanup-2
           fi
 
@@ -126,5 +126,11 @@ jobs:
           grep -q 'oscillator.disconnect()' sound-polish.js
           grep -q 'biquad.disconnect()' sound-polish.js
           ! grep -q 'window.setTimeout' trick-collect-animation.js
-          grep -q '!window.__JOKER_ANDROID_DEAL_2026_STAGE__' script.js
+          grep -q 'usesAndroidDeal' script.js
+          ! grep -q 'android-deal-container-mask-style' android-v15.js
+          grep -q 'table.is-deal-2026-staging > .hand' android-deal-2026.js
+          ! grep -q 'deal-2026-deck-breathe' android-deal-2026.js
+          ! grep -q 'function targetForRecord' android-deal-2026.js
+          grep -q 'clearLegacyArtifactsOnce();' android-deal-2026.js
+          test "$(grep -o 'clearLegacyArtifactsOnce();' android-deal-2026.js | wc -l)" -eq 1
           test "$(grep -o 'setTimeout' android-deal-2026.js | wc -l)" -le 3
