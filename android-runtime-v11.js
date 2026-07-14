@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   /* Keep the approved calm Joker sound behaviour. */
   const originalPlaySound = typeof playSound === "function" ? playSound : null;
 
@@ -10,15 +12,13 @@
   }
 
   const V13_CSS = String.raw`
-    /* Android V13 — focused real-device correction layer. */
-
+    /* Android V13 — focused real-device HUD and suit correction layer. */
     .v13-hud-hidden {
       opacity: 0 !important;
       visibility: hidden !important;
       pointer-events: none !important;
     }
 
-    /* The trump plate only appears when an actual trump card exists. */
     .trump-pill.v13-trump-ready {
       width: clamp(146px, 13.8vw, 182px) !important;
       min-width: clamp(146px, 13.8vw, 182px) !important;
@@ -79,7 +79,6 @@
         inset 0 0 14px rgba(255,255,255,.44) !important;
     }
 
-    /* Web-version glass and magical suit glow. */
     .bid-panel.is-v12-trump-panel,
     .bid-panel.is-v12-joker-suit-panel {
       border-color: rgba(229, 195, 105, .90) !important;
@@ -188,105 +187,6 @@
         inset 0 -13px 21px rgba(0,0,0,.34) !important;
     }
 
-    /* V13 uses a true full-table coordinate system. */
-    .v13-deal-layer {
-      position: absolute !important;
-      inset: 0 !important;
-      left: 0 !important;
-      top: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      z-index: 60 !important;
-      overflow: hidden !important;
-      pointer-events: none !important;
-      transform: none !important;
-    }
-
-    .v13-deal-deck {
-      position: absolute !important;
-      left: 50% !important;
-      top: 44% !important;
-      z-index: 2 !important;
-      width: 48px !important;
-      height: 67px !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      transform: translate(-50%, -50%) rotate(-3deg) !important;
-      filter: drop-shadow(0 11px 15px rgba(0,0,0,.42)) !important;
-      animation: v13-deck-breathe 1.25s ease-in-out infinite alternate !important;
-    }
-
-    .v13-deck-card,
-    .v13-flying-card {
-      position: absolute !important;
-      width: 48px !important;
-      height: 67px !important;
-      border: 1.5px solid rgba(249,246,237,.94) !important;
-      border-radius: 6px !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      animation: none !important;
-      pointer-events: none !important;
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,.36),
-        0 9px 17px rgba(0,0,0,.34) !important;
-      will-change: transform, opacity, filter;
-    }
-
-    .v13-deck-card:nth-child(1) { transform: translate(-6px, -5px) rotate(-3deg) !important; }
-    .v13-deck-card:nth-child(2) { transform: translate(-3px, -2px) rotate(-1deg) !important; }
-    .v13-deck-card:nth-child(3) { transform: translate(0, 0) rotate(1deg) !important; }
-
-    @keyframes v13-deck-breathe {
-      from { filter: drop-shadow(0 10px 14px rgba(0,0,0,.40)) brightness(.98); }
-      to { filter: drop-shadow(0 13px 18px rgba(0,0,0,.48)) brightness(1.06); }
-    }
-
-    .hand .card.is-v13-pending,
-    .hidden-cards span.is-v13-pending {
-      opacity: 0 !important;
-      visibility: hidden !important;
-      animation: none !important;
-      pointer-events: none !important;
-    }
-
-    .hand .card.is-v13-facedown {
-      position: relative !important;
-      overflow: hidden !important;
-      color: transparent !important;
-    }
-
-    .hand .card.is-v13-facedown > * {
-      opacity: 0 !important;
-    }
-
-    .hand .card.is-v13-facedown::after {
-      content: "" !important;
-      position: absolute !important;
-      inset: 0 !important;
-      z-index: 30 !important;
-      display: block !important;
-      border: 1px solid rgba(249,246,237,.94) !important;
-      border-radius: inherit !important;
-      background-color: var(--v13-back-color, #f4eee3) !important;
-      background-image: var(--v13-back-image) !important;
-      background-position: var(--v13-back-position, center) !important;
-      background-size: var(--v13-back-size, cover) !important;
-      background-repeat: var(--v13-back-repeat, no-repeat) !important;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.38) !important;
-    }
-
-    .hand .card.is-v13-lifting {
-      animation: v13-hand-lift 440ms cubic-bezier(.16,.82,.22,1) both !important;
-      transform-origin: center bottom !important;
-    }
-
-    @keyframes v13-hand-lift {
-      0% { opacity: .94; transform: translateY(14px) rotateX(25deg) scale(.965); filter: brightness(.88); }
-      58% { opacity: 1; transform: translateY(-11px) rotateX(0) scale(1.025); filter: brightness(1.09); }
-      100% { opacity: 1; transform: translateY(0) rotateX(0) scale(1); filter: brightness(1); }
-    }
-
     @media (max-height: 430px) {
       .trump-pill.v13-trump-ready {
         width: 139px !important;
@@ -299,13 +199,6 @@
       .trump-pill.v13-trump-ready .trump-card {
         width: 43px !important;
         height: 55px !important;
-      }
-
-      .v13-deal-deck,
-      .v13-deck-card,
-      .v13-flying-card {
-        width: 43px !important;
-        height: 60px !important;
       }
     }
   `;
@@ -355,7 +248,7 @@
     if (trump) {
       const card = trump.querySelector(".trump-card");
       const suitText = cleanSuitGlyph(card?.textContent || "");
-      const hasRealTrump = Boolean(card && card.getBoundingClientRect().width > 0);
+      const hasRealTrump = Boolean(card);
 
       setHiddenState(trump, !hasRealTrump);
       trump.classList.toggle("v13-trump-ready", hasRealTrump);
@@ -373,407 +266,48 @@
     normalizeSuitGlyphs();
   }
 
-  function installHudObserver() {
+  let installed = false;
+  let hudObserver = null;
+  let bidObserver = null;
+
+  function installHudObservers() {
+    if (installed) return;
+    installed = true;
+
     const hud = document.querySelector(".game-hud");
     if (hud) {
-      const observer = new MutationObserver(syncHudVisibility);
-      observer.observe(hud, { subtree: true, childList: true, characterData: true, attributes: true });
+      hudObserver = new MutationObserver(syncHudVisibility);
+      hudObserver.observe(hud, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: false,
+      });
     }
 
     const bidPanel = document.getElementById("bid-panel");
     if (bidPanel) {
-      const observer = new MutationObserver(normalizeSuitGlyphs);
-      observer.observe(bidPanel, { subtree: true, childList: true, characterData: true, attributes: true });
+      bidObserver = new MutationObserver(normalizeSuitGlyphs);
+      bidObserver.observe(bidPanel, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: false,
+      });
     }
 
     syncHudVisibility();
-    window.setInterval(syncHudVisibility, 240);
   }
 
-  function installV13Deal() {
-    const CARD_INTERVAL = 142;
-    const FLIGHT_DURATION = 330;
-    const REVEAL_PAUSE = 270;
-    const LIFT_DURATION = 440;
-    const CLEANUP_PAD = 120;
-
-    let signature = "";
-    let previousTotal = 0;
-    let activeToken = 0;
-    let lastDuration = 900;
-    const pendingIds = new Set();
-    const faceDownIds = new Set();
-    const landedIds = new Set();
-
-    const baseRenderHand = renderHand;
-
-    function safeDelay(value) {
-      return typeof getDelay === "function" ? getDelay(value) : value;
-    }
-
-    function handNodes() {
-      return [...(elements?.playerHand?.querySelectorAll(":scope > .card") || [])];
-    }
-
-    function seatNodes(seat) {
-      if (seat === "bottom") return handNodes();
-      return [...(document.querySelector(`.${seat}-stack`)?.children || [])];
-    }
-
-    function currentSignature() {
-      return `${window.JokerRules?.activeId || "rules"}:${state.currentPulka}:${state.currentGame}`;
-    }
-
-    function sampleBackNode() {
-      return document.querySelector(".hidden-cards span") || document.querySelector(".flying-card-back");
-    }
-
-    function backSnapshot() {
-      const sample = sampleBackNode();
-      if (!sample) {
-        return {
-          color: "#f3eee2",
-          image: "repeating-linear-gradient(45deg,#d6d0c2 0 2px,#f3eee2 2px 5px)",
-          position: "center",
-          size: "cover",
-          repeat: "no-repeat",
-        };
-      }
-
-      const style = getComputedStyle(sample);
-      return {
-        color: style.backgroundColor,
-        image: style.backgroundImage,
-        position: style.backgroundPosition,
-        size: style.backgroundSize,
-        repeat: style.backgroundRepeat,
-      };
-    }
-
-    function applyBackInline(node, back) {
-      node.style.backgroundColor = back.color;
-      node.style.backgroundImage = back.image;
-      node.style.backgroundPosition = back.position;
-      node.style.backgroundSize = back.size;
-      node.style.backgroundRepeat = back.repeat;
-    }
-
-    function applyBackVars(node, back) {
-      node.style.setProperty("--v13-back-color", back.color);
-      node.style.setProperty("--v13-back-image", back.image);
-      node.style.setProperty("--v13-back-position", back.position);
-      node.style.setProperty("--v13-back-size", back.size);
-      node.style.setProperty("--v13-back-repeat", back.repeat);
-    }
-
-    function clearLegacyClasses(node) {
-      node.classList.remove(
-        "is-deal-pending",
-        "is-deal-arrived",
-        "is-v11-deal-pending",
-        "is-v11-deal-arrived",
-        "is-v12-deal-pending",
-        "is-v12-facedown",
-        "is-v12-hand-lift",
-        "is-sequential-deal-pending",
-        "is-sequential-deal-arrived",
-      );
-    }
-
-    function applyHumanState() {
-      const back = backSnapshot();
-      handNodes().forEach((card) => {
-        clearLegacyClasses(card);
-        const id = card.dataset.card;
-        card.classList.toggle("is-v13-pending", pendingIds.has(id));
-        card.classList.toggle("is-v13-facedown", faceDownIds.has(id));
-        if (faceDownIds.has(id)) applyBackVars(card, back);
-      });
-    }
-
-    renderHand = function renderHandWithV13DealState(...args) {
-      const result = baseRenderHand.apply(this, args);
-      applyHumanState();
-      return result;
-    };
-
-    function resetMemory() {
-      previousTotal = 0;
-      pendingIds.clear();
-      faceDownIds.clear();
-      landedIds.clear();
-      handNodes().forEach((card) => {
-        clearLegacyClasses(card);
-        card.classList.remove("is-v13-pending", "is-v13-facedown", "is-v13-lifting");
-      });
-    }
-
-    function clearArtifacts() {
-      document
-        .querySelectorAll(
-          ".deal-flight-layer.is-hand-deal, .deal-flight-layer.is-premium-deal, .v11-deal-layer, .v12-deal-layer, .v13-deal-layer, .android-dealer-deck",
-        )
-        .forEach((node) => node.remove());
-
-      elements?.table?.classList.remove("is-dealing", "is-v11-dealing", "is-v12-dealing", "is-v13-dealing");
-    }
-
-    function prepareBatch(total) {
-      const nextSignature = currentSignature();
-      if (nextSignature !== signature || total <= previousTotal) {
-        signature = nextSignature;
-        resetMemory();
-      }
-
-      const from = previousTotal;
-      const count = Math.max(0, total - from);
-      previousTotal = total;
-      const queues = { left: [], top: [], right: [], bottom: [] };
-
-      Object.keys(queues).forEach((seat) => {
-        const nodes = seatNodes(seat);
-        nodes.forEach(clearLegacyClasses);
-        const fresh = nodes.slice(from, total);
-
-        fresh.forEach((node) => {
-          node.classList.add("is-v13-pending");
-          queues[seat].push(node);
-
-          if (seat === "bottom") {
-            const id = node.dataset.card;
-            if (id) pendingIds.add(id);
-          }
-        });
-      });
-
-      applyHumanState();
-      return { count, queues };
-    }
-
-    function dealerPlayer() {
-      const dealerOrder = state.currentGame === 1 ? 4 : state.currentGame - 1;
-      return state.players.find((player) => player.order === dealerOrder)
-        || (typeof getPlayerById === "function" && typeof getGameLeaderId === "function"
-          ? getPlayerById(getGameLeaderId())
-          : null)
-        || state.players[0];
-    }
-
-    function playerOrderFromDealer(dealerId) {
-      const order = typeof getPlayerOrderFrom === "function"
-        ? [...getPlayerOrderFrom(dealerId)]
-        : state.players.map((player) => player.id);
-
-      if (order.length > 1 && order[0] === dealerId) order.push(order.shift());
-      return order;
-    }
-
-    function createLayer(back) {
-      const layer = document.createElement("div");
-      layer.className = "v13-deal-layer";
-      layer.setAttribute("aria-hidden", "true");
-
-      const deck = document.createElement("div");
-      deck.className = "v13-deal-deck";
-      deck.setAttribute("aria-hidden", "true");
-
-      for (let index = 0; index < 3; index += 1) {
-        const card = document.createElement("span");
-        card.className = "v13-deck-card";
-        applyBackInline(card, back);
-        deck.append(card);
-      }
-
-      layer.append(deck);
-      elements.table.append(layer);
-      return { layer, deck };
-    }
-
-    function createFlyingCard(back) {
-      const card = document.createElement("span");
-      card.className = "v13-flying-card";
-      applyBackInline(card, back);
-      return card;
-    }
-
-    function land(target, seat, back) {
-      if (!target?.isConnected) return;
-      target.classList.remove("is-v13-pending");
-
-      if (seat === "bottom") {
-        const id = target.dataset.card;
-        pendingIds.delete(id);
-        landedIds.add(id);
-        faceDownIds.add(id);
-        applyBackVars(target, back);
-        target.classList.add("is-v13-facedown");
-      }
-    }
-
-    function animateFlight({ layer, deck, target, seat, delay, index, token, back }) {
-      window.setTimeout(() => {
-        if (token !== activeToken || !layer.isConnected || !target?.isConnected) return;
-
-        const tableRect = elements.table.getBoundingClientRect();
-        const deckRect = deck.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
-        const card = createFlyingCard(back);
-        layer.append(card);
-
-        const width = card.getBoundingClientRect().width || 48;
-        const height = card.getBoundingClientRect().height || 67;
-        const startX = deckRect.left - tableRect.left + deckRect.width / 2 - width / 2;
-        const startY = deckRect.top - tableRect.top + deckRect.height / 2 - height / 2;
-        const endX = targetRect.left - tableRect.left + targetRect.width / 2 - width / 2;
-        const endY = targetRect.top - tableRect.top + targetRect.height / 2 - height / 2;
-        const middleX = startX + (endX - startX) * 0.56;
-        const middleY = startY + (endY - startY) * 0.56 - Math.min(38, Math.abs(endY - startY) * 0.08 + 16);
-        const scale = Math.max(.48, Math.min(1.42, Math.min(targetRect.width / width, targetRect.height / height)));
-        const rotation = seat === "left" ? -88 : seat === "right" ? 88 : seat === "top" ? 1 : 0;
-        const turn = (index % 3 - 1) * 3;
-        let finished = false;
-
-        if (originalPlaySound) originalPlaySound("deal");
-
-        const finish = () => {
-          if (finished) return;
-          finished = true;
-          land(target, seat, back);
-          card.remove();
-        };
-
-        const animation = card.animate([
-          {
-            opacity: .94,
-            filter: "brightness(.92) blur(.45px)",
-            transform: `translate3d(${startX}px, ${startY}px, 0) rotate(-3deg) scale(.78)`,
-          },
-          {
-            opacity: 1,
-            filter: "brightness(1.08) blur(0)",
-            transform: `translate3d(${middleX}px, ${middleY}px, 0) rotate(${rotation * .44 + turn}deg) scale(1.04)`,
-            offset: .62,
-          },
-          {
-            opacity: 1,
-            filter: "brightness(1) blur(0)",
-            transform: `translate3d(${endX}px, ${endY}px, 0) rotate(${rotation}deg) scale(${scale})`,
-          },
-        ], {
-          duration: safeDelay(FLIGHT_DURATION),
-          easing: "cubic-bezier(.18,.78,.22,1)",
-          fill: "forwards",
-        });
-
-        animation.addEventListener?.("finish", finish, { once: true });
-        animation.finished?.then(finish).catch(() => {});
-        window.setTimeout(finish, safeDelay(FLIGHT_DURATION + 80));
-      }, safeDelay(delay));
-    }
-
-    function revealNewHumanCards() {
-      const cards = handNodes().filter((card) => faceDownIds.has(card.dataset.card));
-      cards.forEach((card) => faceDownIds.delete(card.dataset.card));
-
-      cards.forEach((card) => {
-        card.classList.remove("is-v13-facedown", "is-v13-lifting");
-        void card.offsetWidth;
-        card.classList.add("is-v13-lifting");
-        window.setTimeout(() => card.classList.remove("is-v13-lifting"), LIFT_DURATION + 45);
-      });
-    }
-
-    playCardDealAnimation = function playV13Deal(handCount) {
-      if (state.autoPlay || !elements?.table) return;
-
-      activeToken += 1;
-      const token = activeToken;
-      clearArtifacts();
-
-      const total = Math.max(0, Math.min(Number(handCount) || 0, 9));
-      const batch = prepareBatch(total);
-      if (!batch.count) {
-        lastDuration = 320;
-        return;
-      }
-
-      const back = backSnapshot();
-      const { layer, deck } = createLayer(back);
-      elements.table.classList.add("is-v13-dealing");
-
-      const dealer = dealerPlayer();
-      const order = playerOrderFromDealer(dealer?.id);
-      const flights = [];
-
-      for (let round = 0; round < batch.count; round += 1) {
-        for (const playerId of order) {
-          const player = typeof getPlayerById === "function" ? getPlayerById(playerId) : null;
-          if (!player) continue;
-          const target = batch.queues[player.seat]?.shift();
-          if (target) flights.push({ target, seat: player.seat });
-        }
-      }
-
-      flights.forEach((flight, index) => {
-        animateFlight({
-          layer,
-          deck,
-          target: flight.target,
-          seat: flight.seat,
-          delay: index * CARD_INTERVAL,
-          index,
-          token,
-          back,
-        });
-      });
-
-      const flightEnd = Math.max(0, flights.length - 1) * CARD_INTERVAL + FLIGHT_DURATION;
-      lastDuration = flightEnd + REVEAL_PAUSE + LIFT_DURATION + CLEANUP_PAD;
-
-      window.setTimeout(() => {
-        if (token === activeToken) revealNewHumanCards();
-      }, safeDelay(flightEnd + REVEAL_PAUSE));
-
-      window.setTimeout(() => {
-        if (token !== activeToken) return;
-
-        document.querySelectorAll(".is-v13-pending").forEach((node) => node.classList.remove("is-v13-pending"));
-        pendingIds.clear();
-        applyHumanState();
-        elements.table.classList.remove("is-dealing", "is-v11-dealing", "is-v12-dealing", "is-v13-dealing");
-        layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: "forwards" });
-        window.setTimeout(() => layer.remove(), 170);
-      }, safeDelay(lastDuration));
-    };
-
-    runAfterDealAnimation = function runAfterV13Deal(callback) {
-      if (state.autoPlay) {
-        callback();
-        return;
-      }
-      scheduleGameTask(callback, safeDelay(lastDuration + 60));
-    };
-  }
-
-  let v13Installed = false;
-
-  function installV13() {
-    if (v13Installed) return;
-    v13Installed = true;
-    injectV13Styles();
-    installHudObserver();
-    installV13Deal();
-  }
-
-  function installAfterV12() {
-    window.setTimeout(installV13, 0);
+  function installAfterRules() {
+    window.setTimeout(installHudObservers, 0);
   }
 
   injectV13Styles();
-  window.addEventListener("joker-rules-adapters-ready", installAfterV12, { once: true });
-  window.addEventListener("load", installAfterV12, { once: true });
+  window.addEventListener("joker-rules-adapters-ready", installAfterRules, { once: true });
+  window.addEventListener("load", installAfterRules, { once: true });
 
   if (document.documentElement.dataset.rulesReady === "true") {
-    installAfterV12();
+    installAfterRules();
   }
 })();
