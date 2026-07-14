@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  const PRELOAD_CONCURRENCY = 6;
   const CARD_PRELOAD_STATE = {
     ready: false,
     promise: null,
@@ -33,36 +34,50 @@
     });
   }
 
+  async function loadImagesWithLimit(imagePaths, onProgress) {
+    const results = new Array(imagePaths.length);
+    let nextIndex = 0;
+    let loadedCount = 0;
+
+    async function worker() {
+      while (nextIndex < imagePaths.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        results[index] = await loadCardImage(imagePaths[index]);
+        loadedCount += 1;
+        onProgress?.(loadedCount, imagePaths.length);
+      }
+    }
+
+    const workerCount = Math.min(PRELOAD_CONCURRENCY, imagePaths.length);
+    await Promise.all(Array.from({ length: workerCount }, worker));
+    return results;
+  }
+
   function preloadCardImages(onProgress) {
     if (CARD_PRELOAD_STATE.ready) return Promise.resolve(true);
     if (CARD_PRELOAD_STATE.promise) return CARD_PRELOAD_STATE.promise;
 
     const imagePaths = getCardImagePaths();
-    let loadedCount = 0;
 
-    CARD_PRELOAD_STATE.promise = Promise.all(
-      imagePaths.map(async (src) => {
-        const result = await loadCardImage(src);
-        loadedCount += 1;
-        onProgress?.(loadedCount, imagePaths.length);
-        return result;
-      }),
-    ).then((results) => {
-      CARD_PRELOAD_STATE.failedImages = results
-        .filter((result) => !result.ok)
-        .map((result) => result.src);
+    CARD_PRELOAD_STATE.promise = loadImagesWithLimit(imagePaths, onProgress)
+      .then((results) => {
+        CARD_PRELOAD_STATE.failedImages = results
+          .filter((result) => !result.ok)
+          .map((result) => result.src);
 
-      if (CARD_PRELOAD_STATE.failedImages.length) {
-        console.warn("Не загрузились карты:", CARD_PRELOAD_STATE.failedImages);
-      }
+        if (CARD_PRELOAD_STATE.failedImages.length) {
+          console.warn("Не загрузились карты:", CARD_PRELOAD_STATE.failedImages);
+        }
 
-      CARD_PRELOAD_STATE.ready = true;
-      return true;
-    }).catch((error) => {
-      CARD_PRELOAD_STATE.promise = null;
-      console.warn("Ошибка предзагрузки карт", error);
-      return false;
-    });
+        CARD_PRELOAD_STATE.ready = true;
+        return true;
+      })
+      .catch((error) => {
+        CARD_PRELOAD_STATE.promise = null;
+        console.warn("Ошибка предзагрузки карт", error);
+        return false;
+      });
 
     return CARD_PRELOAD_STATE.promise;
   }
