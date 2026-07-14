@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit:
@@ -15,6 +15,28 @@ jobs:
     steps:
       - name: Checkout cleanup branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || 'android-runtime-cleanup-2' }}
+          fetch-depth: 0
+
+      - name: Apply runtime cleanup patch
+        if: github.head_ref == 'android-runtime-cleanup-2'
+        run: python3 .github/scripts/apply_runtime_cleanup_2.py
+
+      - name: Commit runtime cleanup patch
+        if: github.head_ref == 'android-runtime-cleanup-2'
+        run: |
+          if git diff --quiet; then
+            echo 'Cleanup already applied.'
+          else
+            git config user.name 'Joker Cleanup Bot'
+            git config user.email 'actions@users.noreply.github.com'
+            git add rules/rules-engine.js android-deal-2026.js high-joker-legal-fix.js \
+              android-runtime-polish.js android-runtime-v2.js index.html \
+              .github/workflows/android-apk.yml
+            git commit -m 'Remove remaining Android runtime owners'
+            git push origin HEAD:android-runtime-cleanup-2
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -93,3 +115,6 @@ jobs:
           ! grep -q 'joker-star-burst' trick-collect-animation.css
           ! grep -q 'paintSilverSuits' android-v12.js
           grep -q 'markSilverSuits' android-v12.js
+          grep -q '__JOKER_ANDROID_DEAL_2026_STAGE__' rules/rules-engine.js
+          ! grep -q 'setTimeout(install' android-deal-2026.js
+          ! grep -q 'originalRender = render' high-joker-legal-fix.js
