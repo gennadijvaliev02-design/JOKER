@@ -30,6 +30,8 @@
   const trumpPill = document.querySelector(".trump-pill");
   let lastTrumpCard = null;
   let lastTrumpSignature = "";
+  let lastTrumpRenderKey = null;
+  let lastRoundSignature = null;
   let lastTrickSignature = null;
   let selectedCard = null;
   let selectionTimer = 0;
@@ -144,6 +146,54 @@
     lastTrumpSignature = signature;
   }
 
+  function renderCachedHud() {
+    const chooser = getPlayerById(state.trumpChooserId);
+    const bidBalance = getBidBalance();
+    const roundSignature = bidBalance ? `${bidBalance.type}:${bidBalance.text}` : "hidden";
+
+    if (roundSignature !== lastRoundSignature) {
+      elements.roundLabel.hidden = !bidBalance;
+      elements.roundLabel.textContent = bidBalance?.text || "";
+      elements.roundLabel.classList.toggle("is-push", bidBalance?.type === "push");
+      elements.roundLabel.classList.toggle("is-take", bidBalance?.type === "take");
+      lastRoundSignature = roundSignature;
+    }
+
+    if (!state.trump) {
+      const chooserText = state.phase === "trump-select" && chooser
+        ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}`
+        : "";
+      const label = state.phase === "trump-select" ? `Козырь${chooserText}` : "Козырь";
+      const renderKey = `empty:${label}`;
+
+      if (renderKey !== lastTrumpRenderKey || elements.trumpLabel.dataset.trumpKey !== "") {
+        elements.trumpLabel.textContent = label;
+        elements.trumpLabel.dataset.trumpKey = "";
+        lastTrumpCard = null;
+        lastTrumpSignature = "";
+        lastTrumpRenderKey = renderKey;
+      }
+
+      syncTrumpPresentation();
+      return;
+    }
+
+    const trumpKey = getTrumpRenderKey(state.trump);
+    const renderKey = `trump:${trumpKey}`;
+    const hasRenderedCard = Boolean(elements.trumpLabel.querySelector(".trump-card"));
+
+    if (renderKey !== lastTrumpRenderKey || elements.trumpLabel.dataset.trumpKey !== trumpKey || !hasRenderedCard) {
+      const shouldReveal = elements.trumpLabel.dataset.trumpKey !== trumpKey;
+      elements.trumpLabel.dataset.trumpKey = trumpKey;
+      elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
+      lastTrumpCard = null;
+      lastTrumpSignature = "";
+      lastTrumpRenderKey = renderKey;
+    }
+
+    syncTrumpPresentation();
+  }
+
   function getTrickSignature() {
     const plays = state.currentTrick.map((play) => [
       play.player?.id || "",
@@ -194,14 +244,7 @@
     if (document.hidden) clearTouchSelection();
   });
 
-  if (typeof renderHud === "function") {
-    const originalRenderHud = renderHud;
-    renderHud = function renderHudWithAndroidV2(...args) {
-      const result = originalRenderHud.apply(this, args);
-      syncTrumpPresentation();
-      return result;
-    };
-  }
+  if (typeof renderHud === "function") renderHud = renderCachedHud;
 
   if (typeof renderTrick === "function") {
     const originalRenderTrick = renderTrick;
