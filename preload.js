@@ -7,61 +7,26 @@
     failedImages: [],
   };
 
-  let botLogicPromise = null;
-
-  function ensureBotLogicLoaded() {
-    if (window.__JOKER_BOT_LOGIC_POLISH_READY__) {
-      return Promise.resolve(true);
-    }
-
-    if (botLogicPromise) {
-      return botLogicPromise;
-    }
-
-    const existing = document.querySelector('script[data-bot-logic-polish="1"]');
-    if (existing) {
-      botLogicPromise = new Promise((resolve) => {
-        if (existing.dataset.loaded === "true") {
-          resolve(true);
-          return;
-        }
-
-        existing.addEventListener("load", () => resolve(true), { once: true });
-        existing.addEventListener("error", () => resolve(false), { once: true });
-      });
-      return botLogicPromise;
-    }
-
-    botLogicPromise = new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "bot-logic-polish.js?v=1";
-      script.async = false;
-      script.dataset.botLogicPolish = "1";
-      script.addEventListener("load", () => {
-        script.dataset.loaded = "true";
-        window.__JOKER_BOT_LOGIC_POLISH_READY__ = true;
-        resolve(true);
-      }, { once: true });
-      script.addEventListener("error", () => {
-        console.warn("Не загрузился bot-logic-polish.js");
-        resolve(false);
-      }, { once: true });
-      document.body.append(script);
+  function getCardImagePaths() {
+    return createJokerDeck().map((card) => {
+      if (card.type === "joker") return `cards/joker_${card.color}.png`;
+      return `cards/${card.rank}_${card.suit}.png`;
     });
-
-    return botLogicPromise;
-  }
-
-  function getStandardCardImagePaths() {
-    return createJokerDeck()
-      .filter((card) => card.type === "standard")
-      .map((card) => `cards/${card.rank}_${card.suit}.png`);
   }
 
   function loadCardImage(src) {
     return new Promise((resolve) => {
       const image = new Image();
-      image.onload = () => resolve({ src, ok: true });
+
+      image.onload = async () => {
+        try {
+          await image.decode?.();
+        } catch {
+          // The image is already loaded; older WebViews may reject decode().
+        }
+        resolve({ src, ok: true });
+      };
+
       image.onerror = () => resolve({ src, ok: false });
       image.decoding = "async";
       image.src = src;
@@ -69,15 +34,10 @@
   }
 
   function preloadCardImages(onProgress) {
-    if (CARD_PRELOAD_STATE.ready) {
-      return Promise.resolve(true);
-    }
+    if (CARD_PRELOAD_STATE.ready) return Promise.resolve(true);
+    if (CARD_PRELOAD_STATE.promise) return CARD_PRELOAD_STATE.promise;
 
-    if (CARD_PRELOAD_STATE.promise) {
-      return CARD_PRELOAD_STATE.promise;
-    }
-
-    const imagePaths = getStandardCardImagePaths();
+    const imagePaths = getCardImagePaths();
     let loadedCount = 0;
 
     CARD_PRELOAD_STATE.promise = Promise.all(
@@ -111,20 +71,13 @@
     const button = document.getElementById("start-game");
     const originalText = button?.textContent || "";
 
-    if (showProgress && button) {
-      button.disabled = true;
-    }
+    if (showProgress && button) button.disabled = true;
 
-    const imagePromise = preloadCardImages((loaded, total) => {
+    const imagesReady = await preloadCardImages((loaded, total) => {
       if (showProgress && button?.isConnected) {
         button.textContent = `Загрузка карт ${Math.round((loaded / total) * 100)}%`;
       }
     });
-
-    const [imagesReady] = await Promise.all([
-      imagePromise,
-      ensureBotLogicLoaded(),
-    ]);
 
     if (showProgress && button?.isConnected) {
       button.disabled = false;
@@ -143,8 +96,6 @@
     isReady: () => CARD_PRELOAD_STATE.ready,
     getFailedImages: () => [...CARD_PRELOAD_STATE.failedImages],
   };
-
-  ensureBotLogicLoaded();
 
   if (typeof window.requestIdleCallback === "function") {
     window.requestIdleCallback(warmUp, { timeout: 1200 });
