@@ -252,6 +252,7 @@
   }, { passive: true });
 
   document.addEventListener("pointerup", () => {
+    if (!selectedCard) return;
     if (selectionTimer) window.clearTimeout(selectionTimer);
     selectionTimer = window.setTimeout(clearTouchSelection, 130);
   }, { passive: true });

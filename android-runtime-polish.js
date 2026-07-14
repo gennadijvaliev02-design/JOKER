@@ -100,6 +100,12 @@
         setText(view.name, player.seat === "bottom" ? "Ты" : player.name);
         setText(view.avatarInitial, player.name.slice(0, 1).toUpperCase());
         setText(view.orderBadge, String(player.order));
+        if (view.orderBadge) {
+          const orderVisibility = state.phase === "ace-deal" ? "hidden" : "visible";
+          if (view.orderBadge.style.visibility !== orderVisibility) {
+            view.orderBadge.style.visibility = orderVisibility;
+          }
+        }
         setText(view.order, String(player.order));
         setText(view.bid, formatBid(player.bid));
         setText(view.taken, String(player.tricks));

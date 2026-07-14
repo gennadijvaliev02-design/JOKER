@@ -586,7 +586,7 @@
   }
 
   function install() {
-    if (installed) return;
+    if (installed) return true;
     if (
       typeof playCardDealAnimation !== "function"
       || typeof runAfterDealAnimation !== "function"
@@ -595,8 +595,7 @@
       || !elements.table
       || !elements.playerHand
     ) {
-      window.setTimeout(install, 80);
-      return;
+      return false;
     }
 
     installed = true;
@@ -682,13 +681,11 @@
       }
       scheduleGameTask(callback, safeDelay(lastDuration + 80));
     };
+
+    return true;
   }
 
-  function scheduleInstall() {
-    window.setTimeout(install, 260);
-  }
-
-  window.addEventListener("joker-rules-adapters-ready", scheduleInstall, { once: true });
-  window.addEventListener("load", scheduleInstall, { once: true });
-  scheduleInstall();
+  window.addEventListener("joker-rules-adapters-ready", install, { once: true });
+  window.addEventListener("load", install, { once: true });
+  if (document.documentElement.dataset.rulesReady === "true") install();
 })();

@@ -72,16 +72,4 @@
     }));
   };
 
-  const originalRender = render;
-
-  render = function renderWithAceOrderBadgeFix(...args) {
-    const result = originalRender.apply(this, args);
-    const shouldShowOrder = state.phase !== "ace-deal";
-
-    document.querySelectorAll("[data-order-badge]").forEach((badge) => {
-      badge.style.visibility = shouldShowOrder ? "visible" : "hidden";
-    });
-
-    return result;
-  };
 })();

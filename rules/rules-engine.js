@@ -106,7 +106,10 @@
       .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
       .then(() => loadAdapter("rules/rules-scoring-adapter.js?v=1", "scoring"))
       .then(() => loadAdapter("rules/core-logic-fixes.js?v=1", "core-fixes"))
-      .then(() => loadAdapter("rules/deal-animation-adapter.js?v=2", "deal-animation"))
+      .then(() => {
+        if (window.__JOKER_ANDROID_DEAL_2026_STAGE__) return null;
+        return loadAdapter("rules/deal-animation-adapter.js?v=2", "deal-animation");
+      })
       .then(() => loadAdapter("rules/bot-survival-priority.js?v=1", "bot-survival"))
       .then(() => loadAdapter("rules/strategic-bot-brain.js?v=1", "strategic-brain"))
       .then(() => loadAdapter("rules/short-deal-tactics.js?v=1", "short-deal-tactics"))
