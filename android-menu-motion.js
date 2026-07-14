@@ -37,10 +37,7 @@
     const menuActions = document.querySelector(".menu-actions");
     const ratingCard = document.getElementById("local-rating-card");
 
-    if (!startScreen || !menuActions || !ratingCard) {
-      window.setTimeout(installFinalUi, 120);
-      return;
-    }
+    if (!startScreen || !menuActions || !ratingCard) return;
 
     installed = true;
     document.documentElement.dataset.androidUi345 = "true";
@@ -257,6 +254,6 @@
     syncLanguage();
   }
 
-  window.setTimeout(installFinalUi, 0);
+  installFinalUi();
   window.addEventListener("load", installFinalUi, { once: true });
 })();
