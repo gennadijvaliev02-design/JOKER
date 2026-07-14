@@ -1,6 +1,6 @@
 /*
- * Android UI V11 — real-device UX corrections.
- * Loaded after V10 only in the Android APK.
+ * Android UI V11 — real-device UX corrections only.
+ * Obsolete V11 ordinary-deal styles were removed.
  */
 
 /* ---------- Order panel: lower, safer two-row spacing ---------- */
@@ -52,7 +52,7 @@
   transform-origin: center !important;
 }
 
-/* ---------- Joker announcement: 20% smaller and calm ---------- */
+/* ---------- Joker announcement: smaller and calm ---------- */
 .joker-announcement {
   min-width: 184px !important;
   padding: 10px 14px 12px !important;
@@ -101,71 +101,6 @@
   animation-iteration-count: 1 !important;
 }
 
-/* ---------- V11 deal: exact DOM targets and no ghost piles ---------- */
-.table.is-v11-dealing .hand .card.is-dealt {
-  animation: none !important;
-}
-
-.v11-deal-layer {
-  position: absolute !important;
-  inset: 0 !important;
-  left: 0 !important;
-  top: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  transform: none !important;
-  z-index: 28 !important;
-  pointer-events: none !important;
-  overflow: hidden !important;
-}
-
-.v11-deal-deck {
-  position: absolute !important;
-  left: 50% !important;
-  top: 48% !important;
-  width: 50px !important;
-  height: 70px !important;
-  margin: 0 !important;
-  transform: translate(-50%, -50%) rotate(-1deg) !important;
-  opacity: 1 !important;
-  z-index: 1 !important;
-}
-
-.v11-flying-card {
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
-  width: 50px !important;
-  height: 70px !important;
-  margin: 0 !important;
-  opacity: 1 !important;
-  animation: none !important;
-  transform: none !important;
-  transform-origin: center !important;
-  will-change: transform, opacity, filter;
-  z-index: 3 !important;
-}
-
-.hand .card.is-v11-deal-pending,
-.hidden-cards span.is-v11-deal-pending {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  animation: none !important;
-  pointer-events: none !important;
-}
-
-.hand .card.is-v11-deal-arrived,
-.hidden-cards span.is-v11-deal-arrived {
-  visibility: visible !important;
-  animation: v11-real-card-arrive 230ms cubic-bezier(0.16, 0.82, 0.22, 1) both !important;
-}
-
-@keyframes v11-real-card-arrive {
-  0% { opacity: 0; filter: brightness(1.12); }
-  72% { opacity: 1; filter: brightness(1.05); }
-  100% { opacity: 1; filter: brightness(1); }
-}
-
 @media (max-height: 430px) {
   .bid-panel:not(.is-android-joker-panel):not(:has(.bid-option[data-trump])) {
     top: 57.5% !important;
@@ -208,11 +143,5 @@
     width: 28px !important;
     height: 28px !important;
     font-size: 24px !important;
-  }
-
-  .v11-deal-deck,
-  .v11-flying-card {
-    width: 46px !important;
-    height: 64px !important;
   }
 }
