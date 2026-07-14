@@ -1,9 +1,5 @@
-/*
- * Android UI V10 — unified Joker controls.
- * Obsolete ordinary-deal reveal classes were removed.
- */
+/* Android UI V10 — unified low-cost Joker controls. */
 
-/* ---------- Unified dark-green glass Joker flow ---------- */
 .bid-panel.is-android-joker-panel {
   position: absolute !important;
   left: 50% !important;
@@ -24,13 +20,13 @@
     linear-gradient(145deg, rgba(12, 68, 52, 0.965), rgba(4, 31, 27, 0.982) 54%, rgba(2, 18, 19, 0.99)) !important;
   box-shadow:
     0 24px 58px rgba(0, 0, 0, 0.58),
-    0 0 24px rgba(47, 231, 177, 0.16),
+    0 0 16px rgba(47, 231, 177, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     inset 0 -18px 32px rgba(0, 0, 0, 0.27) !important;
-  backdrop-filter: blur(15px) saturate(1.08) !important;
-  -webkit-backdrop-filter: blur(15px) saturate(1.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   transform: translate(-50%, -50%) !important;
-  animation: android-joker-panel-enter 210ms cubic-bezier(0.16, 0.82, 0.22, 1) both !important;
+  animation: android-joker-panel-enter 190ms cubic-bezier(0.16, 0.82, 0.22, 1) both !important;
   z-index: 22 !important;
 }
 
@@ -52,9 +48,7 @@
   letter-spacing: 0.035em !important;
   text-transform: none !important;
   text-align: center !important;
-  text-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.78),
-    0 0 16px rgba(255, 224, 117, 0.22) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.78) !important;
 }
 
 .bid-panel.is-android-joker-panel .bid-options {
@@ -92,15 +86,10 @@
   color: #f6fff9 !important;
   box-shadow:
     0 11px 22px rgba(0, 0, 0, 0.38),
-    0 0 13px rgba(46, 228, 178, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     inset 0 -10px 16px rgba(0, 0, 0, 0.23) !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72) !important;
-  transition:
-    transform 130ms ease,
-    border-color 150ms ease,
-    filter 150ms ease,
-    box-shadow 150ms ease !important;
+  transition: transform 130ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
   touch-action: manipulation;
 }
 
@@ -132,7 +121,7 @@
   font-size: clamp(38px, 4.1vw, 52px);
   font-weight: 900;
   line-height: 0.92;
-  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.34));
+  filter: none !important;
 }
 
 .android-joker-suit-name {
@@ -145,22 +134,21 @@
 
 .android-joker-suit-option.is-red .android-joker-suit-symbol {
   color: #ff5368;
-  text-shadow: 0 0 15px rgba(255, 60, 86, 0.22);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
 }
 
 .android-joker-suit-option.is-black .android-joker-suit-symbol {
   color: #ecf5f1;
-  text-shadow: 0 0 13px rgba(255, 255, 255, 0.12);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
 }
 
 .bid-panel.is-android-joker-panel .bid-option:not(:disabled):active,
 .bid-panel.is-android-joker-panel .bid-option.is-confirming {
   transform: translateY(2px) scale(0.97) !important;
   border-color: rgba(255, 231, 141, 0.94) !important;
-  filter: brightness(1.12) !important;
+  filter: none !important;
   box-shadow:
     0 5px 13px rgba(0, 0, 0, 0.42),
-    0 0 22px rgba(255, 221, 104, 0.20),
     inset 0 2px 7px rgba(0, 0, 0, 0.30) !important;
 }
 
@@ -182,9 +170,7 @@
   font-size: 25px;
   font-weight: 700;
   line-height: 1;
-  box-shadow:
-    0 8px 17px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  box-shadow: 0 8px 17px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.11);
   z-index: 3;
   touch-action: manipulation;
 }
@@ -196,17 +182,10 @@
 }
 
 @keyframes android-joker-panel-enter {
-  from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 13px)) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 13px)) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
-/* ---------- Compact landscape phones ---------- */
 @media (max-height: 430px) {
   .bid-panel.is-android-joker-panel {
     top: 61% !important;
@@ -251,7 +230,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bid-panel.is-android-joker-panel {
-    animation-duration: 1ms !important;
-  }
+  .bid-panel.is-android-joker-panel { animation-duration: 1ms !important; }
 }
