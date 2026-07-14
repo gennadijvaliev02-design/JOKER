@@ -4,16 +4,40 @@
   /* Android render caches — no sound or panel-style ownership here. */
   if (typeof renderScoreSheet === "function" && typeof elements !== "undefined" && elements.scoreSheet) {
     const fullRenderScoreSheet = renderScoreSheet;
+    let lastScoreSignature = null;
 
-    renderScoreSheet = function androidV16RenderScoreSheet() {
+    function getScoreSignature() {
+      const players = (state.players || []).map((player) => [
+        player.id,
+        player.name,
+        player.seat,
+        player.order,
+      ]);
+
+      return JSON.stringify([players, state.scoreRows || []]);
+    }
+
+    renderScoreSheet = function androidV16RenderScoreSheet(force = false) {
       if (elements.scoreSheet.hidden) return;
-      return fullRenderScoreSheet();
+
+      const signature = getScoreSignature();
+      if (!force && signature === lastScoreSignature) return;
+
+      const result = fullRenderScoreSheet();
+      lastScoreSignature = signature;
+      return result;
     };
 
-    elements.scoreButton?.addEventListener("click", () => {
-      requestAnimationFrame(() => {
-        if (!elements.scoreSheet.hidden) fullRenderScoreSheet();
+    function refreshVisibleScore() {
+      window.requestAnimationFrame(() => {
+        if (!elements.scoreSheet.hidden) renderScoreSheet(true);
       });
+    }
+
+    elements.scoreButton?.addEventListener("click", refreshVisibleScore);
+    window.addEventListener("joker-language-change", () => {
+      lastScoreSignature = null;
+      refreshVisibleScore();
     });
   }
 
@@ -22,7 +46,24 @@
   function installHandRenderCache() {
     if (handCacheInstalled || typeof renderHand !== "function" || !elements?.playerHand) return;
     handCacheInstalled = true;
+
     const fullRenderHand = renderHand;
+    let lastHandStateKey = null;
+
+    function getHandStateKey(hand) {
+      const canInteract = state.phase === "playing" && !state.busy && state.activePlayerId === "human";
+      const leadSuit = typeof getLeadSuit === "function" ? (getLeadSuit() || "") : "";
+      const trumpSuit = state.trump?.type === "standard" ? (state.trump.suit || "") : "";
+      const handIds = hand.map((card) => card?.id || "").join(",");
+
+      return [
+        state.dealAnimationKey,
+        canInteract ? "active" : "inactive",
+        leadSuit,
+        trumpSuit,
+        handIds,
+      ].join("|");
+    }
 
     renderHand = function androidV16CachedHand(...args) {
       const hand = state.hands?.human || [];
@@ -30,10 +71,15 @@
       const shouldAnimateDeal = state.dealAnimationKey !== state.renderedDealAnimationKey;
       const domMatches = nodes.length === hand.length
         && nodes.every((node, index) => node.classList.contains("card") && node.dataset.card === hand[index]?.id);
+      const stateKey = getHandStateKey(hand);
 
       if (!domMatches || shouldAnimateDeal) {
-        return fullRenderHand.apply(this, args);
+        const result = fullRenderHand.apply(this, args);
+        lastHandStateKey = getHandStateKey(state.hands?.human || []);
+        return result;
       }
+
+      if (stateKey === lastHandStateKey) return;
 
       const middle = (hand.length - 1) / 2;
       nodes.forEach((node, index) => {
@@ -51,6 +97,8 @@
         if (node.style.getPropertyValue("--hand-rotate") !== rotate) node.style.setProperty("--hand-rotate", rotate);
         if (node.style.getPropertyValue("--hand-lift") !== lift) node.style.setProperty("--hand-lift", lift);
       });
+
+      lastHandStateKey = stateKey;
     };
   }
 
