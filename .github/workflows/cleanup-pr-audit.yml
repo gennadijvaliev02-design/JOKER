@@ -19,11 +19,11 @@ jobs:
           ref: ${{ github.head_ref || 'android-runtime-cleanup-2' }}
           fetch-depth: 0
 
-      - name: Apply legality cache cleanup
+      - name: Apply final Deal and audio cleanup
         if: github.head_ref == 'android-runtime-cleanup-2'
-        run: python3 .github/scripts/apply_legality_cache_cleanup.py
+        run: python3 .github/scripts/apply_deal_audio_finalize.py
 
-      - name: Commit legality cache cleanup
+      - name: Commit final Deal and audio cleanup
         if: github.head_ref == 'android-runtime-cleanup-2'
         run: |
           if git diff --quiet; then
@@ -31,8 +31,8 @@ jobs:
           else
             git config user.name 'Joker Cleanup Bot'
             git config user.email 'actions@users.noreply.github.com'
-            git add android-runtime-polish.js
-            git commit -m 'Cache repeated Android legality checks'
+            git add android-deal-2026.js sound-polish.js index.html
+            git commit -m 'Finalize Deal and audio hot-path cleanup'
             git push origin HEAD:android-runtime-cleanup-2
           fi
 
@@ -125,6 +125,7 @@ jobs:
           ! grep -q 'state.timeoutIds = state.timeoutIds.filter' script.js
           grep -q 'oscillator.disconnect()' sound-polish.js
           grep -q 'biquad.disconnect()' sound-polish.js
+          grep -q 'state.audioContext.state === "suspended"' sound-polish.js
           ! grep -q 'window.setTimeout' trick-collect-animation.js
           grep -q 'usesAndroidDeal' script.js
           ! grep -q 'android-deal-container-mask-style' android-v15.js
@@ -135,4 +136,7 @@ jobs:
           test "$(grep -o 'clearLegacyArtifactsOnce();' android-deal-2026.js | wc -l)" -eq 1
           grep -q 'cachedAndroidIsLegalCard' android-runtime-polish.js
           grep -q 'legalityByPlayer' android-runtime-polish.js
-          test "$(grep -o 'setTimeout' android-deal-2026.js | wc -l)" -le 3
+          grep -q 'cards.length = 0' android-deal-2026.js
+          grep -q 'trackAnimation(animation);' android-deal-2026.js
+          ! grep -q 'window.setTimeout(() => elements.table.classList.remove("is-deal-2026-revealing")' android-deal-2026.js
+          test "$(grep -o 'setTimeout' android-deal-2026.js | wc -l)" -le 2
