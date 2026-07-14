@@ -26,6 +26,38 @@
 
   const stageCards = { left: [], top: [], right: [], bottom: [] };
   const noiseCache = new WeakMap();
+  const activeAnimations = new Set();
+  const activeSoundSources = new Set();
+
+  function trackAnimation(animation, onFinish) {
+    activeAnimations.add(animation);
+    let settled = false;
+
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      activeAnimations.delete(animation);
+      onFinish?.();
+    };
+
+    animation.addEventListener("finish", settle, { once: true });
+    animation.addEventListener("cancel", settle, { once: true });
+    return animation;
+  }
+
+  function cancelActiveMotion() {
+    activeAnimations.forEach((animation) => animation.cancel());
+    activeAnimations.clear();
+
+    activeSoundSources.forEach((source) => {
+      try {
+        source.stop();
+      } catch {
+        // The source may have already ended.
+      }
+    });
+    activeSoundSources.clear();
+  }
 
   function safeDelay(value) {
     return typeof getDelay === "function" ? getDelay(value) : value;
@@ -236,6 +268,7 @@
 
   function resetDeal() {
     activeToken += 1;
+    cancelActiveMotion();
     previousTotal = 0;
     clearStageCards();
     layer?.remove();
@@ -286,7 +319,7 @@
     return { context, ...cached };
   }
 
-  function playDealTick(sound) {
+  function playDealTick(sound, delay = 0) {
     if (!sound) return;
     const { context, buffer, duration, frames, variants } = sound;
     const source = context.createBufferSource();
@@ -294,18 +327,25 @@
     const gain = context.createGain();
     const variant = soundVariant % variants;
     soundVariant += 1;
-    const now = context.currentTime;
+    const startAt = context.currentTime + safeDelay(delay) / 1000;
     source.buffer = buffer;
     filter.type = "bandpass";
-    filter.frequency.setValueAtTime(2250 + variant * 110, now);
+    filter.frequency.setValueAtTime(2250 + variant * 110, startAt);
     filter.Q.value = 0.9;
-    gain.gain.setValueAtTime(0.060, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    gain.gain.setValueAtTime(0.060, startAt);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
     source.connect(filter);
     filter.connect(gain);
     gain.connect(context.destination);
-    source.start(now, variant * frames / context.sampleRate, duration);
-    source.stop(now + duration + 0.01);
+    activeSoundSources.add(source);
+    source.addEventListener("ended", () => {
+      activeSoundSources.delete(source);
+      source.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    }, { once: true });
+    source.start(startAt, variant * frames / context.sampleRate, duration);
+    source.stop(startAt + duration + 0.01);
   }
 
   function dealerOrder() {
@@ -351,43 +391,37 @@
     card.dataset.seat = seat;
     card.dataset.absoluteIndex = String(absoluteIndex);
     applyBack(card, back);
-    layer.append(card);
     return card;
   }
 
   function animateToStage({ card, start, end, delay, token, sound }) {
-    window.setTimeout(() => {
-      if (token !== activeToken || !card.isConnected) return;
-      playDealTick(sound);
-      const deltaX = end.x - start.x;
-      const deltaY = end.y - start.y;
-      const arc = Math.min(42, 16 + Math.abs(deltaX) * 0.025 + Math.abs(deltaY) * 0.07);
-      const middleX = start.x + deltaX * 0.55;
-      const middleY = start.y + deltaY * 0.55 - arc;
-      const wobble = (Number(card.dataset.absoluteIndex) % 3 - 1) * 2.2;
-      const animation = card.animate([
-        { opacity: 0.88, transform: `translate3d(${start.x}px, ${start.y}px, 0) rotate(-3deg) scale(.82)` },
-        { opacity: 1, transform: `translate3d(${middleX}px, ${middleY}px, 0) rotate(${end.rotation * 0.40 + wobble}deg) scale(1.03)`, offset: 0.62 },
-        { opacity: 1, transform: end.css },
-      ], {
-        duration: safeDelay(FLIGHT_DURATION),
-        easing: "cubic-bezier(.18,.76,.22,1)",
-        fill: "forwards",
-      });
+    const deltaX = end.x - start.x;
+    const deltaY = end.y - start.y;
+    const arc = Math.min(42, 16 + Math.abs(deltaX) * 0.025 + Math.abs(deltaY) * 0.07);
+    const middleX = start.x + deltaX * 0.55;
+    const middleY = start.y + deltaY * 0.55 - arc;
+    const wobble = (Number(card.dataset.absoluteIndex) % 3 - 1) * 2.2;
 
-      let done = false;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        card.style.transform = end.css;
-        card.style.opacity = "1";
-        animation.cancel();
-        card.classList.add("is-staged");
-      };
-      animation.addEventListener?.("finish", finish, { once: true });
-      animation.finished?.then(finish).catch(() => {});
-      window.setTimeout(finish, safeDelay(FLIGHT_DURATION + 90));
-    }, safeDelay(delay));
+    playDealTick(sound, delay);
+    const animation = card.animate([
+      { opacity: 0, transform: `translate3d(${start.x}px, ${start.y}px, 0) rotate(-3deg) scale(.82)` },
+      { opacity: 0.88, transform: `translate3d(${start.x}px, ${start.y}px, 0) rotate(-3deg) scale(.82)`, offset: 0.02 },
+      { opacity: 1, transform: `translate3d(${middleX}px, ${middleY}px, 0) rotate(${end.rotation * 0.40 + wobble}deg) scale(1.03)`, offset: 0.62 },
+      { opacity: 1, transform: end.css },
+    ], {
+      delay: safeDelay(delay),
+      duration: safeDelay(FLIGHT_DURATION),
+      easing: "cubic-bezier(.18,.76,.22,1)",
+      fill: "both",
+    });
+
+    trackAnimation(animation, () => {
+      if (token !== activeToken || !card.isConnected) return;
+      card.style.transform = end.css;
+      card.style.opacity = "1";
+      card.classList.add("is-staged");
+      animation.cancel();
+    });
   }
 
   function revealBottomPreview() {
@@ -447,30 +481,22 @@
         globalIndex += 1;
 
         promises.push(new Promise((resolve) => {
-          window.setTimeout(() => {
-            if (token !== activeToken || !record.node.isConnected) {
-              resolve();
-              return;
-            }
-            const animation = record.node.animate([
-              { opacity: 1, transform: record.node.style.transform },
-              { opacity: 1, transform: end },
-              { opacity: 0.10, transform: end },
-            ], {
-              duration: safeDelay(TRANSFER_DURATION),
-              easing: "cubic-bezier(.16,.82,.22,1)",
-              fill: "forwards",
-            });
-            let done = false;
-            const finish = () => {
-              if (done) return;
-              done = true;
-              resolve();
-            };
-            animation.addEventListener?.("finish", finish, { once: true });
-            animation.finished?.then(finish).catch(() => {});
-            window.setTimeout(finish, safeDelay(TRANSFER_DURATION + 80));
-          }, safeDelay(delay));
+          if (token !== activeToken || !record.node.isConnected) {
+            resolve();
+            return;
+          }
+
+          const animation = record.node.animate([
+            { opacity: 1, transform: record.node.style.transform },
+            { opacity: 1, transform: end },
+            { opacity: 0.10, transform: end },
+          ], {
+            delay: safeDelay(delay),
+            duration: safeDelay(TRANSFER_DURATION),
+            easing: "cubic-bezier(.16,.82,.22,1)",
+            fill: "both",
+          });
+          trackAnimation(animation, resolve);
         }));
       });
     }
@@ -610,6 +636,7 @@
         return;
       }
 
+      cancelActiveMotion();
       activeToken += 1;
       const token = activeToken;
       removeLegacyArtifacts();
@@ -629,6 +656,8 @@
       const sound = prepareDealSound();
       const freshHumanIds = freshHumanIdsForBatch(batch.count);
       let step = 0;
+      const cardFragment = document.createDocumentFragment();
+      const flightJobs = [];
 
       for (let round = 0; round < batch.count; round += 1) {
         const absoluteIndex = batch.from + round;
@@ -638,6 +667,7 @@
           const seat = player.seat;
           const end = stageTransform(seat, absoluteIndex, total);
           const card = createStageCard(back, seat, absoluteIndex);
+          cardFragment.append(card);
           stageCards[seat].push({
             seat,
             absoluteIndex,
@@ -645,10 +675,13 @@
             node: card,
             faceUp: false,
           });
-          animateToStage({ card, start, end, delay: step * CARD_INTERVAL, token, sound });
+          flightJobs.push({ card, start, end, delay: step * CARD_INTERVAL, token, sound });
           step += 1;
         }
       }
+
+      layer.append(cardFragment);
+      flightJobs.forEach(animateToStage);
 
       const flightEnd = Math.max(0, step - 1) * CARD_INTERVAL + FLIGHT_DURATION;
       const handSize = Math.max(1, Number(state.currentHandSize) || 9);
