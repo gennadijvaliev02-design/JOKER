@@ -1,4 +1,6 @@
 (() => {
+  "use strict";
+
   function getLang() {
     return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
   }
@@ -18,12 +20,14 @@
     const button = document.getElementById("last-trick-button");
     const title = document.querySelector(".last-trick-title");
 
-    if (button) button.textContent = copy.button;
-    if (title) title.textContent = copy.title;
+    if (button && button.textContent !== copy.button) button.textContent = copy.button;
+    if (title && title.textContent !== copy.title) title.textContent = copy.title;
   }
 
   function ensureLastTrickUi() {
-    if (!elements.table || document.getElementById("last-trick-button")) {
+    if (typeof elements === "undefined" || !elements.table) return;
+
+    if (document.getElementById("last-trick-button")) {
       applyLastTrickLanguage();
       return;
     }
@@ -56,42 +60,26 @@
     viewer.append(panel);
     elements.table.append(button, viewer);
 
-    const show = () => showLastTrick();
-    const hide = () => hideLastTrick();
-
     button.addEventListener("pointerdown", (event) => {
-      if (!state.lastTrick?.cards?.length) {
-        return;
-      }
+      if (!state.lastTrick?.cards?.length) return;
 
       event.preventDefault();
       button.setPointerCapture?.(event.pointerId);
-      show();
+      showLastTrick();
     });
 
-    button.addEventListener("pointerup", hide);
-    button.addEventListener("pointercancel", hide);
-    button.addEventListener("pointerleave", hide);
-    button.addEventListener("mousedown", show);
-    button.addEventListener("mouseup", hide);
-    button.addEventListener("mouseleave", hide);
-    button.addEventListener("touchstart", (event) => {
-      event.preventDefault();
-      show();
-    }, { passive: false });
-    button.addEventListener("touchend", hide);
-    button.addEventListener("touchcancel", hide);
+    button.addEventListener("pointerup", hideLastTrick);
+    button.addEventListener("pointercancel", hideLastTrick);
+    button.addEventListener("lostpointercapture", hideLastTrick);
   }
 
   function updateLastTrickButton() {
+    ensureLastTrickUi();
     const button = document.getElementById("last-trick-button");
+    if (!button) return;
 
-    if (!button) {
-      return;
-    }
-
-    button.disabled = !state.lastTrick?.cards?.length;
-    applyLastTrickLanguage();
+    const disabled = !state.lastTrick?.cards?.length;
+    if (button.disabled !== disabled) button.disabled = disabled;
   }
 
   function renderLastTrickCards(container) {
@@ -125,9 +113,7 @@
     const button = document.getElementById("last-trick-button");
     const cards = viewer?.querySelector(".last-trick-cards");
 
-    if (!viewer || !cards || !state.lastTrick?.cards?.length) {
-      return;
-    }
+    if (!viewer || !cards || !state.lastTrick?.cards?.length) return;
 
     applyLastTrickLanguage();
     renderLastTrickCards(cards);
@@ -139,27 +125,14 @@
   function hideLastTrick() {
     const viewer = document.getElementById("last-trick-viewer");
     const button = document.getElementById("last-trick-button");
-
-    if (!viewer) {
-      return;
-    }
+    if (!viewer) return;
 
     viewer.classList.remove("is-visible");
     button?.classList.remove("is-active");
     window.setTimeout(() => {
-      if (!viewer.classList.contains("is-visible")) {
-        viewer.hidden = true;
-      }
+      if (!viewer.classList.contains("is-visible")) viewer.hidden = true;
     }, 120);
   }
-
-  const originalRender = render;
-  render = function renderWithLastTrickButton(...args) {
-    const result = originalRender.apply(this, args);
-    ensureLastTrickUi();
-    updateLastTrickButton();
-    return result;
-  };
 
   const originalFinishTrickSoon = finishTrickSoon;
   finishTrickSoon = function finishTrickSoonWithLastTrick(...args) {
@@ -185,6 +158,11 @@
   };
 
   window.addEventListener("joker-language-change", applyLastTrickLanguage);
+  window.addEventListener("load", () => {
+    ensureLastTrickUi();
+    updateLastTrickButton();
+  }, { once: true });
+
   ensureLastTrickUi();
   updateLastTrickButton();
 })();
