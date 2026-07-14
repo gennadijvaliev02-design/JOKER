@@ -601,9 +601,11 @@ function renderHand() {
     state.renderedDealAnimationKey = state.dealAnimationKey;
     elements.table?.classList.add("is-dealing");
     playCardDealAnimation(hand.length);
-    window.setTimeout(() => {
-      elements.table?.classList.remove("is-dealing");
-    }, getDelay(5600));
+    if (!window.__JOKER_ANDROID_DEAL_2026_STAGE__) {
+      scheduleGameTask(() => {
+        elements.table?.classList.remove("is-dealing");
+      }, getDelay(5600));
+    }
   }
 }
 

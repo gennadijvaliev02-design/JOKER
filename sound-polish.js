@@ -35,6 +35,10 @@
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
     oscillator.connect(gain);
     gain.connect(destination || ctx.destination);
+    oscillator.addEventListener("ended", () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    }, { once: true });
     oscillator.start(time);
     oscillator.stop(time + duration + 0.02);
   }
@@ -84,6 +88,11 @@
     source.connect(biquad);
     biquad.connect(gain);
     gain.connect(destination || ctx.destination);
+    source.addEventListener("ended", () => {
+      source.disconnect();
+      biquad.disconnect();
+      gain.disconnect();
+    }, { once: true });
     source.start(time, offset, duration);
     source.stop(time + duration + 0.02);
   }

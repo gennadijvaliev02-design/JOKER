@@ -83,7 +83,7 @@
     elements.table.append(layer);
     elements.table.classList.add("is-trick-collecting");
 
-    window.setTimeout(() => {
+    scheduleGameTask(() => {
       layer.remove();
       elements.table.classList.remove("is-trick-collecting");
     }, getDelay(COLLECT_ANIMATION_TIME + 180));
