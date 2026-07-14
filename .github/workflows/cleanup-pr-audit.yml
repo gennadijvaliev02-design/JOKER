@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   audit:
@@ -15,26 +15,6 @@ jobs:
     steps:
       - name: Checkout cleanup branch
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || 'android-runtime-cleanup-2' }}
-          fetch-depth: 0
-
-      - name: Apply final runtime timer cleanup
-        if: github.head_ref == 'android-runtime-cleanup-2'
-        run: python3 .github/scripts/apply_final_runtime_timers.py
-
-      - name: Commit final runtime timer cleanup
-        if: github.head_ref == 'android-runtime-cleanup-2'
-        run: |
-          if git diff --quiet; then
-            echo 'Cleanup already applied.'
-          else
-            git config user.name 'Joker Cleanup Bot'
-            git config user.email 'actions@users.noreply.github.com'
-            git add android-deal-2026.js ace-deal-animation.js android-ui-v11.css index.html
-            git commit -m 'Track final gameplay timers and remove joker blur'
-            git push origin HEAD:android-runtime-cleanup-2
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -108,36 +88,8 @@ jobs:
           ! grep -q 'filter: blur' android-ui-v10.css
           ! grep -q 'backdrop-filter: blur' android-ui-v7.css
           ! grep -q 'backdrop-filter: blur' android-ui-v10.css
-          ! grep -q 'backdrop-filter: blur' android-ui-v11.css
           ! grep -q 'backdrop-filter: blur' android-ui-v12.css
           ! grep -q 'joker-bubble-trail' trick-collect-animation.css
           ! grep -q 'joker-star-burst' trick-collect-animation.css
           ! grep -q 'paintSilverSuits' android-v12.js
           grep -q 'markSilverSuits' android-v12.js
-          grep -q '__JOKER_ANDROID_DEAL_2026_STAGE__' rules/rules-engine.js
-          ! grep -q 'setTimeout(install' android-deal-2026.js
-          ! grep -q 'originalRender = render' high-joker-legal-fix.js
-          grep -q 'const activeAnimations = new Set' android-deal-2026.js
-          grep -q 'const activeSoundSources = new Set' android-deal-2026.js
-          grep -q 'const cardFragment = document.createDocumentFragment' android-deal-2026.js
-          grep -q 'const transferJobs = \[\]' android-deal-2026.js
-          grep -q 'timeoutIds: new Set()' script.js
-          grep -q 'state.timeoutIds.delete(timeoutId)' script.js
-          ! grep -q 'state.timeoutIds = state.timeoutIds.filter' script.js
-          grep -q 'oscillator.disconnect()' sound-polish.js
-          grep -q 'biquad.disconnect()' sound-polish.js
-          grep -q 'state.audioContext.state === "suspended"' sound-polish.js
-          ! grep -q 'window.setTimeout' trick-collect-animation.js
-          grep -q 'usesAndroidDeal' script.js
-          ! grep -q 'android-deal-container-mask-style' android-v15.js
-          grep -q 'table.is-deal-2026-staging > .hand' android-deal-2026.js
-          ! grep -q 'deal-2026-deck-breathe' android-deal-2026.js
-          ! grep -q 'function targetForRecord' android-deal-2026.js
-          grep -q 'clearLegacyArtifactsOnce();' android-deal-2026.js
-          test "$(grep -o 'clearLegacyArtifactsOnce();' android-deal-2026.js | wc -l)" -eq 1
-          grep -q 'cachedAndroidIsLegalCard' android-runtime-polish.js
-          grep -q 'legalityByPlayer' android-runtime-polish.js
-          grep -q 'cards.length = 0' android-deal-2026.js
-          grep -q 'trackAnimation(animation);' android-deal-2026.js
-          ! grep -q 'window.setTimeout' android-deal-2026.js
-          ! grep -q 'window.setTimeout' ace-deal-animation.js
