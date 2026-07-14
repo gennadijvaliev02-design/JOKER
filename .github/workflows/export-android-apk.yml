@@ -1,0 +1,73 @@
+name: Export Android APK
+
+on:
+  pull_request:
+    branches:
+      - android-app
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  export-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for the Android build from the target commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TARGET_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          run_id=""
+          for attempt in $(seq 1 60); do
+            run_id=$(gh run list \
+              --workflow android-apk.yml \
+              --branch android-app \
+              --limit 20 \
+              --json databaseId,headSha,event,status,conclusion \
+              --jq '.[] | select(.headSha == env.TARGET_SHA and .event == "push") | .databaseId' \
+              | head -n 1)
+
+            if [ -n "$run_id" ]; then
+              status=$(gh run view "$run_id" --json status --jq '.status')
+              conclusion=$(gh run view "$run_id" --json conclusion --jq '.conclusion // ""')
+              echo "Android run $run_id: status=$status conclusion=$conclusion"
+
+              if [ "$status" = "completed" ]; then
+                if [ "$conclusion" != "success" ]; then
+                  echo "Android build failed with conclusion: $conclusion" >&2
+                  exit 1
+                fi
+                break
+              fi
+            else
+              echo "Waiting for Android run for $TARGET_SHA"
+            fi
+
+            sleep 10
+          done
+
+          if [ -z "$run_id" ]; then
+            echo "Android build run was not found" >&2
+            exit 1
+          fi
+
+          status=$(gh run view "$run_id" --json status --jq '.status')
+          if [ "$status" != "completed" ]; then
+            echo "Timed out waiting for Android build" >&2
+            exit 1
+          fi
+
+          mkdir -p exported-apk
+          gh run download "$run_id" --name JOKER-APK --dir exported-apk
+          find exported-apk -type f -maxdepth 3 -print
+
+      - name: Upload accessible APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JOKER-APK-EXPORT
+          path: exported-apk/**
+          if-no-files-found: error
+          retention-days: 14
