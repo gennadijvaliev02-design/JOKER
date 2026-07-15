@@ -6,6 +6,19 @@
     SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]),
   );
   const renderedCounts = new WeakMap();
+  let playerSeatSignature = "";
+  let playerIdBySeat = Object.create(null);
+
+  function syncPlayerSeats() {
+    const signature = state.players.map((player) => `${player.id}:${player.seat}`).join("|");
+    if (signature === playerSeatSignature) return;
+
+    playerIdBySeat = Object.create(null);
+    state.players.forEach((player) => {
+      playerIdBySeat[player.seat] = player.id;
+    });
+    playerSeatSignature = signature;
+  }
 
   function getStackMetrics(count) {
     if (count >= 9) return { scale: 0.94, overlap: -7, angle: 1.05 };
@@ -27,7 +40,8 @@
   function applyFanGeometry(stack, seat, count, angle) {
     const middle = (count - 1) / 2;
 
-    Array.from(stack.children).forEach((card, index) => {
+    for (let index = 0; index < stack.children.length; index += 1) {
+      const card = stack.children[index];
       const offset = index - middle;
       const distance = Math.abs(offset);
       let shiftX = 0;
@@ -48,7 +62,7 @@
       card.style.setProperty("--fan-shift-y", `${shiftY.toFixed(2)}px`);
       card.style.setProperty("--fan-rotation", `${rotation.toFixed(2)}deg`);
       card.style.zIndex = String(index + 1);
-    });
+    }
   }
 
   function updateStackPresentation(stack, seat, count) {
@@ -64,14 +78,14 @@
   }
 
   renderOpponentCardStacks = function renderResponsiveOpponentCardStacks() {
-    const playersBySeat = new Map(state.players.map((player) => [player.seat, player]));
+    syncPlayerSeats();
 
     for (const seat of SEATS) {
       const stack = stacksBySeat[seat];
       if (!stack) continue;
 
-      const player = playersBySeat.get(seat);
-      const cardCount = player ? state.hands[player.id]?.length || 0 : 0;
+      const playerId = playerIdBySeat[seat];
+      const cardCount = playerId ? state.hands[playerId]?.length || 0 : 0;
       const countIsCurrent = renderedCounts.get(stack) === cardCount
         && stack.children.length === cardCount;
 
