@@ -1,0 +1,81 @@
+name: Audit raw script.js references
+
+on:
+  push:
+    branches:
+      - agent/android-script-audit-1
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-audit-1
+          fetch-depth: 1
+
+      - name: Build template-aware reference report
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          source = Path('script.js').read_text(encoding='utf-8')
+          files = sorted(
+              p for p in Path('.').rglob('*')
+              if p.is_file()
+              and p.suffix.lower() in {'.js', '.html'}
+              and '.git' not in p.parts
+              and 'node_modules' not in p.parts
+          )
+          corpus = {str(p): p.read_text(encoding='utf-8', errors='replace') for p in files}
+          declarations = []
+          for match in re.finditer(r'(?m)^[ \t]*(?:async[ \t]+)?function[ \t]+([A-Za-z_$][\w$]*)[ \t]*\(', source):
+              declarations.append((match.group(1), source.count('\n', 0, match.start()) + 1))
+
+          rows = []
+          for name, line in declarations:
+              identifier = re.compile(rf'(?<![\w$]){re.escape(name)}(?![\w$])')
+              call = re.compile(rf'(?<![\w$]){re.escape(name)}\s*\(')
+              refs = []
+              calls = 0
+              for filename, text in corpus.items():
+                  split = text.splitlines()
+                  for found in identifier.finditer(text):
+                      ref_line = text.count('\n', 0, found.start()) + 1
+                      if len(refs) < 20:
+                          refs.append((filename, ref_line, split[ref_line - 1].strip()[:180]))
+                  calls += len(call.findall(text))
+              calls = max(0, calls - 1)
+              rows.append((name, line, sum(1 for text in corpus.values() for _ in identifier.finditer(text)), calls, refs))
+
+          candidates = [row for row in rows if row[2] == 1]
+          low_use = [row for row in rows if row[2] <= 3]
+
+          out = ['# Template-aware `script.js` references', '', '## Raw single-reference declarations', '']
+          if not candidates:
+              out.append('_None._')
+          for name, line, count, calls, refs in candidates:
+              out.append(f'- `{name}` — declaration line {line}; raw refs {count}; direct calls {calls}')
+          out.extend(['', '## All declarations with at most three raw references', ''])
+          for name, line, count, calls, refs in low_use:
+              out.append(f'### `{name}` — declaration line {line}; raw refs {count}; direct calls {calls}')
+              for filename, ref_line, snippet in refs:
+                  out.append(f'- `{filename}:{ref_line}` — `{snippet}`')
+              out.append('')
+
+          Path('SCRIPT_AUDIT_RAW.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SCRIPT_AUDIT_RAW.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Generate template-aware script reference report'
+          git push origin HEAD:agent/android-script-audit-1
