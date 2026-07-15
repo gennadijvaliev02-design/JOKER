@@ -1,0 +1,77 @@
+name: Audit Android loader across all files
+
+on:
+  push:
+    branches:
+      - agent/android-script-static-audit-2
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-static-audit-2
+          fetch-depth: 1
+
+      - name: Build Android loader report
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          needles = [
+              'android-joker-v10', 'android-v14', 'android-v15',
+              'android-runtime-v11', 'android-runtime-v13',
+              'evaluateJavascript', 'loadUrl(', 'WebView',
+              'index.html', 'file:///android_asset', 'copy',
+          ]
+          skip_dirs = {'.git', 'node_modules', '.gradle', 'build'}
+          lines = ['# Android loader all-file audit', '']
+
+          files = []
+          for path in Path('.').rglob('*'):
+              if not path.is_file() or any(part in skip_dirs for part in path.parts):
+                  continue
+              try:
+                  if path.stat().st_size > 2_000_000:
+                      continue
+                  text = path.read_text(encoding='utf-8')
+              except Exception:
+                  continue
+              files.append((path, text))
+
+          for needle in needles:
+              hits = []
+              for path, text in files:
+                  for number, line in enumerate(text.splitlines(), 1):
+                      if needle in line:
+                          hits.append((path.as_posix(), number, line.strip()))
+              lines += [f'## `{needle}` — {len(hits)}', '']
+              for path, number, line in hits[:200]:
+                  lines.append(f'- `{path}:{number}` — `{line}`')
+              lines.append('')
+
+          lines += ['## Android/native/build file inventory', '']
+          interesting = []
+          for path, _ in files:
+              p = path.as_posix()
+              if ('android' in p.lower() or path.suffix.lower() in {'.kt', '.java', '.gradle', '.kts', '.xml', '.yml', '.yaml'}) and not p.startswith('.github/workflows/audit-'):
+                  interesting.append(p)
+          for p in sorted(interesting):
+              lines.append(f'- `{p}`')
+
+          Path('ANDROID_LOADER_AUDIT.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ANDROID_LOADER_AUDIT.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add Android loader audit report'
+          git push origin HEAD:agent/android-script-static-audit-2
