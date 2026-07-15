@@ -1,0 +1,55 @@
+name: Build Runtime Cleanup APK
+
+on:
+  push:
+    branches:
+      - android-runtime-cleanup-2-build
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout cleaned source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Run validated APK build recipe
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          import yaml
+
+          workflow = yaml.safe_load(Path('.github/workflows/android-apk.yml').read_text(encoding='utf-8'))
+          steps = workflow['jobs']['build-apk']['steps']
+          for step in steps:
+              command = step.get('run')
+              if not command:
+                  continue
+              print(f"\n=== {step.get('name', 'build step')} ===", flush=True)
+              subprocess.run(command, shell=True, executable='/bin/bash', check=True)
+          PY
+
+      - name: Upload cleaned APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JOKER-RUNTIME-CLEANUP-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
