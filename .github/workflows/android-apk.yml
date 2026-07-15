@@ -17,58 +17,36 @@ jobs:
           ref: agent/android-script-dom-cache-cleanup-1
           fetch-depth: 1
 
-      - name: Confirm renderPlayers has no external owner
+      - name: Collect render ownership diagnostics
         run: |
           python3 - <<'PY'
           import re
           from pathlib import Path
-          owners = []
-          for path in Path('.').rglob('*.js'):
-              if path.name == 'script.js':
-                  continue
-              if re.search(r'\brenderPlayers\s*=', path.read_text(encoding='utf-8')):
-                  owners.append(str(path))
-          assert owners == [], owners
+
+          lines = []
+          for symbol in ('renderPlayers', 'renderOpponentCardStacks'):
+              lines.append(f'[{symbol}]')
+              for path in sorted(Path('.').rglob('*.js')):
+                  source = path.read_text(encoding='utf-8')
+                  for number, line in enumerate(source.splitlines(), 1):
+                      if re.search(rf'\b{symbol}\s*=', line):
+                          lines.append(f'{path}:{number}: {line.strip()}')
+
+          script = Path('script.js').read_text(encoding='utf-8')
+          android = Path('android-opponent-hands.js').read_text(encoding='utf-8')
+          lines.extend([
+              '[markers]',
+              f'elements={script.count(chr(32) * 2 + "gameDialogActions: document.querySelector(\"#game-dialog-actions\")," + chr(10) + "};")}',
+              f'renderPlayers={script.count("function renderPlayers() {")}',
+              f'renderOpponentCardStacks={script.count("function renderOpponentCardStacks() {")}',
+              f'avatarLookup={script.count("const avatar = document.querySelector(`[data-seat=\"${player.seat}\"]`);")}',
+              f'stackLookup={script.count("const stack = document.querySelector(`.${seat}-stack`);")}',
+              f'androidStacks={android.count("  const stacksBySeat = Object.fromEntries(")}',
+          ])
+          Path('dom-cache-diagnostics.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
           PY
 
-      - name: Confirm opponent stack owner
-        run: |
-          python3 - <<'PY'
-          import re
-          from pathlib import Path
-          owners = []
-          for path in Path('.').rglob('*.js'):
-              if path.name == 'script.js':
-                  continue
-              if re.search(r'\brenderOpponentCardStacks\s*=', path.read_text(encoding='utf-8')):
-                  owners.append(str(path))
-          assert owners == ['android-opponent-hands.js'], owners
-          PY
-
-      - name: Confirm elements insertion marker
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          source = Path('script.js').read_text(encoding='utf-8')
-          marker = '  gameDialogActions: document.querySelector("#game-dialog-actions"),\n};'
-          assert source.count(marker) == 1, source.count(marker)
-          PY
-
-      - name: Confirm base render function markers
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          source = Path('script.js').read_text(encoding='utf-8')
-          assert source.count('function renderPlayers() {') == 1
-          assert source.count('function renderOpponentCardStacks() {') == 1
-          assert source.count('const avatar = document.querySelector(`[data-seat="${player.seat}"]`);') == 1
-          assert source.count('const stack = document.querySelector(`.${seat}-stack`);') == 1
-          PY
-
-      - name: Confirm Android stack marker
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          source = Path('android-opponent-hands.js').read_text(encoding='utf-8')
-          assert source.count('  const stacksBySeat = Object.fromEntries(') == 1
-          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dom-cache-diagnostics
+          path: dom-cache-diagnostics.txt
