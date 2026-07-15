@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  const reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
   const SUIT_META = {
     hearts: {
       color: "red",
@@ -235,8 +236,19 @@
     selectedCard = null;
   }
 
+  function canVibrate() {
+    return typeof navigator.vibrate === "function" && !reducedMotionQuery?.matches;
+  }
+
   document.addEventListener("pointerdown", (event) => {
     if (!(event.target instanceof Element)) return;
+
+    const interactive = event.target.closest(
+      "button:not(:disabled), .card:not(.is-disabled), [role='button']",
+    );
+    if (interactive && canVibrate()) {
+      navigator.vibrate(interactive.matches(".card") ? 7 : 10);
+    }
 
     const card = event.target.closest(".hand .card:not(.is-disabled):not(:disabled)");
     if (!card) return;

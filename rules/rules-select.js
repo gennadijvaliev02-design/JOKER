@@ -197,17 +197,10 @@
     overlay.hidden = false;
     notifyOverlayChange(true);
 
-    requestAnimationFrame(() => {
-      overlay.classList.add("is-visible");
-      requestAnimationFrame(() => {
-        choices
-          .find((button) => button.dataset.rulesModeChoice === window.JokerRules.activeId)
-          ?.focus?.({ preventScroll: true });
-      });
-    });
+    requestAnimationFrame(() => overlay.classList.add("is-visible"));
   }
 
-  function closeRulesDialog({ restoreFocus = true, immediate = false } = {}) {
+  function closeRulesDialog({ immediate = false } = {}) {
     window.clearTimeout(closeTimer);
     overlay.classList.remove("is-visible");
 
@@ -215,7 +208,6 @@
       if (overlay.classList.contains("is-visible")) return;
       overlay.hidden = true;
       notifyOverlayChange(false);
-      if (restoreFocus) requestAnimationFrame(() => startButton.focus?.({ preventScroll: true }));
     };
 
     if (immediate) {
@@ -233,7 +225,7 @@
     }
 
     updateSelectedState();
-    closeRulesDialog({ restoreFocus: false, immediate: true });
+    closeRulesDialog({ immediate: true });
     if (window.JokerDifficultySelect?.open) {
       window.JokerDifficultySelect.open();
     } else {

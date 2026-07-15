@@ -101,19 +101,6 @@
     source.stop(time + duration + 0.02);
   }
 
-  function playShuffle(ctx) {
-    const now = ctx.currentTime + 0.02;
-
-    for (let index = 0; index < 18; index += 1) {
-      const time = now + index * 0.044;
-      playNoise(ctx, time, { duration: 0.052, volume: 0.07, filter: 1500 + (index % 8) * 155 });
-
-      if (index % 2 === 0) {
-        playTone(ctx, time, { frequency: 150 + index * 5, endFrequency: 90, duration: 0.04, volume: 0.012 });
-      }
-    }
-  }
-
   function playDeal(ctx) {
     const now = ctx.currentTime;
     playNoise(ctx, now, { duration: 0.038, volume: 0.072, filter: 2300, q: 0.9 });
@@ -155,7 +142,6 @@
   }
 
   const SOUND_PLAYERS = {
-    shuffle: playShuffle,
     deal: playDeal,
     card: playCard,
     trick: playTrick,
@@ -172,17 +158,5 @@
     if (!ctx) return originalPlaySound?.(type);
 
     SOUND_PLAYERS[type]?.(ctx);
-  };
-
-  const originalStartGame = startGame;
-  startGame = function polishedStartGame(...args) {
-    playSound("shuffle");
-    return originalStartGame.apply(this, args);
-  };
-
-  const originalStartDeal = startDeal;
-  startDeal = function polishedStartDeal(...args) {
-    playSound("shuffle");
-    return originalStartDeal.apply(this, args);
   };
 })();

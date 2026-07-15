@@ -8,14 +8,36 @@
   if (!startScreen || !cards.length) return;
 
   function syncMenuMotion() {
-    const shouldRun = !document.hidden && !startScreen.classList.contains("is-hidden");
+    const overlayOpen = Boolean(startScreen.querySelector(
+      ".difficulty-overlay:not([hidden]), .android-rating-modal:not([hidden])",
+    ));
+    const shouldRun = !document.hidden
+      && !startScreen.classList.contains("is-hidden")
+      && !overlayOpen;
+
     cards.forEach((card) => {
       card.style.animationPlayState = shouldRun ? "running" : "paused";
     });
   }
 
-  const observer = new MutationObserver(syncMenuMotion);
-  observer.observe(startScreen, { attributes: true, attributeFilter: ["class", "hidden"] });
+  if (typeof startGame === "function") {
+    const fullStartGame = startGame;
+    startGame = function startGameWithMenuMotionSync(...args) {
+      const result = fullStartGame.apply(this, args);
+      syncMenuMotion();
+      return result;
+    };
+  }
+
+  if (typeof goToMainMenu === "function") {
+    const fullGoToMainMenu = goToMainMenu;
+    goToMainMenu = function goToMainMenuWithMotionSync(...args) {
+      const result = fullGoToMainMenu.apply(this, args);
+      syncMenuMotion();
+      return result;
+    };
+  }
+
   document.addEventListener("visibilitychange", syncMenuMotion, { passive: true });
   syncMenuMotion();
 })();
@@ -25,6 +47,8 @@
 
   /* Android final UI owner for tasks 4–5: raised hand and rating modal. */
   let installed = false;
+  let renderedLanguage = "";
+  let closeTimer = 0;
 
   function getLanguage() {
     return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
@@ -215,30 +239,39 @@
     const backdrop = modal.querySelector(".android-rating-backdrop");
     const title = modal.querySelector(".android-rating-title");
 
-    function syncLanguage() {
-      const isEnglish = getLanguage() === "en";
+    function syncLanguage(force = false) {
+      const language = getLanguage();
+      if (!force && language === renderedLanguage) return;
+
+      const isEnglish = language === "en";
       ratingButton.textContent = isEnglish ? "🏆 Rating" : "🏆 Рейтинг";
       if (title) title.textContent = isEnglish ? "Rating" : "Рейтинг";
       if (closeButton) closeButton.setAttribute("aria-label", isEnglish ? "Close" : "Закрыть");
       if (backdrop) backdrop.setAttribute("aria-label", isEnglish ? "Close rating" : "Закрыть рейтинг");
       window.JokerRating?.render?.();
+      renderedLanguage = language;
     }
 
     function openRating() {
+      window.clearTimeout(closeTimer);
+      closeTimer = 0;
       syncLanguage();
       modal.hidden = false;
       modal.setAttribute("aria-hidden", "false");
+      window.JokerMenuOverlayState?.setOpen?.("rating", true);
       requestAnimationFrame(() => modal.classList.add("is-open"));
-      window.setTimeout(() => closeButton?.focus(), 40);
     }
 
     function closeRating() {
       if (modal.hidden) return;
+      window.clearTimeout(closeTimer);
       modal.classList.remove("is-open");
       modal.setAttribute("aria-hidden", "true");
-      window.setTimeout(() => {
+      closeTimer = window.setTimeout(() => {
+        if (modal.classList.contains("is-open")) return;
         modal.hidden = true;
-        ratingButton.focus();
+        window.JokerMenuOverlayState?.setOpen?.("rating", false);
+        closeTimer = 0;
       }, 180);
     }
 
@@ -246,12 +279,12 @@
     closeButton?.addEventListener("click", closeRating);
     backdrop?.addEventListener("click", closeRating);
     document.getElementById("start-game")?.addEventListener("click", closeRating);
-    window.addEventListener("joker-language-change", syncLanguage);
+    window.addEventListener("joker-language-change", () => syncLanguage(true));
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !modal.hidden) closeRating();
     });
 
-    syncLanguage();
+    syncLanguage(true);
   }
 
   installFinalUi();

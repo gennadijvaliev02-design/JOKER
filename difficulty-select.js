@@ -28,7 +28,7 @@
   }
 
   function afterNextPaint() {
-    return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return new Promise((resolve) => requestAnimationFrame(resolve));
   }
 
   const menuFanCards = [...startScreen.querySelectorAll(".menu-fan-card")];
@@ -38,7 +38,9 @@
     if (isOpen) openMenuOverlays.add(owner);
     else openMenuOverlays.delete(owner);
 
-    const playState = openMenuOverlays.size ? "paused" : "running";
+    const playState = openMenuOverlays.size || startScreen.classList.contains("is-hidden")
+      ? "paused"
+      : "running";
     menuFanCards.forEach((card) => {
       if (card.style.animationPlayState !== playState) card.style.animationPlayState = playState;
     });
@@ -160,17 +162,10 @@
     overlay.hidden = false;
     notifyOverlayChange(true);
 
-    requestAnimationFrame(() => {
-      overlay.classList.add("is-visible");
-      requestAnimationFrame(() => {
-        choices
-          .find((button) => button.dataset.aiDifficultyChoice === getCurrentDifficulty())
-          ?.focus?.({ preventScroll: true });
-      });
-    });
+    requestAnimationFrame(() => overlay.classList.add("is-visible"));
   }
 
-  function closeDifficultyDialog(restoreFocus = true, immediate = false) {
+  function closeDifficultyDialog(immediate = false) {
     window.clearTimeout(closeTimer);
     overlay.classList.remove("is-visible");
 
@@ -178,7 +173,6 @@
       if (overlay.classList.contains("is-visible")) return;
       overlay.hidden = true;
       notifyOverlayChange(false);
-      if (restoreFocus) requestAnimationFrame(() => startButton.focus?.({ preventScroll: true }));
     };
 
     if (immediate) {
@@ -193,6 +187,7 @@
     if (starting || state.started) return;
 
     setStartingState(true);
+    setMenuOverlayOpen("game-start", true);
     setDifficulty(value);
     updateSelectedState(true);
 
@@ -201,7 +196,7 @@
     const ready = await (window.JokerCardPreload?.ensureReady?.({ showProgress: false })
       || Promise.resolve(true));
 
-    closeDifficultyDialog(false, true);
+    closeDifficultyDialog(true);
     await afterNextPaint();
 
     if (!ready) {
@@ -210,9 +205,11 @@
 
     if (typeof window.startGame === "function") {
       window.startGame();
+      setMenuOverlayOpen("game-start", false);
       return;
     }
 
+    setMenuOverlayOpen("game-start", false);
     console.warn("Difficulty selector could not find startGame()");
     setStartingState(false);
   }
@@ -228,17 +225,17 @@
     });
   });
 
-  backButton.addEventListener("click", () => closeDifficultyDialog(true));
+  backButton.addEventListener("click", () => closeDifficultyDialog());
 
   overlay.addEventListener("click", (event) => {
     if (!starting && !modal.contains(event.target)) {
-      closeDifficultyDialog(true);
+      closeDifficultyDialog();
     }
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !overlay.hidden && !starting) {
-      closeDifficultyDialog(true);
+      closeDifficultyDialog();
     }
   });
 
