@@ -1057,6 +1057,39 @@ function handleHumanCardClick(event) {
   continueBotTurns();
 }
 
+const bidPanelNodesByKey = new Map();
+
+function createBidPanelButton(datasetName, datasetValue, text, className = "bid-option") {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.dataset[datasetName] = String(datasetValue);
+  button.textContent = text;
+  return button;
+}
+
+function getCachedBidPanelNodes(key, factory) {
+  let nodes = bidPanelNodesByKey.get(key);
+  if (!nodes) {
+    nodes = factory();
+    bidPanelNodesByKey.set(key, nodes);
+  }
+  return nodes;
+}
+
+function syncBidPanelNodes(nodes) {
+  const current = elements.bidOptions.children;
+  let matches = current.length === nodes.length;
+
+  for (let index = 0; matches && index < nodes.length; index += 1) {
+    matches = current[index] === nodes[index];
+  }
+
+  if (matches) return false;
+  elements.bidOptions.replaceChildren(...nodes);
+  return true;
+}
+
 function renderBidding() {
   if (state.phase === "joker-lead-command" && state.activePlayerId === "human") {
     renderLeadJokerCommandSelection();
@@ -1081,29 +1114,25 @@ function renderBidding() {
   elements.bidPanel.hidden = state.phase !== "bidding" || getCurrentBidderId() !== "human";
 
   if (elements.bidPanel.hidden) {
-    elements.bidOptions.replaceChildren();
+    if (elements.bidOptions.childElementCount) elements.bidOptions.replaceChildren();
     return;
   }
 
-  elements.bidTitle.textContent = "Заказ";
+  setElementText(elements.bidTitle, "Заказ");
   const currentBidTotal = getOrderedBidTotal();
   const isLastBidder = state.biddingIndex === state.biddingOrder.length - 1;
-  const buttons = BID_OPTIONS.map((bid) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "bid-option";
-    button.dataset.bid = String(bid);
-    button.textContent = bid === "pass" ? "Пас" : String(bid);
+  const buttons = getCachedBidPanelNodes("base-order:9", () =>
+    BID_OPTIONS.map((bid) => createBidPanelButton("bid", bid, bid === "pass" ? "Пас" : String(bid))),
+  );
 
-    const bidValue = bid === "pass" ? 0 : bid;
+  for (const button of buttons) {
+    const bidValue = button.dataset.bid === "pass" ? 0 : Number(button.dataset.bid);
     const isForbidden = isLastBidder && currentBidTotal + bidValue === 9;
     button.disabled = isForbidden;
     button.classList.toggle("is-forbidden", isForbidden);
+  }
 
-    return button;
-  });
-
-  elements.bidOptions.replaceChildren(...buttons);
+  syncBidPanelNodes(buttons);
 }
 
 function renderEmotionPanel() {
@@ -1177,78 +1206,56 @@ function isEmotionCoolingDown() {
 
 function renderTrumpSelection() {
   elements.bidPanel.hidden = false;
-  elements.bidTitle.textContent = "Козырь";
+  setElementText(elements.bidTitle, "Козырь");
 
-  const suitButtons = FIXED_TRUMP_BY_GAME.map((suitId) => SUITS.find((suit) => suit.id === suitId)).map((suit) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "bid-option";
-    button.dataset.trump = suit.id;
-    button.textContent = suit.symbol;
-    return button;
+  const buttons = getCachedBidPanelNodes("base-trump", () => {
+    const nodes = FIXED_TRUMP_BY_GAME.map((suitId) => {
+      const suit = SUITS.find((item) => item.id === suitId);
+      return createBidPanelButton("trump", suit.id, suit.symbol);
+    });
+    nodes.push(createBidPanelButton("trump", "no-trump", "Безка"));
+    return nodes;
   });
 
-  const noTrumpButton = document.createElement("button");
-  noTrumpButton.type = "button";
-  noTrumpButton.className = "bid-option";
-  noTrumpButton.dataset.trump = "no-trump";
-  noTrumpButton.textContent = "Безка";
-
-  elements.bidOptions.replaceChildren(...suitButtons, noTrumpButton);
+  syncBidPanelNodes(buttons);
 }
 
 function renderJokerModeSelection() {
   elements.bidPanel.hidden = false;
-  elements.bidTitle.textContent = "Джокер";
+  setElementText(elements.bidTitle, "Джокер");
 
-  const duckButton = document.createElement("button");
-  duckButton.type = "button";
-  duckButton.className = "bid-option joker-duck-option";
-  duckButton.dataset.jokerMode = "duck";
-  duckButton.textContent = "Подсунуть";
+  const buttons = getCachedBidPanelNodes("base-joker-mode", () => [
+    createBidPanelButton("jokerMode", "duck", "Подсунуть", "bid-option joker-duck-option"),
+    createBidPanelButton("jokerMode", "beat", "Перебить", "bid-option joker-beat-option"),
+  ]);
 
-  const beatButton = document.createElement("button");
-  beatButton.type = "button";
-  beatButton.className = "bid-option joker-beat-option";
-  beatButton.dataset.jokerMode = "beat";
-  beatButton.textContent = "Перебить";
-
-  elements.bidOptions.replaceChildren(duckButton, beatButton);
+  syncBidPanelNodes(buttons);
 }
 
 function renderLeadJokerCommandSelection() {
   elements.bidPanel.hidden = false;
-  elements.bidTitle.textContent = "Джокер";
+  setElementText(elements.bidTitle, "Джокер");
 
-  const highButton = document.createElement("button");
-  highButton.type = "button";
-  highButton.className = "bid-option joker-high-option";
-  highButton.dataset.jokerLeadCommand = "high";
-  highButton.textContent = "Высший";
+  const buttons = getCachedBidPanelNodes("base-joker-command", () => [
+    createBidPanelButton("jokerLeadCommand", "take", "Берет", "bid-option joker-take-option"),
+    createBidPanelButton("jokerLeadCommand", "high", "Высший", "bid-option joker-high-option"),
+  ]);
 
-  const takeButton = document.createElement("button");
-  takeButton.type = "button";
-  takeButton.className = "bid-option joker-take-option";
-  takeButton.dataset.jokerLeadCommand = "take";
-  takeButton.textContent = "Берет";
-
-  elements.bidOptions.replaceChildren(takeButton, highButton);
+  syncBidPanelNodes(buttons);
 }
 
 function renderLeadJokerSuitSelection() {
   elements.bidPanel.hidden = false;
-  elements.bidTitle.textContent = state.pendingJokerCommand === "take" ? "Берет масть" : "Высший";
+  setElementText(elements.bidTitle, state.pendingJokerCommand === "take" ? "Берет масть" : "Высший");
 
-  const suitButtons = FIXED_TRUMP_BY_GAME.map((suitId) => SUITS.find((suit) => suit.id === suitId)).map((suit) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "bid-option";
-    button.dataset.jokerLeadSuit = suit.id;
-    button.textContent = suit.symbol;
-    return button;
-  });
+  const buttons = getCachedBidPanelNodes("base-joker-suit", () =>
+    FIXED_TRUMP_BY_GAME.map((suitId) => {
+      const suit = SUITS.find((item) => item.id === suitId);
+      return createBidPanelButton("jokerLeadSuit", suit.id, suit.symbol);
+    }),
+  );
 
-  elements.bidOptions.replaceChildren(...suitButtons);
+  syncBidPanelNodes(buttons);
 }
 
 function getOrderedBidTotal() {
