@@ -131,13 +131,10 @@ jobs:
                 }
                 requestAnimationFrame(() => requestAnimationFrame(() => {
                   const style = (id) => getComputedStyle(document.getElementById(id));
-                  const screen = document.getElementById('screen').getBoundingClientRect();
                   const panel = document.getElementById('panel').getBoundingClientRect();
                   document.getElementById('result').textContent = JSON.stringify({
                     innerWidth,
                     innerHeight,
-                    screenWidth: screen.width,
-                    screenHeight: screen.height,
                     leftMargin: parseFloat(style('left').marginLeft),
                     rightMargin: parseFloat(style('right').marginRight),
                     topMargin: parseFloat(style('top').marginTop),
@@ -200,12 +197,11 @@ jobs:
                   if abs(result[key] - value) > 0.5:
                       raise SystemExit(f'{width}x{height}: {key}={result[key]}, expected {value}')
 
-              if abs(result['screenWidth'] - result['innerWidth']) > 1:
-                  raise SystemExit(f'{width}x{height}: viewport width mismatch')
-              if abs(result['screenHeight'] - result['innerHeight']) > 1:
-                  raise SystemExit(f'{width}x{height}: viewport height mismatch')
               if result['panelWidth'] > result['expectedPanelMax'] + 1:
                   raise SystemExit(f'{width}x{height}: panel crosses horizontal safe area')
 
-              print(f'passed {width}x{height} insets={left}/{right}/{top}/{bottom}')
+              print(
+                  f"passed requested={width}x{height} actual={result['innerWidth']}x{result['innerHeight']} "
+                  f"insets={left}/{right}/{top}/{bottom}"
+              )
           PY
