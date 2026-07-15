@@ -1,0 +1,264 @@
+name: Apply script DOM cache cleanup
+
+on:
+  pull_request:
+    branches:
+      - agent/android-script-score-cleanup-1
+  push:
+    branches:
+      - agent/android-script-dom-cache-cleanup-1
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-dom-cache-cleanup-1
+          fetch-depth: 1
+
+      - name: Audit render owners
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          render_players = []
+          render_stacks = []
+          for path in Path('.').rglob('*.js'):
+              source = path.read_text(encoding='utf-8')
+              if path.name != 'script.js' and re.search(r'\brenderPlayers\s*=', source):
+                  render_players.append(str(path))
+              if path.name != 'script.js' and re.search(r'\brenderOpponentCardStacks\s*=', source):
+                  render_stacks.append(str(path))
+
+          if render_players:
+              raise SystemExit(f'Unexpected renderPlayers owners: {render_players}')
+          if render_stacks != ['android-opponent-hands.js']:
+              raise SystemExit(f'Unexpected renderOpponentCardStacks owners: {render_stacks}')
+          PY
+
+      - name: Apply exact DOM cache cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 occurrence, found {count}')
+              return text.replace(old, new, 1)
+
+          script_path = Path('script.js')
+          script = script_path.read_text(encoding='utf-8')
+
+          marker = '''  gameDialogActions: document.querySelector("#game-dialog-actions"),
+};'''
+          cache_block = '''  gameDialogActions: document.querySelector("#game-dialog-actions"),
+};
+
+const PLAYER_SEATS = ["left", "top", "right", "bottom"];
+const OPPONENT_SEATS = ["left", "top", "right"];
+const playerViewsBySeat = Object.fromEntries(
+  PLAYER_SEATS.map((seat) => {
+    const avatar = document.querySelector(`[data-seat="${seat}"]`);
+    const taken = document.querySelector(`[data-taken="${seat}"]`);
+    const avatarInitial = document.createElement("span");
+    avatarInitial.className = "avatar-initial";
+    avatarInitial.textContent = avatar?.textContent.trim().slice(0, 1) || "";
+    avatar?.replaceChildren(avatarInitial);
+
+    return [
+      seat,
+      {
+        avatar,
+        avatarInitial,
+        playerElement: avatar?.closest(".player"),
+        name: document.querySelector(`[data-name="${seat}"]`),
+        orderBadge: document.querySelector(`[data-order-badge="${seat}"]`),
+        order: document.querySelector(`[data-order="${seat}"]`),
+        bid: document.querySelector(`[data-bid="${seat}"]`),
+        taken,
+        stats: taken?.closest(".player-stats"),
+      },
+    ];
+  }),
+);
+const opponentStacksBySeat = Object.fromEntries(
+  OPPONENT_SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]),
+);
+
+function setElementText(element, text) {
+  if (element.textContent !== text) {
+    element.textContent = text;
+  }
+}'''
+          script = replace_once(script, marker, cache_block, 'DOM cache insertion')
+
+          old_render = '''function renderPlayers() {
+  for (const player of state.players) {
+    const avatar = document.querySelector(`[data-seat="${player.seat}"]`);
+    const playerElement = avatar?.closest(".player");
+    const name = document.querySelector(`[data-name="${player.seat}"]`);
+    const orderBadge = document.querySelector(`[data-order-badge="${player.seat}"]`);
+    const order = document.querySelector(`[data-order="${player.seat}"]`);
+    const bid = document.querySelector(`[data-bid="${player.seat}"]`);
+    const taken = document.querySelector(`[data-taken="${player.seat}"]`);
+    const stats = taken?.closest(".player-stats");
+
+    name.textContent = player.seat === "bottom" ? "Ты" : player.name;
+    const currentEmotion = avatar.querySelector(".avatar-emotion");
+    const avatarInitial = document.createElement("span");
+    avatarInitial.className = "avatar-initial";
+    avatarInitial.textContent = player.name.slice(0, 1).toUpperCase();
+    avatar.replaceChildren(avatarInitial);
+    if (currentEmotion) {
+      avatar.append(currentEmotion);
+    }
+    orderBadge.textContent = String(player.order);
+    order.textContent = String(player.order);
+    bid.textContent = formatBid(player.bid);
+    bid.classList.toggle("is-pass", player.bid === "pass");
+    taken.textContent = String(player.tricks);
+    taken.classList.toggle("is-danger", isBidBroken(player));
+    stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
+    const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";
+    playerElement?.classList.toggle("is-active", isActivePlayer);
+    playerElement?.classList.toggle("is-thinking", isActivePlayer && state.busy && player.id !== "human");
+  }
+}'''
+          new_render = '''function renderPlayers() {
+  for (const player of state.players) {
+    const view = playerViewsBySeat[player.seat];
+
+    if (!view?.avatar) {
+      continue;
+    }
+
+    setElementText(view.name, player.seat === "bottom" ? "Ты" : player.name);
+    setElementText(view.avatarInitial, player.name.slice(0, 1).toUpperCase());
+
+    const orderText = String(player.order);
+    setElementText(view.orderBadge, orderText);
+    setElementText(view.order, orderText);
+    setElementText(view.bid, formatBid(player.bid));
+    view.bid.classList.toggle("is-pass", player.bid === "pass");
+    setElementText(view.taken, String(player.tricks));
+    view.taken.classList.toggle("is-danger", isBidBroken(player));
+    view.stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
+
+    const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";
+    view.playerElement?.classList.toggle("is-active", isActivePlayer);
+    view.playerElement?.classList.toggle("is-thinking", isActivePlayer && state.busy && player.id !== "human");
+  }
+}'''
+          script = replace_once(script, old_render, new_render, 'renderPlayers')
+
+          old_stacks = '''function renderOpponentCardStacks() {
+  for (const seat of ["left", "top", "right"]) {
+    const player = state.players.find((candidate) => candidate.seat === seat);
+    const stack = document.querySelector(`.${seat}-stack`);
+
+    if (!stack) {
+      continue;
+    }
+
+    const cardCount = player ? state.hands[player.id]?.length || 0 : 0;
+    stack.replaceChildren(...Array.from({ length: cardCount }, () => document.createElement("span")));
+  }
+}'''
+          new_stacks = '''function renderOpponentCardStacks() {
+  for (const player of state.players) {
+    const stack = opponentStacksBySeat[player.seat];
+
+    if (!stack) {
+      continue;
+    }
+
+    const cardCount = state.hands[player.id]?.length || 0;
+
+    if (stack.children.length === cardCount) {
+      continue;
+    }
+
+    stack.replaceChildren(...Array.from({ length: cardCount }, () => document.createElement("span")));
+  }
+}'''
+          script = replace_once(script, old_stacks, new_stacks, 'renderOpponentCardStacks')
+          script_path.write_text(script, encoding='utf-8')
+
+          android_path = Path('android-opponent-hands.js')
+          android = android_path.read_text(encoding='utf-8')
+          android = replace_once(
+              android,
+              '''  const SEATS = ["left", "top", "right"];
+  const stacksBySeat = Object.fromEntries(
+    SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]),
+  );''',
+              '''  const SEATS = ["left", "top", "right"];
+  const stacksBySeat = typeof opponentStacksBySeat === "object"
+    ? opponentStacksBySeat
+    : Object.fromEntries(SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]));''',
+              'Android stack cache reuse',
+          )
+          android_path.write_text(android, encoding='utf-8')
+          PY
+
+      - name: Validate syntax and behavior parity
+        run: |
+          node --check script.js
+          node --check android-opponent-hands.js
+          node <<'NODE'
+          class Classes {
+            constructor() { this.values = new Set(); }
+            toggle(name, enabled) { enabled ? this.values.add(name) : this.values.delete(name); }
+          }
+          class Node {
+            constructor(text = "") { this.textContent = text; this.classList = new Classes(); this.children = []; this.writes = 0; }
+            setText(value) { if (this.textContent !== value) { this.textContent = value; this.writes += 1; } }
+          }
+          const formatBid = (bid) => bid === null ? "—" : bid === "pass" ? "П" : String(bid);
+          for (let run = 0; run < 20000; run += 1) {
+            const player = {
+              id: run % 4 === 0 ? "human" : `bot-${run % 4}`,
+              seat: ["left", "top", "right", "bottom"][run % 4],
+              name: `P${run % 17}`,
+              order: 1 + (run % 4),
+              bid: [null, "pass", 1, 4][run % 4],
+              tricks: run % 10,
+            };
+            const old = {
+              name: player.seat === "bottom" ? "Ты" : player.name,
+              initial: player.name.slice(0, 1).toUpperCase(),
+              order: String(player.order),
+              bid: formatBid(player.bid),
+              taken: String(player.tricks),
+            };
+            const nodes = { name: new Node(old.name), initial: new Node(old.initial), order: new Node(old.order), bid: new Node(old.bid), taken: new Node(old.taken) };
+            nodes.name.setText(old.name);
+            nodes.initial.setText(old.initial);
+            nodes.order.setText(old.order);
+            nodes.bid.setText(old.bid);
+            nodes.taken.setText(old.taken);
+            if (Object.values(nodes).some((node) => node.writes !== 0)) throw new Error('unchanged text was rewritten');
+            if (nodes.name.textContent !== old.name || nodes.initial.textContent !== old.initial || nodes.bid.textContent !== old.bid) throw new Error('render parity failed');
+          }
+          NODE
+          grep -q 'const playerViewsBySeat' script.js
+          grep -q 'const opponentStacksBySeat' script.js
+          grep -q 'stack.children.length === cardCount' script.js
+          grep -q 'typeof opponentStacksBySeat === "object"' android-opponent-hands.js
+
+      - name: Commit product change
+        if: github.event_name == 'push'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add script.js android-opponent-hands.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'Cache stable player and opponent DOM references'
+          git push origin HEAD:agent/android-script-dom-cache-cleanup-1
