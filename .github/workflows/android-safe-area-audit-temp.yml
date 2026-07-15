@@ -122,20 +122,18 @@ jobs:
                 for (const [name, value] of Object.entries(values)) {
                   document.documentElement.style.setProperty(`--android-safe-${name}`, `${value}px`);
                 }
-                setTimeout(() => {
-                  const style = (id) => getComputedStyle(document.getElementById(id));
-                  const panel = document.getElementById('panel').getBoundingClientRect();
-                  document.getElementById('result').textContent = JSON.stringify({
-                    innerWidth,
-                    innerHeight,
-                    leftMargin: parseFloat(style('left').marginLeft),
-                    rightMargin: parseFloat(style('right').marginRight),
-                    topMargin: parseFloat(style('top').marginTop),
-                    bottomMargin: parseFloat(style('bottom').marginBottom),
-                    panelWidth: panel.width,
-                    expectedPanelMax: innerWidth - values.left - values.right - 34,
-                  });
-                }, 100);
+                const style = (id) => getComputedStyle(document.getElementById(id));
+                const panel = document.getElementById('panel').getBoundingClientRect();
+                document.getElementById('result').textContent = JSON.stringify({
+                  innerWidth,
+                  innerHeight,
+                  leftMargin: parseFloat(style('left').marginLeft),
+                  rightMargin: parseFloat(style('right').marginRight),
+                  topMargin: parseFloat(style('top').marginTop),
+                  bottomMargin: parseFloat(style('bottom').marginBottom),
+                  panelWidth: panel.width,
+                  expectedPanelMax: innerWidth - values.left - values.right - 34,
+                });
               </script>
             </body>
           </html>
@@ -177,7 +175,6 @@ jobs:
                       '--disable-gpu',
                       '--allow-file-access-from-files',
                       f'--window-size={width},{height}',
-                      '--virtual-time-budget=1500',
                       '--dump-dom',
                       url,
                   ], text=True, stderr=subprocess.STDOUT)
