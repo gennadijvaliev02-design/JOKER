@@ -120,15 +120,16 @@ jobs:
           cd android
           ./gradlew compileDebugJavaWithJavac
 
-      - name: Remove temporary audit files and commit product changes
+      - name: Commit permanent workflow integration
         shell: bash
         run: |
           set -euo pipefail
           rm -rf android www node_modules package-lock.json tools/__pycache__
-          rm -f .github/workflows/android-wrapper-integration-temp.yml
-          rm -f .github/workflows/android-wrapper-pr-audit-temp.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
+          git add .github/workflows/android-apk.yml
           git commit -m "Wire Android wrapper configurator into CI"
-          git push origin HEAD:agent/android-mobile-wrapper-integration-1
+
+      - name: Push permanent workflow integration
+        shell: bash
+        run: git push origin HEAD:agent/android-mobile-wrapper-integration-1
