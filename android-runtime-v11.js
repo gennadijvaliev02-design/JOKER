@@ -1,19 +1,12 @@
 (() => {
   "use strict";
 
-  /* Load static Android styles without parsing CSS templates as JavaScript. */
-  const stylesheets = [
-    ["android-runtime-v13-stylesheet", "android-runtime-v13.css?v=1"],
-    ["android-webview-paint-stylesheet", "android-webview-paint.css?v=1"],
-  ];
+  /* Load static V13 styles without parsing a large CSS template as JavaScript. */
+  if (document.getElementById("android-runtime-v13-stylesheet")) return;
 
-  for (const [id, href] of stylesheets) {
-    if (document.getElementById(id)) continue;
-
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href = href;
-    document.head.append(link);
-  }
+  const link = document.createElement("link");
+  link.id = "android-runtime-v13-stylesheet";
+  link.rel = "stylesheet";
+  link.href = "android-runtime-v13.css?v=1";
+  document.head.append(link);
 })();
