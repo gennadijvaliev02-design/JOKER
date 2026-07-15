@@ -1,14 +1,17 @@
 (() => {
   const originalChooseBotCard = chooseBotCard;
   const originalChooseJokerMode = chooseJokerMode;
-
-  function isMediumAi() {
-    return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
-  }
-
-  function isBotId(playerId) {
-    return typeof playerId === "string" && playerId.startsWith("bot-");
-  }
+  const {
+    isMediumAi,
+    isBotId,
+    getGoal,
+    getLegalCards,
+    isTrump,
+    getStandardCards,
+    getJokerCards,
+    createCardOrder,
+  } = window.JokerMediumContext;
+  const { sortLow, sortHigh } = createCardOrder({ trumpBonus: 48, jokerPower: 130 });
 
   function getPulkaOffset() {
     return (state.currentPulka - 1) * 5;
@@ -18,33 +21,9 @@
     return state.players.findIndex((player) => player.id === playerId);
   }
 
-  function getPlayerTarget(player) {
-    if (!player || isFourHundredPulka()) {
-      return isFourHundredPulka() ? 3 : 0;
-    }
-
-    if (player.bid === "pass") {
-      return 0;
-    }
-
-    return Number(player.bid || 0);
-  }
-
-  function getGoal(playerId) {
-    const player = getPlayerById(playerId);
-    const target = getPlayerTarget(player);
-    const tricks = player?.tricks || 0;
-    const cardsLeft = state.hands[playerId]?.length || 0;
-
-    return {
-      player,
-      target,
-      tricks,
-      cardsLeft,
-      needsTake: player?.bid !== "pass" && tricks < target,
-      shouldAvoid: player?.bid === "pass" || tricks >= target,
-      desperate: player?.bid !== "pass" && tricks < target && target - tricks >= Math.max(1, cardsLeft - 1),
-    };
+  function isNearDesperate(playerId) {
+    const goal = getGoal(playerId);
+    return goal.needsTake && goal.needed >= Math.max(1, goal.cardsLeft - 1);
   }
 
   function getFulfilledGamesInCurrentPulka(playerId) {
@@ -98,41 +77,6 @@
     })[0];
   }
 
-  function getLegalCards(playerId) {
-    const hand = state.hands[playerId] || [];
-    const legalCards = hand.filter((card) => isLegalCard(playerId, card));
-    return legalCards.length ? legalCards : hand;
-  }
-
-  function isTrump(card) {
-    const trumpSuit = getTrumpSuit();
-    return Boolean(trumpSuit && card?.type === "standard" && card.suit === trumpSuit);
-  }
-
-  function cardPower(card) {
-    if (card?.type === "joker") {
-      return 130;
-    }
-
-    return (isTrump(card) ? 48 : 0) + (RANK_POWER[card.rank] || 0);
-  }
-
-  function sortLow(cards) {
-    return [...cards].sort((first, second) => cardPower(first) - cardPower(second));
-  }
-
-  function sortHigh(cards) {
-    return [...cards].sort((first, second) => cardPower(second) - cardPower(first));
-  }
-
-  function getStandardCards(cards) {
-    return cards.filter((card) => card.type === "standard");
-  }
-
-  function getJokerCards(cards) {
-    return cards.filter((card) => card.type === "joker");
-  }
-
   function getCurrentWinner() {
     return getCurrentWinningPlay()?.player || null;
   }
@@ -144,10 +88,10 @@
       return null;
     }
 
-    const ownGoal = getGoal(botId);
     const threatGoal = getGoal(threat.id);
+    const ownIsNearDesperate = isNearDesperate(botId);
 
-    if (threatGoal.shouldAvoid && !ownGoal.desperate) {
+    if (threatGoal.shouldAvoid && !ownIsNearDesperate) {
       const standards = getStandardCards(legalCards);
       const losingStandards = standards.filter((card) => !wouldCardWinCurrentTrick(botId, card));
       return losingStandards.length ? sortHigh(losingStandards)[0] : null;
@@ -162,7 +106,7 @@
 
     const jokers = getJokerCards(legalCards);
 
-    if (jokers.length && !ownGoal.desperate) {
+    if (jokers.length && !ownIsNearDesperate) {
       return jokers.find((card) => card.color === "red") || jokers[0];
     }
 
@@ -170,13 +114,11 @@
   }
 
   function choosePremiumPressureLead(botId, legalCards, threat) {
-    const ownGoal = getGoal(botId);
-    const threatGoal = getGoal(threat.id);
-
-    if (ownGoal.desperate) {
+    if (isNearDesperate(botId)) {
       return null;
     }
 
+    const threatGoal = getGoal(threat.id);
     const standards = getStandardCards(legalCards);
 
     if (threatGoal.needsTake) {
@@ -208,7 +150,7 @@
     if (isMediumAi() && isBotId(playerId) && card?.type === "joker" && state.currentTrick.length > 0) {
       const threat = findPremiumThreat(playerId);
 
-      if (threat && getCurrentWinner()?.id === threat.id && getGoal(threat.id).needsTake && !getGoal(playerId).desperate) {
+      if (threat && getCurrentWinner()?.id === threat.id && getGoal(threat.id).needsTake && !isNearDesperate(playerId)) {
         return "beat";
       }
     }

@@ -1,42 +1,21 @@
 (() => {
   const originalChooseBotCard = chooseBotCard;
   const originalChooseJokerMode = chooseJokerMode;
+  const {
+    isMediumAi,
+    isBotId,
+    getGoal,
+    getLegalCards,
+    isTrump,
+    getStandardCards,
+    getJokerCards,
+    createCardOrder,
+  } = window.JokerMediumContext;
+  const { sortLow, sortHigh } = createCardOrder({ trumpBonus: 46, jokerPower: 120 });
 
-  function isMediumAi() {
-    return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
-  }
-
-  function isBotId(playerId) {
-    return typeof playerId === "string" && playerId.startsWith("bot-");
-  }
-
-  function getPlayerTarget(player) {
-    if (!player || isFourHundredPulka()) {
-      return isFourHundredPulka() ? 3 : 0;
-    }
-
-    if (player.bid === "pass") {
-      return 0;
-    }
-
-    return Number(player.bid || 0);
-  }
-
-  function getOwnGoal(playerId) {
-    const player = getPlayerById(playerId);
-    const target = getPlayerTarget(player);
-    const tricks = player?.tricks || 0;
-    const cardsLeft = state.hands[playerId]?.length || 0;
-
-    return {
-      player,
-      target,
-      tricks,
-      cardsLeft,
-      needsTake: player?.bid !== "pass" && tricks < target,
-      fulfilled: player?.bid === "pass" || tricks >= target,
-      canRisk: player?.bid === "pass" || tricks >= target || target <= 1 || cardsLeft <= 4,
-    };
+  function canRisk(playerId) {
+    const goal = getGoal(playerId);
+    return goal.player?.bid === "pass" || goal.fulfilled || goal.target <= 1 || goal.cardsLeft <= 4;
   }
 
   function getTrapPriority(player) {
@@ -78,41 +57,6 @@
     })[0];
   }
 
-  function getLegalCards(playerId) {
-    const hand = state.hands[playerId] || [];
-    const legalCards = hand.filter((card) => isLegalCard(playerId, card));
-    return legalCards.length ? legalCards : hand;
-  }
-
-  function isTrump(card) {
-    const trumpSuit = getTrumpSuit();
-    return Boolean(trumpSuit && card?.type === "standard" && card.suit === trumpSuit);
-  }
-
-  function cardPower(card) {
-    if (card?.type === "joker") {
-      return 120;
-    }
-
-    return (isTrump(card) ? 46 : 0) + (RANK_POWER[card.rank] || 0);
-  }
-
-  function sortLow(cards) {
-    return [...cards].sort((first, second) => cardPower(first) - cardPower(second));
-  }
-
-  function sortHigh(cards) {
-    return [...cards].sort((first, second) => cardPower(second) - cardPower(first));
-  }
-
-  function getStandardCards(cards) {
-    return cards.filter((card) => card.type === "standard");
-  }
-
-  function getJokerCards(cards) {
-    return cards.filter((card) => card.type === "joker");
-  }
-
   function getCurrentWinnerId() {
     return getCurrentWinningPlay()?.player?.id || null;
   }
@@ -126,8 +70,8 @@
       return true;
     }
 
-    const own = getOwnGoal(botId);
-    return own.canRisk || own.cardsLeft <= 5;
+    const ownGoal = getGoal(botId);
+    return canRisk(botId) || ownGoal.cardsLeft <= 5;
   }
 
   function chooseTrumpDrainLead(botId, legalCards, target) {

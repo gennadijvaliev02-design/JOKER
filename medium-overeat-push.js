@@ -1,25 +1,16 @@
 (() => {
   const originalChooseBotCard = chooseBotCard;
-
-  function isMediumAi() {
-    return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
-  }
-
-  function isBotId(playerId) {
-    return typeof playerId === "string" && playerId.startsWith("bot-");
-  }
-
-  function getTargetValue(player) {
-    if (!player || isFourHundredPulka()) {
-      return isFourHundredPulka() ? 3 : 0;
-    }
-
-    if (player.bid === "pass") {
-      return 0;
-    }
-
-    return Number(player.bid || 0);
-  }
+  const {
+    isMediumAi,
+    isBotId,
+    getPlayerTarget,
+    getGoal,
+    getLegalCards,
+    isTrump,
+    getStandardCards,
+    createCardOrder,
+  } = window.JokerMediumContext;
+  const { sortLow, sortHigh } = createCardOrder({ trumpBonus: 42, jokerPower: 120 });
 
   function shouldAvoidMoreTricks(player) {
     if (!player || player.bid === null) {
@@ -27,29 +18,19 @@
     }
 
     if (isFourHundredPulka()) {
-      return player.tricks >= 3;
+      return (player.tricks || 0) >= 3;
     }
 
     if (player.bid === "pass") {
       return true;
     }
 
-    return player.tricks >= getTargetValue(player);
+    return getGoal(player.id).shouldAvoid;
   }
 
-  function getOwnGoal(playerId) {
-    const player = getPlayerById(playerId);
-    const target = getTargetValue(player);
-    const tricks = player?.tricks || 0;
-    const cardsLeft = state.hands[playerId]?.length || 0;
-
-    return {
-      player,
-      target,
-      tricks,
-      cardsLeft,
-      desperate: player?.bid !== "pass" && tricks < target && target - tricks >= Math.max(1, cardsLeft - 1),
-    };
+  function isNearDesperate(playerId) {
+    const goal = getGoal(playerId);
+    return goal.needsTake && goal.needed >= Math.max(1, goal.cardsLeft - 1);
   }
 
   function findOvereatPushTarget(botId) {
@@ -70,42 +51,11 @@
       const secondHuman = second.id === "human" ? 1000 : 0;
       const firstPass = first.bid === "pass" ? 350 : 0;
       const secondPass = second.bid === "pass" ? 350 : 0;
-      const firstOver = first.tricks - getTargetValue(first);
-      const secondOver = second.tricks - getTargetValue(second);
+      const firstOver = first.tricks - getPlayerTarget(first);
+      const secondOver = second.tricks - getPlayerTarget(second);
 
       return secondHuman - firstHuman || secondPass - firstPass || secondOver - firstOver;
     })[0];
-  }
-
-  function getLegalCards(playerId) {
-    const hand = state.hands[playerId] || [];
-    const legalCards = hand.filter((card) => isLegalCard(playerId, card));
-    return legalCards.length ? legalCards : hand;
-  }
-
-  function isTrump(card) {
-    const trumpSuit = getTrumpSuit();
-    return Boolean(trumpSuit && card?.type === "standard" && card.suit === trumpSuit);
-  }
-
-  function cardPower(card) {
-    if (card?.type === "joker") {
-      return 120;
-    }
-
-    return (isTrump(card) ? 42 : 0) + (RANK_POWER[card.rank] || 0);
-  }
-
-  function sortLow(cards) {
-    return [...cards].sort((first, second) => cardPower(first) - cardPower(second));
-  }
-
-  function sortHigh(cards) {
-    return [...cards].sort((first, second) => cardPower(second) - cardPower(first));
-  }
-
-  function getStandardCards(cards) {
-    return cards.filter((card) => card.type === "standard");
   }
 
   function getCurrentWinner() {
@@ -115,13 +65,7 @@
   function chooseLeaveTargetWinning(botId, legalCards, target) {
     const currentWinner = getCurrentWinner();
 
-    if (!currentWinner || currentWinner.id !== target.id) {
-      return null;
-    }
-
-    const own = getOwnGoal(botId);
-
-    if (own.desperate) {
+    if (!currentWinner || currentWinner.id !== target.id || isNearDesperate(botId)) {
       return null;
     }
 
@@ -136,9 +80,7 @@
   }
 
   function chooseSoftLeadToPush(playerId, legalCards, target) {
-    const own = getOwnGoal(playerId);
-
-    if (own.desperate || !target || target.id !== "human") {
+    if (isNearDesperate(playerId) || !target || target.id !== "human") {
       return null;
     }
 
