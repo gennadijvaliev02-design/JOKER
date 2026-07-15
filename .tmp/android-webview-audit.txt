@@ -1,0 +1,284 @@
+ANDROID WEBVIEW COST AUDIT
+==========================
+
+SUMMARY
+will-change: 7
+translateZ(0): 1
+backdrop-filter: 37
+filter-blur: 6
+infinite-animation: 8
+shadow-transition: 4
+fixed-layer: 4
+mix-blend-mode: 0
+setInterval: 0
+requestAnimationFrame: 8
+MutationObserver: 0
+
+MATCHES
+[will-change] ace-deal-animation.css:68
+  selector: .ace-open-played-card
+  will-change: transform, opacity;
+[fixed-layer] android-app.css:20
+  selector: body
+  position: fixed;
+[infinite-animation] android-app.css:118
+  selector: .menu-fan-card:nth-child(1)
+  animation: android-card-left 3.8s ease-in-out infinite !important;
+[infinite-animation] android-app.css:122
+  selector: .menu-fan-card:nth-child(2)
+  animation: android-card-center 3.8s ease-in-out 120ms infinite !important;
+[infinite-animation] android-app.css:126
+  selector: .menu-fan-card:nth-child(3)
+  animation: android-card-right 3.8s ease-in-out 240ms infinite !important;
+[will-change] android-deal-2026.css:37
+  selector: .deal-2026-stage-card
+  will-change: transform, opacity !important;
+[fixed-layer] android-fullscreen.css:21
+  selector: body
+  position: fixed !important;
+[fixed-layer] android-fullscreen.css:28
+  selector: .phone-screen
+  position: fixed !important;
+[backdrop-filter] android-menu-motion.js:108
+  selector: .android-rating-backdrop
+  backdrop-filter: none !important;
+[backdrop-filter] android-menu-motion.js:109
+  selector: .android-rating-backdrop
+  -webkit-backdrop-filter: none !important;
+[requestAnimationFrame] android-menu-motion.js:262
+  selector: function openRating()
+  requestAnimationFrame(() => modal.classList.add("is-open"));
+[backdrop-filter] android-motion-v2.css:17
+  selector: .ace-open-winner
+  backdrop-filter: none !important;
+[backdrop-filter] android-motion-v2.css:18
+  selector: .ace-open-winner
+  -webkit-backdrop-filter: none !important;
+[will-change] android-motion-v2.css:23
+  selector: .table .deal-2026-stage-card.is-staged
+  will-change: auto !important;
+[backdrop-filter] android-runtime-v13.css:73
+  selector: .bid-panel.is-v12-order-panel
+  backdrop-filter: none !important;
+[backdrop-filter] android-runtime-v13.css:74
+  selector: .bid-panel.is-v12-order-panel
+  -webkit-backdrop-filter: none !important;
+[filter-blur] android-table-v2.css:88
+  selector: .felt-glow
+  filter: blur(18px) !important;
+[backdrop-filter] android-ui-v10.css:26
+  selector: .bid-panel.is-android-joker-panel
+  backdrop-filter: none !important;
+[backdrop-filter] android-ui-v10.css:27
+  selector: .bid-panel.is-android-joker-panel
+  -webkit-backdrop-filter: none !important;
+[shadow-transition] android-ui-v10.css:92
+  selector: .bid-panel.is-android-joker-panel .bid-option
+  transition: transform 130ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+[backdrop-filter] android-ui-v11.css:63
+  selector: .joker-announcement
+  backdrop-filter: none !important;
+[backdrop-filter] android-ui-v11.css:64
+  selector: .joker-announcement
+  -webkit-backdrop-filter: none !important;
+[backdrop-filter] android-ui-v12.css:44
+  selector: .bid-panel.is-v12-joker-mode-panel
+  backdrop-filter: none !important;
+[backdrop-filter] android-ui-v12.css:45
+  selector: .bid-panel.is-v12-joker-mode-panel
+  -webkit-backdrop-filter: none !important;
+[backdrop-filter] android-ui-v4.css:198
+  selector: .sheet-paper
+  backdrop-filter: blur(14px) saturate(1.08) !important;
+[backdrop-filter] android-ui-v4.css:199
+  selector: .sheet-paper
+  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+[backdrop-filter] android-ui-v5.css:28
+  selector: #score-sheet .sheet-paper
+  backdrop-filter: none !important;
+[backdrop-filter] android-ui-v5.css:29
+  selector: #score-sheet .sheet-paper
+  -webkit-backdrop-filter: none !important;
+[backdrop-filter] android-ui-v7.css:103
+  selector: .table-notice
+  backdrop-filter: none !important;
+[backdrop-filter] android-ui-v7.css:104
+  selector: .table-notice
+  -webkit-backdrop-filter: none !important;
+[backdrop-filter] android-ui-v7.css:113
+  selector: .sheet-paper
+  backdrop-filter: none !important;
+[backdrop-filter] android-ui-v7.css:114
+  selector: .sheet-paper
+  -webkit-backdrop-filter: none !important;
+[backdrop-filter] android-ui-v8.css:55
+  selector: .trump-pill
+  backdrop-filter: none !important;
+[backdrop-filter] android-ui-v8.css:56
+  selector: .trump-pill
+  -webkit-backdrop-filter: none !important;
+[requestAnimationFrame] android-v15.js:32
+  selector: window.requestAnimationFrame(() =>
+  window.requestAnimationFrame(() => {
+[backdrop-filter] bid-panel-polish.css:21
+  selector: .bid-panel
+  backdrop-filter: blur(14px) saturate(1.08);
+[fixed-layer] difficulty-select.css:2
+  selector: .difficulty-overlay
+  position: fixed;
+[backdrop-filter] difficulty-select.css:15
+  selector: .difficulty-overlay
+  backdrop-filter: none !important;
+[backdrop-filter] difficulty-select.css:16
+  selector: .difficulty-overlay
+  -webkit-backdrop-filter: none !important;
+[translateZ(0)] difficulty-select.css:93
+  selector: .difficulty-option
+  transform: translateZ(0);
+[requestAnimationFrame] difficulty-select.js:31
+  selector: function afterNextPaint()
+  return new Promise((resolve) => requestAnimationFrame(resolve));
+[requestAnimationFrame] difficulty-select.js:165
+  selector: function openDifficultyDialog()
+  requestAnimationFrame(() => overlay.classList.add("is-visible"));
+[backdrop-filter] game-summary-compact.css:15
+  selector: .game-summary:not(.is-pulka-summary)
+  backdrop-filter: blur(4px) !important;
+[will-change] hand-and-motion-polish.css:52
+  selector: .hand .card.is-dealt
+  will-change: transform, opacity;
+[will-change] hand-and-motion-polish.css:116
+  selector: .played-card.bottom.is-entering
+  will-change: transform, opacity;
+[will-change] hand-and-motion-polish.css:163
+  selector: .played-card.is-collecting
+  will-change: transform;
+[backdrop-filter] joker-announcement.css:20
+  selector: .joker-announcement
+  backdrop-filter: blur(10px);
+[infinite-animation] joker-announcement.css:125
+  selector: .player.is-joker-announcer .avatar
+  animation: joker-announcer-pulse 1.15s ease-in-out infinite alternate;
+[backdrop-filter] last-trick-viewer.css:22
+  selector: .last-trick-button
+  backdrop-filter: blur(10px);
+[backdrop-filter] last-trick-viewer.css:23
+  selector: .last-trick-button
+  -webkit-backdrop-filter: blur(10px);
+[backdrop-filter] last-trick-viewer.css:67
+  selector: .last-trick-panel
+  backdrop-filter: blur(14px);
+[backdrop-filter] last-trick-viewer.css:68
+  selector: .last-trick-panel
+  -webkit-backdrop-filter: blur(14px);
+[requestAnimationFrame] last-trick-viewer.js:122
+  selector: function showLastTrick()
+  requestAnimationFrame(() => viewer.classList.add("is-visible"));
+[infinite-animation] main-menu-2026-final.css:23
+  selector: .menu-card-fan
+  animation: menu-cards-glow-loop 4.6s ease-in-out 1.4s infinite !important;
+[filter-blur] main-menu-2026-polish.css:75
+  selector: 0%
+  filter: blur(2px);
+[filter-blur] main-menu-2026-polish.css:82
+  selector: 70%
+  filter: blur(0);
+[infinite-animation] main-menu-2026.css:32
+  selector: .start-screen::before
+  animation: menu-grid-drift 16s linear infinite;
+[backdrop-filter] main-menu-2026.css:59
+  selector: .start-panel
+  backdrop-filter: blur(18px) saturate(1.22);
+[backdrop-filter] main-menu-2026.css:60
+  selector: .start-panel
+  -webkit-backdrop-filter: blur(18px) saturate(1.22);
+[shadow-transition] main-menu-2026.css:223
+  selector: .menu-action
+  transition: transform 160ms ease, filter 160ms ease, opacity 160ms ease;
+[backdrop-filter] main-menu-2026.css:334
+  selector: .rules-card
+  backdrop-filter: blur(14px);
+[backdrop-filter] rules/rules-book.js:102
+  selector: .rules-card.rules-book-card
+  backdrop-filter: blur(20px) saturate(1.2);
+[backdrop-filter] rules/rules-book.js:103
+  selector: .rules-card.rules-book-card
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+[shadow-transition] rules/rules-book.js:219
+  selector: .rules-book-nav
+  transition: transform 150ms ease, filter 150ms ease, border-color 150ms ease, background 150ms ease;
+[shadow-transition] rules/rules-book.js:284
+  selector: .rules-book-dot
+  transition: width 180ms ease, background 180ms ease, box-shadow 180ms ease;
+[requestAnimationFrame] rules/rules-book.js:411
+  selector: function openBook()
+  requestAnimationFrame(() => closeButton.focus?.({ preventScroll: true }));
+[requestAnimationFrame] rules/rules-select.js:200
+  selector: function openRulesDialog()
+  requestAnimationFrame(() => overlay.classList.add("is-visible"));
+[filter-blur] styles.css:252
+  selector: .trump-pill:has(.trump-card.is-revealed)::before
+  filter: blur(1px);
+[filter-blur] styles.css:337
+  selector: .felt-glow
+  filter: blur(9px);
+[infinite-animation] styles.css:362
+  selector: .player.is-active .avatar::before
+  animation: active-player-ring 1.55s ease-out infinite;
+[infinite-animation] styles.css:378
+  selector: .player.is-thinking .avatar::after
+  animation: thinking-dots 0.9s ease-in-out infinite;
+[backdrop-filter] styles.css:518
+  selector: .player-stats
+  backdrop-filter: blur(8px);
+[filter-blur] styles.css:1245
+  selector: .played-card.is-joker-play::before
+  filter: blur(1px);
+[requestAnimationFrame] table-language.js:310
+  selector: languageFrame = requestAnimationFrame(() =>
+  languageFrame = requestAnimationFrame(() => {
+[will-change] trick-collect-animation.css:24
+  selector: .trick-collect-card
+  will-change: transform, opacity;
+
+LARGEST CSS/JS FILES
+   73749  script.js
+   42667  styles.css
+   23012  android-deal-2026.js
+   18088  main-menu-2026.js
+   16872  android-app.css
+   16098  rules/rules-book.js
+   13735  table-language.js
+   12689  android-table-v2.css
+   12413  android-ui-v8.css
+   11881  rules/rules-progression-adapter.js
+   11170  rules/rules-select.js
+   10658  rules/strategic-bot-brain.js
+   10331  android-ui-v12.css
+   10303  main-menu-2026.css
+   10259  android-runtime-v2.js
+    9855  bot-personality-polish.js
+    9722  android-menu-motion.js
+    9220  bot-memory-polish.js
+    9185  medium-four-hundred-anti-premium.js
+    8813  medium-four-hundred-control.js
+    8762  endgame-smart-bots.js
+    8760  bid-panel-polish.css
+    8665  medium-human-profile.js
+    8528  android-runtime-v13.css
+    8401  difficulty-select.js
+    8325  rules/rules-hand-size-adapter.js
+    8281  medium-bid-balance-war.js
+    8154  rules/short-deal-tactics.js
+    7672  anti-premium-bots.js
+    7642  medium-game-plan.js
+    7306  smart-joker-bots.js
+    7257  winner-podium.css
+    7238  medium-table-cooperation.js
+    7237  rules/deal-animation-adapter.js
+    7151  smart-lead-bots.js
+    7123  android-runtime-polish.js
+    6904  android-ui-v10.css
+    6879  personality-modes-bots.js
+    6856  medium-high-order-executor-v2.js
+    6796  android-ui-v4.css
