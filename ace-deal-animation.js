@@ -125,7 +125,6 @@
     state.currentTrick = [];
     state.activePlayerId = null;
     hideNotice();
-    render();
 
     const aceDeal = dealUntilFirstAce();
     applyTableOrderFromAceWinner(aceDeal.winnerId);
@@ -142,7 +141,6 @@
     const waitBeforeRealDeal = state.autoPlay ? 900 : getAceDealDuration(aceDeal) + 450;
     scheduleGameTask(() => {
       startDeal();
-      render();
     }, getDelay(waitBeforeRealDeal));
   };
 })();
