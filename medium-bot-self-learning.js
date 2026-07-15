@@ -2,6 +2,7 @@
   const STORAGE_KEY = "joker-medium-bot-learning-v1";
   const originalChooseBotBid = chooseBotBid;
   const originalWriteCurrentGameScore = writeCurrentGameScore;
+  let cachedMemory = null;
 
   function isMediumAi() {
     return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
@@ -22,12 +23,22 @@
     };
   }
 
-  function loadMemory() {
+  function cloneMemory(memory) {
+    return {
+      ...memory,
+      bots: Object.fromEntries(
+        Object.entries(memory.bots || {}).map(([playerId, stats]) => [playerId, { ...stats }]),
+      ),
+    };
+  }
+
+  function readMemoryFromStorage() {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
 
       if (parsed?.version === 1 && parsed.bots) {
-        return { ...createDefaultMemory(), ...parsed, bots: { ...createDefaultMemory().bots, ...parsed.bots } };
+        const defaults = createDefaultMemory();
+        return { ...defaults, ...parsed, bots: { ...defaults.bots, ...parsed.bots } };
       }
     } catch {
       // ignored
@@ -36,9 +47,24 @@
     return createDefaultMemory();
   }
 
+  function getMemory() {
+    if (!cachedMemory) {
+      cachedMemory = readMemoryFromStorage();
+    }
+
+    return cachedMemory;
+  }
+
+  function loadMemory() {
+    return cloneMemory(getMemory());
+  }
+
   function saveMemory(memory) {
+    const snapshot = cloneMemory(memory);
+
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(memory));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+      cachedMemory = snapshot;
     } catch {
       // localStorage can be blocked; game must keep working.
     }
@@ -61,8 +87,7 @@
   }
 
   function getAdjustment(playerId) {
-    const memory = loadMemory();
-    const stats = memory.bots[playerId];
+    const stats = getMemory().bots[playerId];
 
     if (!stats || stats.games < 4) {
       return 0;
@@ -116,7 +141,7 @@
   };
 
   writeCurrentGameScore = function mediumLearningWriteCurrentGameScore() {
-    const memory = loadMemory();
+    const memory = cloneMemory(getMemory());
 
     if (isMediumAi()) {
       state.players.forEach((player) => {
@@ -156,7 +181,7 @@
     reset() {
       const fresh = createDefaultMemory();
       saveMemory(fresh);
-      return fresh;
+      return cloneMemory(fresh);
     },
   };
 })();
