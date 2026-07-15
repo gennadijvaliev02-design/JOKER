@@ -323,9 +323,18 @@
   }
 
   const originalShowNotice = window.showNotice;
+  let lastNoticeSource = null;
+  let lastNoticeLanguage = null;
+  let lastNoticeTranslation = null;
   if (typeof originalShowNotice === "function") {
     window.showNotice = function translatedShowNotice(message) {
-      return originalShowNotice.call(this, translateMessage(message, t()));
+      const language = getLang();
+      if (message !== lastNoticeSource || language !== lastNoticeLanguage) {
+        lastNoticeSource = message;
+        lastNoticeLanguage = language;
+        lastNoticeTranslation = translateMessage(message, t());
+      }
+      return originalShowNotice.call(this, lastNoticeTranslation);
     };
   }
 

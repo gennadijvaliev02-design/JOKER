@@ -33,8 +33,14 @@
   let lastTrumpSignature = "";
   let lastTrumpRenderKey = null;
   let lastRoundSignature = null;
+  let lastHudClassSignature = null;
   let lastTrickSignature = null;
   let selectedCard = null;
+  const setText = typeof setElementText === "function"
+    ? setElementText
+    : (node, value) => {
+        if (node && node.textContent !== value) node.textContent = value;
+      };
   let selectionTimer = 0;
 
   function getLanguage() {
@@ -147,69 +153,80 @@
     lastTrumpSignature = signature;
   }
 
-  function syncHudClasses(bidBalance) {
-    const hasTrump = Boolean(state.trump);
-    const suitKind = state.trump?.type === "standard"
-      ? (state.trump.color === "red" || state.trump.suit === "hearts" || state.trump.suit === "diamonds" ? "red" : "black")
-      : "special";
+  function getAndroidHudState() {
+    if (typeof getHudRenderState === "function") return getHudRenderState();
 
-    elements.trumpLabel.classList.toggle("v13-hud-hidden", !hasTrump);
-    elements.trumpLabel.classList.toggle("v13-trump-ready", hasTrump);
-    if (elements.trumpLabel.dataset.v13Suit !== suitKind) {
-      elements.trumpLabel.dataset.v13Suit = suitKind;
-    }
-
-    elements.roundLabel.classList.toggle("v13-hud-hidden", !bidBalance);
-  }
-
-  function renderCachedHud() {
     const chooser = getPlayerById(state.trumpChooserId);
     const bidBalance = getBidBalance();
     const roundSignature = bidBalance ? `${bidBalance.type}:${bidBalance.text}` : "hidden";
-
-    if (roundSignature !== lastRoundSignature) {
-      elements.roundLabel.hidden = !bidBalance;
-      elements.roundLabel.textContent = bidBalance?.text || "";
-      elements.roundLabel.classList.toggle("is-push", bidBalance?.type === "push");
-      elements.roundLabel.classList.toggle("is-take", bidBalance?.type === "take");
-      lastRoundSignature = roundSignature;
-    }
-
     if (!state.trump) {
       const chooserText = state.phase === "trump-select" && chooser
         ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}`
         : "";
       const label = state.phase === "trump-select" ? `Козырь${chooserText}` : "Козырь";
-      const renderKey = `empty:${label}`;
-
-      if (renderKey !== lastTrumpRenderKey || elements.trumpLabel.dataset.trumpKey !== "") {
-        elements.trumpLabel.textContent = label;
-        elements.trumpLabel.dataset.trumpKey = "";
-        lastTrumpCard = null;
-        lastTrumpSignature = "";
-        lastTrumpRenderKey = renderKey;
-      }
-
-      syncTrumpPresentation();
-      syncHudClasses(bidBalance);
-      return;
+      return { bidBalance, roundSignature, trumpKey: "", renderKey: `empty:${label}`, label };
     }
 
     const trumpKey = getTrumpRenderKey(state.trump);
-    const renderKey = `trump:${trumpKey}`;
-    const hasRenderedCard = Boolean(elements.trumpLabel.querySelector(".trump-card"));
+    return { bidBalance, roundSignature, trumpKey, renderKey: `trump:${trumpKey}`, label: "Козырь" };
+  }
 
-    if (renderKey !== lastTrumpRenderKey || elements.trumpLabel.dataset.trumpKey !== trumpKey || !hasRenderedCard) {
-      const shouldReveal = elements.trumpLabel.dataset.trumpKey !== trumpKey;
-      elements.trumpLabel.dataset.trumpKey = trumpKey;
+  function syncHudClasses(bidBalance) {
+    const hasTrump = Boolean(state.trump);
+    const suitKind = state.trump?.type === "standard"
+      ? (state.trump.color === "red" || state.trump.suit === "hearts" || state.trump.suit === "diamonds" ? "red" : "black")
+      : "special";
+    const signature = `${hasTrump ? 1 : 0}:${suitKind}:${bidBalance ? 1 : 0}`;
+    if (signature === lastHudClassSignature) return;
+
+    elements.trumpLabel.classList.toggle("v13-hud-hidden", !hasTrump);
+    elements.trumpLabel.classList.toggle("v13-trump-ready", hasTrump);
+    if (elements.trumpLabel.dataset.v13Suit !== suitKind) elements.trumpLabel.dataset.v13Suit = suitKind;
+    elements.roundLabel.classList.toggle("v13-hud-hidden", !bidBalance);
+    lastHudClassSignature = signature;
+  }
+
+  function renderCachedHud() {
+    const hud = getAndroidHudState();
+
+    if (hud.roundSignature !== lastRoundSignature) {
+      elements.roundLabel.hidden = !hud.bidBalance;
+      setText(elements.roundLabel, hud.bidBalance?.text || "");
+      elements.roundLabel.classList.toggle("is-push", hud.bidBalance?.type === "push");
+      elements.roundLabel.classList.toggle("is-take", hud.bidBalance?.type === "take");
+      lastRoundSignature = hud.roundSignature;
+    }
+
+    if (!state.trump) {
+      if (hud.renderKey !== lastTrumpRenderKey || elements.trumpLabel.dataset.trumpKey !== "") {
+        setText(elements.trumpLabel, hud.label);
+        elements.trumpLabel.dataset.trumpKey = "";
+        lastTrumpCard = null;
+        lastTrumpSignature = "";
+        lastTrumpRenderKey = hud.renderKey;
+      }
+
+      syncTrumpPresentation();
+      syncHudClasses(hud.bidBalance);
+      return;
+    }
+
+    const hasRenderedCard = Boolean(elements.trumpLabel.querySelector(".trump-card"));
+    if (
+      hud.renderKey !== lastTrumpRenderKey
+      || elements.trumpLabel.dataset.trumpKey !== hud.trumpKey
+      || !hasRenderedCard
+    ) {
+      const shouldReveal = elements.trumpLabel.dataset.trumpKey !== hud.trumpKey;
+      elements.trumpLabel.dataset.trumpKey = hud.trumpKey;
       elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
       lastTrumpCard = null;
       lastTrumpSignature = "";
-      lastTrumpRenderKey = renderKey;
+      lastTrumpRenderKey = hud.renderKey;
     }
 
     syncTrumpPresentation();
-    syncHudClasses(bidBalance);
+    syncHudClasses(hud.bidBalance);
   }
 
   function getTrickSignature() {
