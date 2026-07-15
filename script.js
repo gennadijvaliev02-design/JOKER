@@ -439,9 +439,9 @@ function render() {
 
 function renderPlayers() {
   for (const player of state.players) {
-    const playerElement = document.querySelector(`[data-seat="${player.seat}"]`)?.closest(".player");
-    const name = document.querySelector(`[data-name="${player.seat}"]`);
     const avatar = document.querySelector(`[data-seat="${player.seat}"]`);
+    const playerElement = avatar?.closest(".player");
+    const name = document.querySelector(`[data-name="${player.seat}"]`);
     const orderBadge = document.querySelector(`[data-order-badge="${player.seat}"]`);
     const order = document.querySelector(`[data-order="${player.seat}"]`);
     const bid = document.querySelector(`[data-bid="${player.seat}"]`);
@@ -545,13 +545,20 @@ function renderHud() {
 }
 
 function getBidBalance() {
-  if (!state.players.length || state.players.some((player) => player.bid === null)) {
+  if (!state.players.length) {
     return null;
   }
 
-  const totalBid = state.players.reduce((sum, player) => {
-    return sum + (player.bid === "pass" ? 0 : player.bid);
-  }, 0);
+  let totalBid = 0;
+
+  for (const player of state.players) {
+    if (player.bid === null) {
+      return null;
+    }
+
+    totalBid += player.bid === "pass" ? 0 : player.bid;
+  }
+
   const balance = totalBid - 9;
 
   if (balance > 0) {
@@ -856,17 +863,18 @@ function playCard(playerId, cardId, options = {}) {
     return false;
   }
 
+  const player = getPlayerById(playerId);
   hand.splice(cardIndex, 1);
 
   if (card.type === "joker") {
-    getPlayerById(playerId).jokersPlayed += 1;
+    player.jokersPlayed += 1;
     playSound("joker");
   } else {
     playSound("card");
   }
 
   const playedCard = {
-    player: getPlayerById(playerId),
+    player,
     card,
     jokerMode: card.type === "joker" ? options.jokerMode || "lead" : null,
     jokerCommand: options.jokerCommand || null,
@@ -1548,7 +1556,11 @@ function getPlayedStandardCards(suit = null) {
     .filter((card) => card.type === "standard" && (!suit || card.suit === suit));
 }
 
-function isHigherCardAlreadyPlayed(card, rank) {
+function isHigherCardAlreadyPlayed(card, rank, playedRankPowers = null) {
+  if (playedRankPowers) {
+    return playedRankPowers.has(rank);
+  }
+
   return getPlayedStandardCards(card.suit).some((playedCard) => RANK_POWER[playedCard.rank] === rank);
 }
 
@@ -1557,7 +1569,15 @@ function getUnseenHigherCardCount(card) {
     return 0;
   }
 
-  return RANKS.filter((rank) => RANK_POWER[rank] > RANK_POWER[card.rank] && !isHigherCardAlreadyPlayed(card, RANK_POWER[rank])).length;
+  const playedRankPowers = new Set(
+    getPlayedStandardCards(card.suit).map((playedCard) => RANK_POWER[playedCard.rank]),
+  );
+  const cardPower = RANK_POWER[card.rank];
+
+  return RANKS.filter((rank) => {
+    const rankPower = RANK_POWER[rank];
+    return rankPower > cardPower && !isHigherCardAlreadyPlayed(card, rankPower, playedRankPowers);
+  }).length;
 }
 
 function isLikelyHighCard(card) {
@@ -1584,12 +1604,15 @@ function getBotAttackPower(card) {
     return 100;
   }
 
-  const trumpBonus = getTrumpSuit() && card.suit === getTrumpSuit() ? 30 : 0;
+  const trumpSuit = getTrumpSuit();
+  const trumpBonus = trumpSuit && card.suit === trumpSuit ? 30 : 0;
   const memoryBonus = isLikelyHighCard(card) ? 14 : 0;
   return trumpBonus + memoryBonus + RANK_POWER[card.rank];
 }
 
 function hasStrongLeadCard(cards) {
+  const trumpSuit = getTrumpSuit();
+
   return cards.some((card) => {
     if (card.type === "joker") {
       return false;
@@ -1599,7 +1622,7 @@ function hasStrongLeadCard(cards) {
       return true;
     }
 
-    return getTrumpSuit() && card.suit === getTrumpSuit() && RANK_POWER[card.rank] >= RANK_POWER.Q;
+    return trumpSuit && card.suit === trumpSuit && RANK_POWER[card.rank] >= RANK_POWER.Q;
   });
 }
 
