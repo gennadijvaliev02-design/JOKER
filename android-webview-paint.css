@@ -1,0 +1,91 @@
+/* Android WebView paint cleanup — preserve layout and colors, reduce repaint cost. */
+
+/* Card selection should animate only compositor-friendly transforms. */
+.hand .card {
+  transition: transform 150ms cubic-bezier(0.16, 0.82, 0.22, 1) !important;
+}
+
+.hand .card:hover,
+.hand .card:active,
+.hand .card.is-touch-selected,
+.hand .card:focus-visible {
+  box-shadow:
+    0 0 0 2px rgba(73, 219, 255, 0.28),
+    0 12px 22px rgba(0, 0, 0, 0.38) !important;
+}
+
+/* Large panels previously rasterized several wide glow layers on every opening. */
+.bid-panel[class*="is-v12-"] {
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.bid-panel[class*="is-v12-"] .bid-title {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.76) !important;
+}
+
+.bid-panel[class*="is-v12-"] .bid-option {
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  transition:
+    transform 130ms ease,
+    border-color 150ms ease !important;
+}
+
+.bid-panel.is-android-joker-panel .bid-option {
+  transition:
+    transform 130ms ease,
+    border-color 150ms ease !important;
+}
+
+/* Frequently changing table pieces keep depth without oversized blur radii. */
+.player.is-active .avatar {
+  box-shadow:
+    0 0 0 2px rgba(255, 214, 41, 0.22),
+    0 7px 14px rgba(0, 0, 0, 0.34) !important;
+}
+
+.played-card .card {
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.36) !important;
+}
+
+#round-label,
+.trump-pill {
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+.score,
+.last-trick-button,
+.table-notice {
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Temporary motion layers use small hard shadows instead of wide glows. */
+.ace-open-title,
+.ace-open-winner {
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.40) !important;
+}
+
+.ace-open-played-card.is-winning-ace .card {
+  box-shadow:
+    0 0 0 2px rgba(255, 221, 87, 0.94),
+    0 10px 18px rgba(0, 0, 0, 0.38) !important;
+}
+
+.trick-collect-layer.is-black .trick-collect-card .card {
+  box-shadow:
+    0 0 0 1px rgba(255, 222, 122, 0.34),
+    0 6px 12px rgba(0, 0, 0, 0.28) !important;
+}
+
+.trick-collect-layer.is-red .trick-collect-card .card {
+  box-shadow:
+    0 0 0 1px rgba(255, 142, 82, 0.36),
+    0 6px 12px rgba(0, 0, 0, 0.28) !important;
+}
