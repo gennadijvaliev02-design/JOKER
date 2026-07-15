@@ -18,17 +18,6 @@ def replace_section(text, start_marker, end_marker, new_block, label):
 
 pulka_path = Path("pulka-summary.js")
 pulka = pulka_path.read_text(encoding="utf-8")
-pulka = replace_section(
-    pulka,
-    "  function refreshScoreSheetNow() {",
-    "  function showPulkaSummary(",
-    '''  function refreshScoreSheetNow() {
-    if (typeof renderScoreSheet === "function" && !elements.scoreSheet?.hidden) {
-      renderScoreSheet();
-    }
-  }''',
-    "pulka refresh",
-)
 pulka = replace_once(
     pulka,
     '''    const rows = state.players
