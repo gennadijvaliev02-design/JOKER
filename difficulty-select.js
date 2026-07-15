@@ -19,6 +19,32 @@
   }
 
   let starting = false;
+  let renderedLanguage = "";
+  let renderedDifficulty = "";
+  let closeTimer = null;
+
+  function notifyOverlayChange(isOpen) {
+    setMenuOverlayOpen("difficulty", isOpen);
+  }
+
+  function afterNextPaint() {
+    return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  }
+
+  const menuFanCards = [...startScreen.querySelectorAll(".menu-fan-card")];
+  const openMenuOverlays = new Set();
+
+  function setMenuOverlayOpen(owner, isOpen) {
+    if (isOpen) openMenuOverlays.add(owner);
+    else openMenuOverlays.delete(owner);
+
+    const playState = openMenuOverlays.size ? "paused" : "running";
+    menuFanCards.forEach((card) => {
+      if (card.style.animationPlayState !== playState) card.style.animationPlayState = playState;
+    });
+  }
+
+  window.JokerMenuOverlayState = Object.freeze({ setOpen: setMenuOverlayOpen });
 
   function getCurrentDifficulty() {
     if (typeof window.getAiDifficulty === "function") {
@@ -92,7 +118,10 @@
     };
   }
 
-  function applyLanguage() {
+  function applyLanguage(force = false) {
+    const language = window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
+    if (!force && language === renderedLanguage) return;
+
     const t = getTexts();
     title.textContent = t.difficultyTitle;
     easyName.textContent = t.easyName;
@@ -101,13 +130,17 @@
     mediumDesc.textContent = t.mediumDesc;
     backButton.textContent = t.back;
     startButton.textContent = t.play;
+    renderedLanguage = language;
   }
 
-  function updateSelectedState() {
+  function updateSelectedState(force = false) {
     const current = getCurrentDifficulty();
+    if (!force && current === renderedDifficulty) return;
+
     choices.forEach((button) => {
       button.classList.toggle("is-selected", button.dataset.aiDifficultyChoice === current);
     });
+    renderedDifficulty = current;
   }
 
   function setStartingState(value) {
@@ -116,15 +149,17 @@
       button.disabled = value;
     });
     backButton.disabled = value;
+    overlay.classList.toggle("is-starting", value);
   }
 
   function openDifficultyDialog() {
     if (starting) return;
+    window.clearTimeout(closeTimer);
     applyLanguage();
     updateSelectedState();
     overlay.hidden = false;
+    notifyOverlayChange(true);
 
-    // Let the browser paint the overlay before focus/layout work starts.
     requestAnimationFrame(() => {
       overlay.classList.add("is-visible");
       requestAnimationFrame(() => {
@@ -135,16 +170,23 @@
     });
   }
 
-  function closeDifficultyDialog(restoreFocus = true) {
+  function closeDifficultyDialog(restoreFocus = true, immediate = false) {
+    window.clearTimeout(closeTimer);
     overlay.classList.remove("is-visible");
-    window.setTimeout(() => {
-      if (!overlay.classList.contains("is-visible")) {
-        overlay.hidden = true;
-        if (restoreFocus) {
-          startButton.focus?.({ preventScroll: true });
-        }
-      }
-    }, 190);
+
+    const finish = () => {
+      if (overlay.classList.contains("is-visible")) return;
+      overlay.hidden = true;
+      notifyOverlayChange(false);
+      if (restoreFocus) requestAnimationFrame(() => startButton.focus?.({ preventScroll: true }));
+    };
+
+    if (immediate) {
+      finish();
+      return;
+    }
+
+    closeTimer = window.setTimeout(finish, 145);
   }
 
   async function startWithDifficulty(value) {
@@ -152,14 +194,15 @@
 
     setStartingState(true);
     setDifficulty(value);
-    updateSelectedState();
-    closeDifficultyDialog(false);
+    updateSelectedState(true);
 
-    const closeAnimation = new Promise((resolve) => window.setTimeout(resolve, 220));
-    const preload = window.JokerCardPreload?.ensureReady?.({ showProgress: false })
-      || Promise.resolve(true);
+    // Paint the selected/pressed state before any game initialization starts.
+    await afterNextPaint();
+    const ready = await (window.JokerCardPreload?.ensureReady?.({ showProgress: false })
+      || Promise.resolve(true));
 
-    const [, ready] = await Promise.all([closeAnimation, preload]);
+    closeDifficultyDialog(false, true);
+    await afterNextPaint();
 
     if (!ready) {
       console.warn("Карты не успели полностью предзагрузиться; запускаем с браузерным fallback");
@@ -199,8 +242,9 @@
     }
   });
 
-  window.addEventListener("joker-language-change", applyLanguage);
-  applyLanguage();
+  window.addEventListener("joker-language-change", () => applyLanguage(true));
+  applyLanguage(true);
+  updateSelectedState(true);
 
   window.JokerDifficultySelect = {
     open: openDifficultyDialog,

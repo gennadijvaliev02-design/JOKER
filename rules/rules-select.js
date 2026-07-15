@@ -133,20 +133,37 @@
         ];
   }
 
-  function applyRulesCard() {
-    const list = rulesCard?.querySelector("ol");
-    if (!list) {
-      return;
-    }
+  let renderedLanguage = "";
+  let renderedRulesId = "";
+  let renderedRulesCardKey = "";
+  let closeTimer = null;
 
-    list.replaceChildren(...getRulesList().map((text) => {
-      const item = document.createElement("li");
-      item.textContent = text;
-      return item;
-    }));
+  function notifyOverlayChange(isOpen) {
+    window.JokerMenuOverlayState?.setOpen?.("rules", isOpen);
   }
 
-  function applyLanguage() {
+  function applyRulesCard(force = false) {
+    if (rulesCard?.classList.contains("rules-book-card")) return;
+
+    const list = rulesCard?.querySelector("ol");
+    if (!list) return;
+
+    const key = `${getLanguage()}:${window.JokerRules.activeId}`;
+    if (!force && key === renderedRulesCardKey) return;
+
+    const rules = getRulesList();
+    while (list.children.length < rules.length) list.append(document.createElement("li"));
+    while (list.children.length > rules.length) list.lastElementChild.remove();
+    rules.forEach((text, index) => {
+      if (list.children[index].textContent !== text) list.children[index].textContent = text;
+    });
+    renderedRulesCardKey = key;
+  }
+
+  function applyLanguage(force = false) {
+    const language = getLanguage();
+    if (!force && language === renderedLanguage) return;
+
     const texts = getTexts();
     title.textContent = texts.title;
     popularName.textContent = texts.popularName;
@@ -154,36 +171,59 @@
     aggressionName.textContent = texts.aggressionName;
     aggressionDesc.textContent = texts.aggressionDesc;
     backButton.textContent = texts.back;
-    applyRulesCard();
+    renderedLanguage = language;
+    renderedRulesCardKey = "";
+    applyRulesCard(true);
   }
 
-  function updateSelectedState() {
+  function updateSelectedState(force = false) {
+    const activeId = window.JokerRules.activeId;
+    if (!force && activeId === renderedRulesId) return;
+
     choices.forEach((button) => {
-      button.classList.toggle("is-selected", button.dataset.rulesModeChoice === window.JokerRules.activeId);
+      button.classList.toggle("is-selected", button.dataset.rulesModeChoice === activeId);
     });
+    renderedRulesId = activeId;
+    renderedRulesCardKey = "";
     applyRulesCard();
   }
 
   function openRulesDialog() {
-    if (window.jokerState?.started) {
-      return;
-    }
+    if (window.jokerState?.started || !overlay.hidden) return;
 
+    window.clearTimeout(closeTimer);
     applyLanguage();
     updateSelectedState();
     overlay.hidden = false;
-    requestAnimationFrame(() => overlay.classList.add("is-visible"));
-    choices.find((button) => button.dataset.rulesModeChoice === window.JokerRules.activeId)?.focus?.();
+    notifyOverlayChange(true);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add("is-visible");
+      requestAnimationFrame(() => {
+        choices
+          .find((button) => button.dataset.rulesModeChoice === window.JokerRules.activeId)
+          ?.focus?.({ preventScroll: true });
+      });
+    });
   }
 
-  function closeRulesDialog() {
+  function closeRulesDialog({ restoreFocus = true, immediate = false } = {}) {
+    window.clearTimeout(closeTimer);
     overlay.classList.remove("is-visible");
-    window.setTimeout(() => {
-      if (!overlay.classList.contains("is-visible")) {
-        overlay.hidden = true;
-      }
-    }, 190);
-    startButton.focus?.();
+
+    const finish = () => {
+      if (overlay.classList.contains("is-visible")) return;
+      overlay.hidden = true;
+      notifyOverlayChange(false);
+      if (restoreFocus) requestAnimationFrame(() => startButton.focus?.({ preventScroll: true }));
+    };
+
+    if (immediate) {
+      finish();
+      return;
+    }
+
+    closeTimer = window.setTimeout(finish, 145);
   }
 
   function continueToDifficulty(ruleId) {
@@ -193,14 +233,12 @@
     }
 
     updateSelectedState();
-    closeRulesDialog();
-    window.setTimeout(() => {
-      if (window.JokerDifficultySelect?.open) {
-        window.JokerDifficultySelect.open();
-      } else {
-        console.warn("Rules selector could not find difficulty selector.");
-      }
-    }, 220);
+    closeRulesDialog({ restoreFocus: false, immediate: true });
+    if (window.JokerDifficultySelect?.open) {
+      window.JokerDifficultySelect.open();
+    } else {
+      console.warn("Rules selector could not find difficulty selector.");
+    }
   }
 
   startButton.addEventListener("click", (event) => {
@@ -213,7 +251,7 @@
     button.addEventListener("click", () => continueToDifficulty(button.dataset.rulesModeChoice));
   });
 
-  backButton.addEventListener("click", closeRulesDialog);
+  backButton.addEventListener("click", () => closeRulesDialog());
 
   overlay.addEventListener("click", (event) => {
     if (!modal.contains(event.target)) {
@@ -227,9 +265,10 @@
     }
   });
 
-  window.addEventListener("joker-language-change", applyLanguage);
-  window.addEventListener("joker-rules-change", updateSelectedState);
-  applyLanguage();
+  window.addEventListener("joker-language-change", () => applyLanguage(true));
+  window.addEventListener("joker-rules-change", () => updateSelectedState(true));
+  applyLanguage(true);
+  updateSelectedState(true);
 
   window.JokerRulesSelect = Object.freeze({
     open: openRulesDialog,

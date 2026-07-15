@@ -347,7 +347,10 @@
   const previousButton = rulesCard.querySelector("[data-rules-book-prev]");
   const nextButton = rulesCard.querySelector("[data-rules-book-next]");
   const dots = [...rulesCard.querySelectorAll(".rules-book-dot")];
+  const popularModeName = document.querySelector("[data-rules-popular-name]");
+  const aggressionModeName = document.querySelector("[data-rules-aggression-name]");
   let pageIndex = window.JokerRules.isPopular() ? 0 : 1;
+  let renderedPageKey = "";
 
   function getLanguage() {
     return window.JokerI18n?.getLanguage?.() || window.JokerLanguage || "ru";
@@ -359,21 +362,22 @@
 
   function applyModeNames() {
     const isEnglish = getLanguage() === "en";
-    const popularName = document.querySelector("[data-rules-popular-name]");
-    const aggressionName = document.querySelector("[data-rules-aggression-name]");
-
-    if (popularName) {
-      popularName.textContent = isEnglish ? "Popular" : "Популярная";
+    if (popularModeName) {
+      popularModeName.textContent = isEnglish ? "Popular" : "Популярная";
     }
 
-    if (aggressionName) {
-      aggressionName.textContent = isEnglish ? "Aggression" : "Агрессивная";
+    if (aggressionModeName) {
+      aggressionModeName.textContent = isEnglish ? "Aggression" : "Агрессивная";
     }
   }
 
-  function renderPage() {
-    const copy = getCopy();
+  function renderPage(force = false) {
+    const language = getLanguage() === "en" ? "en" : "ru";
     const pageId = PAGES[pageIndex];
+    const pageKey = `${language}:${pageId}`;
+    if (!force && pageKey === renderedPageKey) return;
+
+    const copy = COPY[language];
     const current = copy[pageId];
 
     book.dataset.page = pageId;
@@ -397,13 +401,14 @@
 
     dots.forEach((dot, index) => dot.classList.toggle("is-active", index === pageIndex));
     applyModeNames();
+    renderedPageKey = pageKey;
   }
 
   function openBook() {
     pageIndex = window.JokerRules.isPopular() ? 0 : 1;
     renderPage();
     rulesCard.hidden = false;
-    closeButton.focus?.();
+    requestAnimationFrame(() => closeButton.focus?.({ preventScroll: true }));
   }
 
   function closeBook() {
@@ -445,15 +450,15 @@
     }
   });
 
-  window.addEventListener("joker-language-change", renderPage);
-  window.addEventListener("joker-rules-change", () => {
-    if (rulesCard.hidden) {
-      pageIndex = window.JokerRules.isPopular() ? 0 : 1;
-    }
-    renderPage();
+  window.addEventListener("joker-language-change", () => {
+    renderedPageKey = "";
+    if (!rulesCard.hidden) renderPage(true);
   });
-
-  renderPage();
+  window.addEventListener("joker-rules-change", () => {
+    pageIndex = window.JokerRules.isPopular() ? 0 : 1;
+    renderedPageKey = "";
+    if (!rulesCard.hidden) renderPage(true);
+  });
 
   window.JokerRulesBook = Object.freeze({
     open: openBook,

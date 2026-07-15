@@ -60,6 +60,10 @@
         return false;
       }
 
+      if (selectedId === id) {
+        return true;
+      }
+
       selectedId = id;
       syncRuleSelection();
       emitRulesEvent("joker-rules-change");
@@ -113,8 +117,8 @@
       .then(() => loadAdapter("rules/bot-survival-priority.js?v=1", "bot-survival"))
       .then(() => loadAdapter("rules/strategic-bot-brain.js?v=1", "strategic-brain"))
       .then(() => loadAdapter("rules/short-deal-tactics.js?v=1", "short-deal-tactics"))
-      .then(() => loadAdapter("rules/rules-select.js?v=3", "selector"))
-      .then(() => loadAdapter("rules/rules-book.js?v=1", "rules-book"))
+      .then(() => loadAdapter("rules/rules-select.js?v=4", "selector"))
+      .then(() => loadAdapter("rules/rules-book.js?v=2", "rules-book"))
       .then(() => {
         document.documentElement.dataset.rulesReady = "true";
         emitRulesEvent("joker-rules-adapters-ready");
