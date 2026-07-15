@@ -179,20 +179,4 @@ text = replace_section(
     "finishMatch",
 )
 
-text = replace_section(
-    text,
-    "function toggleScoreSheet() {",
-    "function getDevTargetFromUrl() {",
-    '''function toggleScoreSheet() {
-  const shouldOpen = elements.scoreSheet.hidden;
-
-  if (shouldOpen) {
-    renderScoreSheet();
-  }
-
-  elements.scoreSheet.hidden = !shouldOpen;
-}''',
-    "toggleScoreSheet",
-)
-
 path.write_text(text, encoding="utf-8")
