@@ -1,0 +1,46 @@
+name: Android Runtime Cleanup Audit
+
+on:
+  push:
+    branches:
+      - agent/android-runtime-cleanup-2
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate changed Android JavaScript
+        run: |
+          node --check difficulty-select.js
+          node --check rules/rules-select.js
+          node --check android-menu-motion.js
+          node --check android-runtime-polish.js
+          node --check android-runtime-v2.js
+          node --check android-opponent-hands.js
+          node --check ace-deal-animation.js
+          node --check game-emotions.js
+          node --check sound-polish.js
+          node --check trick-collect-animation.js
+
+      - name: Validate cleanup guards
+        run: |
+          ! grep -q 'MutationObserver' android-menu-motion.js
+          ! grep -q 'function playShuffle' sound-polish.js
+          ! grep -q 'playSound("shuffle")' sound-polish.js
+          test "$(grep -h 'document.addEventListener("pointerdown"' android-runtime-v2.js android-runtime-polish.js | wc -l)" -eq 1
+          ! grep -q 'startButton.focus' difficulty-select.js
+          ! grep -q 'startButton.focus' rules/rules-select.js
+          grep -q 'const avatarsBySeat = new Map' game-emotions.js
+          grep -q 'const avatarsBySeat = new Map' trick-collect-animation.js
+          grep -q 'playerIdBySeat = Object.create(null)' android-opponent-hands.js
