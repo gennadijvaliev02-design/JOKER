@@ -48,7 +48,12 @@ jobs:
           node audit-tools/tools/android_system_lifecycle_harness_temp.js
 
       - name: Patch generated Android shell owner
-        run: python3 audit-tools/tools/patch_android_lifecycle_temp.py --root .
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 audit-tools/tools/patch_android_lifecycle_temp.py --root .
+          sed -i 's/protected void onPause()/public void onPause()/' tools/configure_android_wrapper.py
+          sed -i 's/protected void onDestroy()/public void onDestroy()/' tools/configure_android_wrapper.py
 
       - name: Validate wrapper configurator
         shell: bash
@@ -84,6 +89,8 @@ jobs:
           grep -q 'FLAG_KEEP_SCREEN_ON' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
           grep -q 'joker-native-lifecycle' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
           grep -q 'HapticFeedbackConstants.CONFIRM' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
+          grep -q 'public void onPause()' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
+          grep -q 'public void onDestroy()' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
           chmod +x android/gradlew
 
       - name: Compile native shell and capture log
