@@ -8,14 +8,36 @@
   if (!startScreen || !cards.length) return;
 
   function syncMenuMotion() {
-    const shouldRun = !document.hidden && !startScreen.classList.contains("is-hidden");
+    const overlayOpen = Boolean(startScreen.querySelector(
+      ".difficulty-overlay:not([hidden]), .android-rating-modal:not([hidden])",
+    ));
+    const shouldRun = !document.hidden
+      && !startScreen.classList.contains("is-hidden")
+      && !overlayOpen;
+
     cards.forEach((card) => {
       card.style.animationPlayState = shouldRun ? "running" : "paused";
     });
   }
 
-  const observer = new MutationObserver(syncMenuMotion);
-  observer.observe(startScreen, { attributes: true, attributeFilter: ["class", "hidden"] });
+  if (typeof startGame === "function") {
+    const fullStartGame = startGame;
+    startGame = function startGameWithMenuMotionSync(...args) {
+      const result = fullStartGame.apply(this, args);
+      syncMenuMotion();
+      return result;
+    };
+  }
+
+  if (typeof goToMainMenu === "function") {
+    const fullGoToMainMenu = goToMainMenu;
+    goToMainMenu = function goToMainMenuWithMotionSync(...args) {
+      const result = fullGoToMainMenu.apply(this, args);
+      syncMenuMotion();
+      return result;
+    };
+  }
+
   document.addEventListener("visibilitychange", syncMenuMotion, { passive: true });
   syncMenuMotion();
 })();
