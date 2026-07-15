@@ -34,20 +34,23 @@
     return legalCards.length ? legalCards : hand;
   }
 
+  function isSafeExitCard(card, trumpSuit) {
+    return card.type === "standard"
+      && (!trumpSuit || card.suit !== trumpSuit)
+      && RANK_POWER[card.rank] <= RANK_POWER[10]
+      && !isLikelyHighCard(card);
+  }
+
   function getSafeExitCardsAfterJoker(playerId) {
     const trumpSuit = getTrumpSuit();
-    const hand = state.hands[playerId] || [];
-
-    return hand
-      .filter((card) => card.type === "standard")
-      .filter((card) => !trumpSuit || card.suit !== trumpSuit)
-      .filter((card) => RANK_POWER[card.rank] <= RANK_POWER[10])
-      .filter((card) => !isLikelyHighCard(card))
+    return (state.hands[playerId] || [])
+      .filter((card) => isSafeExitCard(card, trumpSuit))
       .sort(compareBotCards);
   }
 
   function hasSafeExitAfterJoker(playerId) {
-    return getSafeExitCardsAfterJoker(playerId).length > 0;
+    const trumpSuit = getTrumpSuit();
+    return (state.hands[playerId] || []).some((card) => isSafeExitCard(card, trumpSuit));
   }
 
   function chooseSafeJokerSuit(playerId) {
