@@ -1,0 +1,134 @@
+name: Android wrapper PR audit
+
+on:
+  pull_request:
+    branches:
+      - agent/android-mobile-wrapper-integration-1
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-finalize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Android integration branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/android-mobile-wrapper-integration-1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Patch permanent Android workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          path = Path('.github/workflows/android-apk.yml')
+          workflow = path.read_text(encoding='utf-8')
+
+          pr_trigger = "  pull_request:\n    branches:\n      - 'agent/android-*'\n"
+          if pr_trigger not in workflow:
+              workflow = workflow.replace(
+                  'on:\n  workflow_dispatch:\n',
+                  'on:\n  workflow_dispatch:\n' + pr_trigger,
+                  1,
+              )
+
+          self_test = (
+              '      - name: Validate Android wrapper configurator\n'
+              '        run: python3 tools/configure_android_wrapper.py --self-test\n\n'
+          )
+          if self_test not in workflow:
+              workflow = workflow.replace(
+                  '      - name: Validate all JavaScript sources\n',
+                  self_test + '      - name: Validate all JavaScript sources\n',
+                  1,
+              )
+
+          pattern = re.compile(
+              r'      - name: Configure true immersive landscape app\n'
+              r'        run: \|\n.*?'
+              r'(?=\n      - name: Build debug APK)',
+              re.S,
+          )
+          replacement = (
+              '      - name: Configure true immersive landscape app\n'
+              '        run: python3 tools/configure_android_wrapper.py\n'
+          )
+          workflow, count = pattern.subn(replacement, workflow, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected one native configuration block, replaced {count}')
+
+          path.write_text(workflow, encoding='utf-8')
+          PY
+
+      - name: Validate sources and wrapper fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/configure_android_wrapper.py --self-test
+          python3 -m py_compile tools/configure_android_wrapper.py
+          find . \
+            -path './.git' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './android' -prune -o \
+            -path './www' -prune -o \
+            -name '*.js' -type f -print0 \
+            | sort -z \
+            | xargs -0 -n1 node --check
+
+      - name: Generate and compile native shell without APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --package-lock=false --no-audit --no-fund
+          rm -rf www android
+          mkdir -p www
+          rsync -a --prune-empty-dirs ./ www/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'android/' \
+            --exclude 'www/' \
+            --exclude 'package.json' \
+            --exclude 'package-lock.json' \
+            --exclude 'capacitor.config.json' \
+            --exclude '*.md' \
+            --exclude '*.txt' \
+            --exclude '*.log'
+          npx cap add android
+          npx cap sync android
+          python3 tools/configure_android_wrapper.py
+          grep -q 'android:screenOrientation="sensorLandscape"' android/app/src/main/AndroidManifest.xml
+          grep -q 'joker-android-back' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
+          grep -q 'android:windowBackground">#03110f' android/app/src/main/res/values/styles.xml
+          chmod +x android/gradlew
+          cd android
+          ./gradlew compileDebugJavaWithJavac
+
+      - name: Remove temporary audit files and commit product changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf android www node_modules package-lock.json tools/__pycache__
+          rm -f .github/workflows/android-wrapper-integration-temp.yml
+          rm -f .github/workflows/android-wrapper-pr-audit-temp.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Wire Android wrapper configurator into CI"
+          git push origin HEAD:agent/android-mobile-wrapper-integration-1
