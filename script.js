@@ -14,17 +14,6 @@ const SUIT_SORT_WEIGHT = {
   clubs: 2,
   spades: 3,
 };
-const RANK_SORT_WEIGHT = {
-  A: 0,
-  K: 1,
-  Q: 2,
-  J: 3,
-  10: 4,
-  9: 5,
-  8: 6,
-  7: 7,
-  6: 8,
-};
 const RANK_POWER = {
   6: 0,
   7: 1,
@@ -36,12 +25,6 @@ const RANK_POWER = {
   K: 7,
   A: 8,
 };
-const DEMO_BIDS = [
-  [2, "pass", 3, 1],
-  [3, 2, "pass", 2],
-  [1, 3, 2, "pass"],
-  [4, 1, 2, 3],
-];
 const BID_OPTIONS = ["pass", 1, 2, 3, 4, 5, 6, 7, 8, 9];
 const EMOTIONS = ["😀", "😂", "😎", "😮", "😡", "😢", "😍", "🤔", "👏", "🔥"];
 const FULFILLED_SCORE = {
@@ -161,10 +144,10 @@ function shuffle(cards) {
 
 function buildPlayers(playerName) {
   return [
-    { id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },
-    { id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },
-    { id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },
-    { id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },
+    { id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, order: 1 },
+    { id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, order: 2 },
+    { id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, order: 3 },
+    { id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, order: 4 },
   ];
 }
 
@@ -1913,14 +1896,6 @@ function hideGameSummary() {
   if (elements.gameSummary) {
     elements.gameSummary.hidden = true;
   }
-}
-
-function formatPlayerScore(player) {
-  return formatScoreEntryLabel(calculatePlayerScore(player));
-}
-
-function scoreValue(player) {
-  return calculatePlayerScore(player).value;
 }
 
 function calculatePlayerScore(player) {
