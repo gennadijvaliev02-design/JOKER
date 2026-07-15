@@ -32,10 +32,11 @@
     }
   }
 
-  /* Keep the low-cost paint overrides after the final announcement styles. */
+  /* Keep paint cleanup and safe-area protection after all earlier Android layers. */
   const stylesheets = [
     ["android-v14-stylesheet", "android-v14.css?v=1"],
     ["android-webview-paint-stylesheet", "android-webview-paint.css?v=3"],
+    ["android-safe-area-stylesheet", "android-safe-area.css?v=1"],
   ];
 
   for (const [id, href] of stylesheets) {
