@@ -1,0 +1,211 @@
+name: Android safe-area audit
+
+on:
+  pull_request:
+    branches:
+      - agent/android-mobile-safe-area-1
+
+permissions:
+  contents: read
+
+jobs:
+  verify-safe-area:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout product branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/android-mobile-safe-area-1
+
+      - name: Validate source contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-v14.js
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          css = Path('android-safe-area.css').read_text(encoding='utf-8')
+          loader = Path('android-v14.js').read_text(encoding='utf-8')
+          v10 = Path('android-ui-v10.css').read_text(encoding='utf-8')
+          v12 = Path('android-ui-v12.css').read_text(encoding='utf-8')
+
+          stripped = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
+          if stripped.count('{') != stripped.count('}'):
+              raise SystemExit('Unbalanced safe-area CSS braces')
+
+          required = [
+              '--android-safe-left: 0px',
+              '--android-safe-right: 0px',
+              '--android-safe-top: 0px',
+              '--android-safe-bottom: 0px',
+              'env(safe-area-inset-left, 0px)',
+              'env(safe-area-inset-right, 0px)',
+              'env(safe-area-inset-top, 0px)',
+              'env(safe-area-inset-bottom, 0px)',
+              'width: var(--android-viewport-width)',
+              'height: var(--android-viewport-height)',
+              'margin-left: var(--android-safe-left)',
+              'margin-right: var(--android-safe-right)',
+              'margin-top: var(--android-safe-top)',
+              'margin-bottom: var(--android-safe-bottom)',
+          ]
+          missing = [marker for marker in required if marker not in css]
+          if missing:
+              raise SystemExit('Missing safe-area contracts: ' + ', '.join(missing))
+
+          forbidden_geometry = re.findall(
+              r'^\s*(left|right|top|bottom|transform)\s*:',
+              stripped,
+              flags=re.M,
+          )
+          if forbidden_geometry:
+              raise SystemExit('Safe-area layer rewrites approved geometry: ' + ', '.join(forbidden_geometry))
+
+          paint_index = loader.index('android-webview-paint.css?v=3')
+          safe_index = loader.index('android-safe-area.css?v=1')
+          if safe_index <= paint_index:
+              raise SystemExit('Safe-area stylesheet is not the final Android CSS layer')
+
+          if '--android-safe-left' not in v10 or '--android-safe-right' not in v10:
+              raise SystemExit('V10 decision panels no longer consume safe-area variables')
+          if '--android-safe-left' not in v12 or '--android-safe-right' not in v12:
+              raise SystemExit('V12 decision panels no longer consume safe-area variables')
+
+          for width, height in [(640, 360), (800, 360), (1024, 600), (1280, 720), (1600, 720)]:
+              if width <= height:
+                  raise SystemExit(f'Viewport is not landscape: {width}x{height}')
+              for left, right in [(0, 0), (44, 0), (0, 52), (44, 52)]:
+                  available = width - left - right - 34
+                  if available < 420:
+                      raise SystemExit(f'Unsafe panel width at {width}x{height}: {available}')
+          print('Static safe-area contract passed')
+          PY
+
+      - name: Exercise computed styles across landscape viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+
+          cat > /tmp/joker-safe-area-harness.html <<EOF
+          <!doctype html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+              <link rel="stylesheet" href="file://${GITHUB_WORKSPACE}/android-ui-v10.css">
+              <link rel="stylesheet" href="file://${GITHUB_WORKSPACE}/android-ui-v12.css">
+              <link rel="stylesheet" href="file://${GITHUB_WORKSPACE}/android-safe-area.css">
+              <style>
+                html, body { margin: 0; overflow: hidden; }
+                .phone-screen { position: fixed; inset: 0; }
+                .player-left, .player-right, .player-top, .player-you,
+                .left-stack, .right-stack, .table-menu, .smile,
+                .emotion-panel, .score, .last-trick-button, .game-hud {
+                  position: absolute;
+                }
+              </style>
+            </head>
+            <body>
+              <main class="phone-screen" id="screen"></main>
+              <div class="player-left" id="left"></div>
+              <div class="player-right" id="right"></div>
+              <div class="player-top" id="top"></div>
+              <button class="score" id="bottom"></button>
+              <div class="bid-panel is-v12-order-panel" id="panel"><div class="bid-title">Order</div><div class="bid-options"></div></div>
+              <pre id="result"></pre>
+              <script>
+                const query = new URLSearchParams(location.search);
+                const values = {
+                  left: Number(query.get('left') || 0),
+                  right: Number(query.get('right') || 0),
+                  top: Number(query.get('top') || 0),
+                  bottom: Number(query.get('bottom') || 0),
+                };
+                for (const [name, value] of Object.entries(values)) {
+                  document.documentElement.style.setProperty(`--android-safe-${name}`, `${value}px`);
+                }
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                  const style = (id) => getComputedStyle(document.getElementById(id));
+                  const screen = document.getElementById('screen').getBoundingClientRect();
+                  const panel = document.getElementById('panel').getBoundingClientRect();
+                  document.getElementById('result').textContent = JSON.stringify({
+                    innerWidth,
+                    innerHeight,
+                    screenWidth: screen.width,
+                    screenHeight: screen.height,
+                    leftMargin: parseFloat(style('left').marginLeft),
+                    rightMargin: parseFloat(style('right').marginRight),
+                    topMargin: parseFloat(style('top').marginTop),
+                    bottomMargin: parseFloat(style('bottom').marginBottom),
+                    panelWidth: panel.width,
+                    expectedPanelMax: innerWidth - values.left - values.right - 34,
+                  });
+                }));
+              </script>
+            </body>
+          </html>
+          EOF
+
+          python3 - <<'PY'
+          import html
+          import json
+          import subprocess
+          from pathlib import Path
+
+          chrome = next(
+              path for path in [
+                  '/usr/bin/google-chrome',
+                  '/usr/bin/chromium',
+                  '/usr/bin/chromium-browser',
+              ] if Path(path).exists()
+          )
+          harness = 'file:///tmp/joker-safe-area-harness.html'
+          cases = [
+              (640, 360, 0, 0, 0, 0),
+              (800, 360, 44, 0, 0, 0),
+              (1024, 600, 0, 52, 18, 24),
+              (1280, 720, 44, 52, 0, 24),
+              (1600, 720, 0, 0, 0, 0),
+          ]
+
+          for width, height, left, right, top, bottom in cases:
+              url = f'{harness}?left={left}&right={right}&top={top}&bottom={bottom}'
+              output = subprocess.check_output([
+                  chrome,
+                  '--headless=new',
+                  '--no-sandbox',
+                  '--disable-gpu',
+                  '--allow-file-access-from-files',
+                  f'--window-size={width},{height}',
+                  '--virtual-time-budget=1000',
+                  '--dump-dom',
+                  url,
+              ], text=True, stderr=subprocess.DEVNULL)
+              marker = '<pre id="result">'
+              payload = output.split(marker, 1)[1].split('</pre>', 1)[0]
+              result = json.loads(html.unescape(payload))
+
+              expected = {
+                  'leftMargin': left,
+                  'rightMargin': right,
+                  'topMargin': top,
+                  'bottomMargin': bottom,
+              }
+              for key, value in expected.items():
+                  if abs(result[key] - value) > 0.5:
+                      raise SystemExit(f'{width}x{height}: {key}={result[key]}, expected {value}')
+
+              if abs(result['screenWidth'] - result['innerWidth']) > 1:
+                  raise SystemExit(f'{width}x{height}: viewport width mismatch')
+              if abs(result['screenHeight'] - result['innerHeight']) > 1:
+                  raise SystemExit(f'{width}x{height}: viewport height mismatch')
+              if result['panelWidth'] > result['expectedPanelMax'] + 1:
+                  raise SystemExit(f'{width}x{height}: panel crosses horizontal safe area')
+
+              print(f'passed {width}x{height} insets={left}/{right}/{top}/{bottom}')
+          PY
