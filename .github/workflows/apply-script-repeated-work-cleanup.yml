@@ -1,6 +1,9 @@
 name: Apply script repeated-work cleanup
 
 on:
+  pull_request:
+    branches:
+      - agent/android-script-unused-cleanup-1
   push:
     branches:
       - agent/android-script-repeated-work-cleanup-1
