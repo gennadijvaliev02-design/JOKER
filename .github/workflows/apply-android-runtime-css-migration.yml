@@ -1,0 +1,56 @@
+name: Apply Android Runtime CSS Migration
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - agent/android-runtime-cleanup-2
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  migrate:
+    if: github.event.pull_request.head.ref == 'agent/android-runtime-css-trigger'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Android cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/android-runtime-cleanup-2
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Migrate runtime-injected styles
+        run: python3 .github/scripts/migrate-android-runtime-css.py
+
+      - name: Validate migrated sources
+        run: |
+          node --check android-deal-2026.js
+          node --check android-v15.js
+          test ! -e android-runtime-v11.js
+          test ! -e android-v14.js
+          test -s android-runtime-v13.css
+          test -s android-v14.css
+          test -s android-deal-2026.css
+          ! grep -q 'function injectStyles' android-deal-2026.js
+          ! grep -q 'android-deal-2026-stage-style' android-deal-2026.js
+          grep -q 'android-runtime-v13.css?v=1' .github/workflows/android-apk.yml
+          grep -q 'android-v14.css?v=1' .github/workflows/android-apk.yml
+          grep -q 'android-deal-2026.css?v=1' .github/workflows/android-apk.yml
+          ! grep -q 'android-runtime-v11.js?v=' .github/workflows/android-apk.yml
+          ! grep -q 'android-v14.js?v=' .github/workflows/android-apk.yml
+
+      - name: Commit migration to Android cleanup branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Move Android runtime styles out of JavaScript"
+          git push origin HEAD:agent/android-runtime-cleanup-2
