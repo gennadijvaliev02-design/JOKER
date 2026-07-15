@@ -1,6 +1,9 @@
 name: Build Runtime Cleanup APK
 
 on:
+  pull_request:
+    branches:
+      - android-runtime-cleanup-2-build
   push:
     branches:
       - android-runtime-cleanup-2-build
