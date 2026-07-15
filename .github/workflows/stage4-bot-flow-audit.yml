@@ -1,0 +1,31 @@
+name: Stage 4 bot flow audit
+
+on:
+  pull_request:
+    branches:
+      - agent/android-script-final-audit-1
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JavaScript
+        run: |
+          find . \
+            -path './.git' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './android' -prune -o \
+            -path './www' -prune -o \
+            -name '*.js' -type f -print0 \
+            | sort -z \
+            | xargs -0 -n1 node --check
+      - name: Build bot flow map
+        run: python3 tools/stage4_bot_flow_audit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stage4-bot-flow-audit
+          path: stage4-bot-flow-audit.json
