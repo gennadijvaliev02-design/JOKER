@@ -57,7 +57,7 @@ jobs:
           python3 -m py_compile tools/configure_android_wrapper.py
           python3 tools/configure_android_wrapper.py --self-test
 
-      - name: Generate and compile native shell without APK
+      - name: Generate native shell without APK
         shell: bash
         run: |
           set -euo pipefail
@@ -85,14 +85,39 @@ jobs:
           grep -q 'joker-native-lifecycle' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
           grep -q 'HapticFeedbackConstants.CONFIRM' android/app/src/main/java/com/valievcompany/joker/MainActivity.java
           chmod +x android/gradlew
+
+      - name: Compile native shell and capture log
+        shell: bash
+        run: |
+          set +e
           cd android
-          ./gradlew compileDebugJavaWithJavac
+          ./gradlew compileDebugJavaWithJavac --stacktrace > ../gradle-compile.log 2>&1
+          status=$?
+          cd ..
+          printf '%s\n' "$status" > gradle-compile.status
+          tail -n 180 gradle-compile.log
+          exit 0
+
+      - name: Upload compile diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lifecycle-compile-diagnostics
+          path: |
+            gradle-compile.log
+            gradle-compile.status
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Require native compile success
+        shell: bash
+        run: test "$(cat gradle-compile.status)" = "0"
 
       - name: Commit verified native configurator
         shell: bash
         run: |
           set -euo pipefail
           rm -rf android www node_modules package-lock.json tools/__pycache__ audit-tools
+          rm -f gradle-compile.log gradle-compile.status
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add tools/configure_android_wrapper.py
