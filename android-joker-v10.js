@@ -39,7 +39,7 @@
     clearJokerPanelClasses();
     elements.bidPanel.classList.add("is-android-joker-panel", `is-joker-${mode}-panel`);
     elements.bidPanel.hidden = false;
-    elements.bidTitle.textContent = title;
+    setElementText(elements.bidTitle, title);
     ensureCancelButton()?.removeAttribute("hidden");
   }
 
@@ -82,30 +82,33 @@
 
   renderLeadJokerCommandSelection = function renderAndroidLeadJokerCommandSelection() {
     prepareJokerPanel("command", "Команда джокера");
-    elements.bidOptions.replaceChildren(
+    const buttons = getCachedBidPanelNodes("android-joker-command", () => [
       makeCommandButton("take", "Берёт"),
       makeCommandButton("high", "Высший"),
-    );
+    ]);
+    syncBidPanelNodes(buttons);
   };
 
   renderLeadJokerSuitSelection = function renderAndroidLeadJokerSuitSelection() {
     const isTake = state.pendingJokerCommand === "take";
     prepareJokerPanel("suit", isTake ? "Берёт масть" : "Высший");
 
-    const suitButtons = FIXED_TRUMP_BY_GAME
-      .map((suitId) => SUITS.find((suit) => suit.id === suitId))
-      .filter(Boolean)
-      .map(makeSuitButton);
-
-    elements.bidOptions.replaceChildren(...suitButtons);
+    const buttons = getCachedBidPanelNodes("android-joker-suit", () =>
+      FIXED_TRUMP_BY_GAME
+        .map((suitId) => SUITS.find((suit) => suit.id === suitId))
+        .filter(Boolean)
+        .map(makeSuitButton),
+    );
+    syncBidPanelNodes(buttons);
   };
 
   renderJokerModeSelection = function renderAndroidJokerModeSelection() {
     prepareJokerPanel("mode", "Как сыграть джокером?");
-    elements.bidOptions.replaceChildren(
+    const buttons = getCachedBidPanelNodes("android-joker-mode", () => [
       makeModeButton("duck", "Подсунуть"),
       makeModeButton("beat", "Перебить"),
-    );
+    ]);
+    syncBidPanelNodes(buttons);
   };
 
   function cancelJokerChoice() {
@@ -116,7 +119,7 @@
     state.phase = "playing";
     state.busy = false;
     elements.bidPanel.hidden = true;
-    elements.bidOptions.replaceChildren();
+    if (elements.bidOptions.childElementCount) elements.bidOptions.replaceChildren();
     clearJokerPanelClasses();
     ensureCancelButton()?.setAttribute("hidden", "");
     hideNotice();

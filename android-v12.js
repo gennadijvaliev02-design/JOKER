@@ -67,7 +67,12 @@
 
   function getPanelKey(kind) {
     if (kind === "order") {
-      return `order:${state.biddingIndex}:${state.biddingOrder.length}:${getOrderedBidTotal?.() ?? ""}`;
+      const handSize = Number(window.JokerRules?.getHandSize?.(state.currentPulka, state.currentGame))
+        || Number(state.currentHandSize)
+        || Number(state.hands?.human?.length)
+        || 9;
+      const rulesId = window.JokerRules?.activeId || "rules";
+      return `order:${rulesId}:${state.currentPulka}:${state.currentGame}:${handSize}:${state.biddingIndex}:${state.biddingOrder.length}:${getOrderedBidTotal?.() ?? ""}`;
     }
     if (kind === "trump") return `trump:${state.trumpChooserId || ""}`;
     if (kind === "joker-suit") {

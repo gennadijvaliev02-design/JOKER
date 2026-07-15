@@ -113,31 +113,32 @@
     elements.bidPanel.hidden = state.phase !== "bidding" || getCurrentBidderId() !== "human";
 
     if (elements.bidPanel.hidden) {
-      elements.bidOptions.replaceChildren();
+      if (elements.bidOptions.childElementCount) elements.bidOptions.replaceChildren();
       return;
     }
 
-    elements.bidTitle.textContent = "Заказ";
+    setElementText(elements.bidTitle, "Заказ");
     const handSize = getCurrentHandSize();
     const currentBidTotal = getOrderedBidTotal();
     const isLastBidder = state.biddingIndex === state.biddingOrder.length - 1;
-    const allowedOptions = BID_OPTIONS.filter((bid) => bid === "pass" || bid <= handSize);
-    const buttons = allowedOptions.map((bid) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "bid-option";
-      button.dataset.bid = String(bid);
-      button.textContent = bid === "pass" ? "Пас" : String(bid);
+    const buttons = getCachedBidPanelNodes(`rules-order:${handSize}`, () => {
+      const nodes = [];
+      for (const bid of BID_OPTIONS) {
+        if (bid === "pass" || bid <= handSize) {
+          nodes.push(createBidPanelButton("bid", bid, bid === "pass" ? "Пас" : String(bid)));
+        }
+      }
+      return nodes;
+    });
 
-      const bidValue = bid === "pass" ? 0 : bid;
+    for (const button of buttons) {
+      const bidValue = button.dataset.bid === "pass" ? 0 : Number(button.dataset.bid);
       const isForbidden = isLastBidder && currentBidTotal + bidValue === handSize;
       button.disabled = isForbidden;
       button.classList.toggle("is-forbidden", isForbidden);
+    }
 
-      return button;
-    });
-
-    elements.bidOptions.replaceChildren(...buttons);
+    syncBidPanelNodes(buttons);
   };
 
   isBidAllowedForCurrentTurn = function isBidAllowedForCurrentRules(bid) {
