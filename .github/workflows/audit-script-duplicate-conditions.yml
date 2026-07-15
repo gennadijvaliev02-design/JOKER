@@ -1,0 +1,98 @@
+name: Audit duplicate conditions in script.js
+
+on:
+  push:
+    branches:
+      - agent/android-script-static-audit-2
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-static-audit-2
+          fetch-depth: 1
+
+      - name: Build duplicate-condition report
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          text = Path('script.js').read_text(encoding='utf-8')
+          source = text.splitlines()
+
+          # Simple balanced-brace extraction for top-level named functions.
+          functions = []
+          pattern = re.compile(r'^function\s+([A-Za-z_$][\w$]*)\s*\(', re.M)
+          for match in pattern.finditer(text):
+              name = match.group(1)
+              brace = text.find('{', match.end())
+              if brace < 0:
+                  continue
+              depth = 0
+              quote = None
+              escaped = False
+              end = None
+              i = brace
+              while i < len(text):
+                  ch = text[i]
+                  if quote:
+                      if escaped:
+                          escaped = False
+                      elif ch == '\\':
+                          escaped = True
+                      elif ch == quote:
+                          quote = None
+                  else:
+                      if ch in {'"', "'", '`'}:
+                          quote = ch
+                      elif ch == '{':
+                          depth += 1
+                      elif ch == '}':
+                          depth -= 1
+                          if depth == 0:
+                              end = i + 1
+                              break
+                  i += 1
+              if end:
+                  start_line = text.count('\n', 0, match.start()) + 1
+                  functions.append((name, start_line, text[match.start():end]))
+
+          lines = ['# Duplicate conditions inside `script.js` functions', '']
+          findings = 0
+          for name, start_line, body in functions:
+              conditions = {}
+              for line_offset, line in enumerate(body.splitlines(), 0):
+                  stripped = line.strip()
+                  m = re.match(r'if\s*\((.*)\)\s*\{?\s*$', stripped)
+                  if not m:
+                      continue
+                  normalized = re.sub(r'\s+', ' ', m.group(1).strip())
+                  conditions.setdefault(normalized, []).append(start_line + line_offset)
+              duplicates = {cond: nums for cond, nums in conditions.items() if len(nums) > 1}
+              if not duplicates:
+                  continue
+              findings += len(duplicates)
+              lines += [f'## `{name}`', '']
+              for cond, nums in duplicates.items():
+                  lines.append(f'- `{cond}` — lines {", ".join(map(str, nums))}')
+              lines.append('')
+
+          lines.insert(2, f'- Duplicate condition groups: **{findings}**')
+          Path('SCRIPT_DUPLICATE_CONDITION_AUDIT.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SCRIPT_DUPLICATE_CONDITION_AUDIT.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add duplicate condition audit'
+          git push origin HEAD:agent/android-script-static-audit-2
