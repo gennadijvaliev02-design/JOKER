@@ -1,7 +1,7 @@
 name: Stage 4 bot end-to-end audit
 on:
-  push:
-    branches: [agent/android-script-bot-e2e-audit-1]
+  pull_request:
+    branches: [agent/android-script-bot-animation-sync-1]
   workflow_dispatch:
 jobs:
   audit:
