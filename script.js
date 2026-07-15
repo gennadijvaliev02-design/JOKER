@@ -164,6 +164,49 @@ function getPlayerRenderSignature(player) {
   ].join("|");
 }
 
+let lastHandRenderSignature = null;
+let lastTrickRenderSignature = null;
+let trickRenderLanguageVersion = 0;
+
+function getHandRenderState(hand, shouldAnimateDeal) {
+  const playability = new Array(hand.length);
+  let signature = `${state.dealAnimationKey}|${shouldAnimateDeal ? 1 : 0}`;
+
+  for (let index = 0; index < hand.length; index += 1) {
+    const card = hand[index];
+    const playable = canHumanPlay(card);
+    playability[index] = playable;
+    signature += `|${card.id}:${playable ? 1 : 0}`;
+  }
+
+  return { playability, signature };
+}
+
+function getTrickRenderSignature() {
+  let signature = `${trickRenderLanguageVersion}|${state.collectingTrickWinnerSeat || ""}`;
+
+  for (const play of state.currentTrick) {
+    signature += [
+      play.player?.id || "",
+      play.player?.name || "",
+      play.player?.seat || "",
+      play.card?.id || "",
+      play.jokerMode || "",
+      play.jokerCommand || "",
+      play.jokerSuit || "",
+      play.order ?? "",
+    ].join(":");
+    signature += "|";
+  }
+
+  return signature;
+}
+
+window.addEventListener("joker-language-change", () => {
+  trickRenderLanguageVersion += 1;
+  lastTrickRenderSignature = null;
+});
+
 const urlParams = new URLSearchParams(window.location.search);
 
 function createJokerDeck() {
@@ -641,17 +684,30 @@ function getBidBalance() {
 function renderHand() {
   const hand = state.hands.human || [];
   const shouldAnimateDeal = state.dealAnimationKey !== state.renderedDealAnimationKey;
+  const { playability, signature } = getHandRenderState(hand, shouldAnimateDeal);
+  const nodes = elements.playerHand.children;
+  let domMatches = nodes.length === hand.length;
+
+  for (let index = 0; domMatches && index < hand.length; index += 1) {
+    domMatches = nodes[index]?.classList.contains("card")
+      && nodes[index]?.dataset.card === hand[index].id;
+  }
+
+  if (domMatches && signature === lastHandRenderSignature) {
+    return;
+  }
 
   elements.playerHand.replaceChildren(
     ...hand.map((card, index) =>
       createCardElement(card, {
-        playable: canHumanPlay(card),
+        playable: playability[index],
         dealIndex: shouldAnimateDeal ? index : null,
         handIndex: index,
         handCount: hand.length,
       }),
     ),
   );
+  lastHandRenderSignature = signature;
 
   if (shouldAnimateDeal) {
     state.renderedDealAnimationKey = state.dealAnimationKey;
@@ -812,6 +868,15 @@ function markDealAnimation() {
 }
 
 function renderTrick() {
+  const signature = getTrickRenderSignature();
+
+  if (
+    signature === lastTrickRenderSignature
+    && elements.playedCardSlot.children.length === state.currentTrick.length
+  ) {
+    return;
+  }
+
   elements.playedCardSlot.replaceChildren(
     ...state.currentTrick.map((play) => {
       const playedCard = document.createElement("div");
@@ -839,6 +904,7 @@ function renderTrick() {
       return playedCard;
     }),
   );
+  lastTrickRenderSignature = signature;
 }
 
 function formatJokerPlaySuffix(play) {
