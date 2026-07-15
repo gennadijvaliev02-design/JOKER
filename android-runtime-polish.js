@@ -2,7 +2,6 @@
   "use strict";
 
   const table = document.querySelector(".table");
-  const reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
   const PLAYER_SEATS = ["left", "top", "right", "bottom"];
 
   const playerViews = Object.fromEntries(
@@ -184,21 +183,6 @@
       return result;
     };
   }
-
-  function canVibrate() {
-    return typeof navigator.vibrate === "function" && !reducedMotionQuery?.matches;
-  }
-
-  document.addEventListener("pointerdown", (event) => {
-    if (!(event.target instanceof Element)) return;
-
-    const interactive = event.target.closest(
-      "button:not(:disabled), .card:not(.is-disabled), [role='button']",
-    );
-
-    if (!interactive || !canVibrate()) return;
-    navigator.vibrate(interactive.matches(".card") ? 7 : 10);
-  }, { passive: true });
 
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
