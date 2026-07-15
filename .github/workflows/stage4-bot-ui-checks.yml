@@ -1,6 +1,9 @@
 name: Stage 4 bot UI adapter checks
 
 on:
+  pull_request:
+    branches:
+      - agent/android-script-bot-stale-guard-1
   push:
     branches:
       - agent/android-script-bot-ui-state-1
