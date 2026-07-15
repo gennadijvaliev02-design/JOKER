@@ -1,0 +1,23 @@
+name: Stage 4 bot animation sync checks
+
+on:
+  push:
+    branches:
+      - agent/android-script-bot-animation-sync-1
+  pull_request:
+    branches:
+      - agent/android-script-bot-ui-state-1
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          find . -path './.git' -prune -o -path './node_modules' -prune -o -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Check animation synchronization
+        run: node tests/stage4-bot-animation-sync.test.js
