@@ -1,0 +1,27 @@
+name: Stage 4 stale guard checks
+
+on:
+  pull_request:
+    branches:
+      - agent/android-script-bot-ui-bridge-1
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JavaScript
+        run: |
+          find . \
+            -path './.git' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './android' -prune -o \
+            -path './www' -prune -o \
+            -name '*.js' -type f -print0 \
+            | sort -z \
+            | xargs -0 -n1 node --check
+      - name: Test stale action guards
+        run: node tools/test-stage4-stale-guard.js
