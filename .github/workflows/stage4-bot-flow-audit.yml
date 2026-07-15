@@ -1,4 +1,4 @@
-name: Stage 4 bot flow audit
+name: Stage 4 bot action bridge checks
 
 on:
   pull_request:
@@ -23,7 +23,9 @@ jobs:
             -name '*.js' -type f -print0 \
             | sort -z \
             | xargs -0 -n1 node --check
-      - name: Build bot flow map
+      - name: Validate bot action bridge behavior
+        run: node tools/test_stage4_bot_action_bridge.js
+      - name: Rebuild bot flow map
         run: python3 tools/stage4_bot_flow_audit.py
       - uses: actions/upload-artifact@v4
         with:
