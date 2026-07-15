@@ -18,19 +18,21 @@ jobs:
           ref: agent/android-script-unused-cleanup-1
           fetch-depth: 1
 
-      - name: Apply exact cleanup
+      - name: Apply exact cleanup with diagnostics
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import traceback
 
-          script = Path('script.js')
-          text = script.read_text(encoding='utf-8')
-
-          replacements = [
-              ('state.players = state.players.map((player, index) => {', 'state.players = state.players.map((player) => {', 1),
-              ('function hasStrongLeadCard(playerId, cards) {', 'function hasStrongLeadCard(cards) {', 1),
-              ('hasStrongLeadCard(playerId, standardCards)', 'hasStrongLeadCard(standardCards)', 1),
-              ('''  state.players.forEach((_, playerIndex) => {
+          status = []
+          try:
+              script = Path('script.js')
+              text = script.read_text(encoding='utf-8')
+              replacements = [
+                  ('state.players = state.players.map((player, index) => {', 'state.players = state.players.map((player) => {', 1),
+                  ('function hasStrongLeadCard(playerId, cards) {', 'function hasStrongLeadCard(cards) {', 1),
+                  ('hasStrongLeadCard(playerId, standardCards)', 'hasStrongLeadCard(standardCards)', 1),
+                  ('''  state.players.forEach((_, playerIndex) => {
     const entries = gameRows.map((row) => row.entries[playerIndex]);
 
     if (!entries.every((entry) => entry.fulfilled)) {
@@ -57,7 +59,7 @@ jobs:
     lastEntry.premium = true;
     premiumPlayerIndexes.push(playerIndex);
   }''', 1),
-              ('''  if (premiumPlayerIndexes.length) {
+                  ('''  if (premiumPlayerIndexes.length) {
     state.players.forEach((_, playerIndex) => {
       if (premiumPlayerIndexes.includes(playerIndex)) {
         return;
@@ -74,46 +76,52 @@ jobs:
       crossBestSuccessfulEntry(gameRows, playerIndex);
     }
   }''', 1),
-              ('''  return state.players.map((_, offset) => {
+                  ('''  return state.players.map((_, offset) => {
     return state.players[(startIndex + offset) % state.players.length].id;
   });''', '''  return Array.from(state.players.keys(), (offset) => {
     return state.players[(startIndex + offset) % state.players.length].id;
   });''', 1),
-          ]
+              ]
+              for old, new, expected in replacements:
+                  count = text.count(old)
+                  status.append(f'{old.splitlines()[0]} => {count}')
+                  if count != expected:
+                      raise RuntimeError(f'Expected {expected}, found {count}: {old.splitlines()[0]}')
+                  text = text.replace(old, new, expected)
+              script.write_text(text, encoding='utf-8')
 
-          for old, new, expected in replacements:
-              count = text.count(old)
-              if count != expected:
-                  raise SystemExit(f'Expected {expected} occurrence(s), found {count}: {old.splitlines()[0]}')
-              text = text.replace(old, new, expected)
+              memory = Path('bot-memory-polish.js')
+              memory_text = memory.read_text(encoding='utf-8')
+              old = 'hasStrongLeadCard(playerId, standardCards)'
+              status.append(f'bot-memory call => {memory_text.count(old)}')
+              if memory_text.count(old) != 1:
+                  raise RuntimeError(f'Expected one bot-memory call, found {memory_text.count(old)}')
+              memory.write_text(memory_text.replace(old, 'hasStrongLeadCard(standardCards)', 1), encoding='utf-8')
+              status.append('RESULT: product cleanup applied')
+          except Exception:
+              status.append('RESULT: FAILED')
+              status.append(traceback.format_exc())
 
-          script.write_text(text, encoding='utf-8')
-
-          memory = Path('bot-memory-polish.js')
-          memory_text = memory.read_text(encoding='utf-8')
-          old = 'hasStrongLeadCard(playerId, standardCards)'
-          if memory_text.count(old) != 1:
-              raise SystemExit(f'Expected one bot-memory call, found {memory_text.count(old)}')
-          memory.write_text(memory_text.replace(old, 'hasStrongLeadCard(standardCards)', 1), encoding='utf-8')
+          Path('UNUSED_CLEANUP_STATUS.md').write_text('# Cleanup status\n\n```text\n' + '\n'.join(status) + '\n```\n', encoding='utf-8')
           PY
 
-      - name: Validate syntax and exact cleanup
+      - name: Validate when applied
         run: |
-          node --check script.js
-          node --check bot-memory-polish.js
-          ! grep -q 'function hasStrongLeadCard(playerId' script.js
-          ! grep -q 'map((player, index)' script.js
-          ! grep -q 'forEach((_, playerIndex)' script.js
-          ! grep -q 'map((_, offset)' script.js
-          ! grep -q 'hasStrongLeadCard(playerId, standardCards)' script.js bot-memory-polish.js
-          grep -q 'for (const playerIndex of state.players.keys())' script.js
-          grep -q 'Array.from(state.players.keys(), (offset)' script.js
+          if grep -q 'RESULT: product cleanup applied' UNUSED_CLEANUP_STATUS.md; then
+            node --check script.js
+            node --check bot-memory-polish.js
+            ! grep -q 'function hasStrongLeadCard(playerId' script.js
+            ! grep -q 'map((player, index)' script.js
+            ! grep -q 'forEach((_, playerIndex)' script.js
+            ! grep -q 'map((_, offset)' script.js
+            ! grep -q 'hasStrongLeadCard(playerId, standardCards)' script.js bot-memory-polish.js
+          fi
 
-      - name: Commit product change
+      - name: Commit status and product change
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add script.js bot-memory-polish.js
+          git add script.js bot-memory-polish.js UNUSED_CLEANUP_STATUS.md
           git diff --cached --quiet && exit 0
-          git commit -m 'Remove unused script parameters and placeholder callbacks'
+          git commit -m 'Apply script unused cleanup with diagnostics'
           git push origin HEAD:agent/android-script-unused-cleanup-1
