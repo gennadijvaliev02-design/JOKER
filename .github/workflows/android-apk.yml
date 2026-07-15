@@ -1,27 +1,50 @@
-name: Audit card render owners
+name: Apply hand and trick render cache
 
 on:
-  pull_request:
-    branches:
-      - agent/android-script-dom-cache-cleanup-1
   push:
     branches:
       - agent/android-script-card-render-cache-1
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/android-script-card-render-cache-1
-          fetch-depth: 1
-      - name: Collect render ownership
-        run: python3 .github/tmp/card-render-owner-audit.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: card-render-owner-audit
-          path: card-render-owner-audit.txt
+          fetch-depth: 0
+
+      - name: Apply exact render cache patch
+        run: python3 .github/tmp/card-render-cache-patch.py
+
+      - name: Validate syntax and behavior parity
+        run: |
+          node --check script.js
+          node --check android-runtime-v2.js
+          node --check android-v15.js
+          node --check rules/deal-animation-adapter.js
+          node --check joker-announcement.js
+          node .github/tmp/card-render-cache-test.js
+          grep -q 'function getHandRenderState' script.js
+          grep -q 'function getTrickRenderSignature' script.js
+          grep -q 'typeof getTrickRenderSignature === "function"' android-runtime-v2.js
+          ! grep -q 'Array.from(elements.playerHand.children)' android-v15.js
+
+      - name: Commit product changes and restore repository workflow
+        run: |
+          git fetch origin agent/android-script-dom-cache-cleanup-1
+          git show origin/agent/android-script-dom-cache-cleanup-1:.github/workflows/android-apk.yml > .github/workflows/android-apk.yml
+          rm -f .github/tmp/card-render-owner-audit.py
+          rm -f .github/tmp/card-render-cache-patch.py
+          rm -f .github/tmp/card-render-cache-test.js
+          rm -f card-render-owner-audit.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Cache unchanged hand and trick rendering'
+          git push origin HEAD:agent/android-script-card-render-cache-1
