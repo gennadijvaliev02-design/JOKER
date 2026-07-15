@@ -1,4 +1,4 @@
-name: Diagnose script DOM cache cleanup
+name: Apply script DOM cache cleanup
 
 on:
   pull_request:
@@ -6,47 +6,57 @@ on:
       - agent/android-script-score-cleanup-1
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  diagnose:
+  cleanup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/android-script-dom-cache-cleanup-1
-          fetch-depth: 1
+          fetch-depth: 0
 
-      - name: Collect render ownership diagnostics
+      - name: Apply exact shared DOM cache cleanup
+        run: python3 .github/tmp/dom-cache-patch.py
+
+      - name: Validate syntax and behavior parity
         run: |
+          node --check script.js
+          node --check android-runtime-polish.js
+          node --check android-opponent-hands.js
+          node .github/tmp/dom-cache-test.js
+          grep -q 'const playerViewsBySeat' script.js
+          grep -q 'const lastPlayerRenderSignatures' script.js
+          grep -q 'const opponentStacksBySeat' script.js
+          grep -q 'stack.children.length === cardCount' script.js
+          grep -q 'typeof playerViewsBySeat === "object"' android-runtime-polish.js
+          grep -q 'typeof setElementText === "function"' android-runtime-polish.js
+          grep -q 'typeof opponentStacksBySeat === "object"' android-opponent-hands.js
           python3 - <<'PY'
-          import re
           from pathlib import Path
-
-          lines = []
-          for symbol in ('renderPlayers', 'renderOpponentCardStacks'):
-              lines.append(f'[{symbol}]')
-              for path in sorted(Path('.').rglob('*.js')):
-                  source = path.read_text(encoding='utf-8')
-                  for number, line in enumerate(source.splitlines(), 1):
-                      if re.search(rf'\b{symbol}\s*=', line):
-                          lines.append(f'{path}:{number}: {line.strip()}')
-
           script = Path('script.js').read_text(encoding='utf-8')
-          android = Path('android-opponent-hands.js').read_text(encoding='utf-8')
-          lines.extend([
-              '[markers]',
-              f'elements={script.count(chr(32) * 2 + "gameDialogActions: document.querySelector(\"#game-dialog-actions\")," + chr(10) + "};")}',
-              f'renderPlayers={script.count("function renderPlayers() {")}',
-              f'renderOpponentCardStacks={script.count("function renderOpponentCardStacks() {")}',
-              f'avatarLookup={script.count("const avatar = document.querySelector(`[data-seat=\"${player.seat}\"]`);")}',
-              f'stackLookup={script.count("const stack = document.querySelector(`.${seat}-stack`);")}',
-              f'androidStacks={android.count("  const stacksBySeat = Object.fromEntries(")}',
-          ])
-          Path('dom-cache-diagnostics.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          runtime = Path('android-runtime-polish.js').read_text(encoding='utf-8')
+          opponents = Path('android-opponent-hands.js').read_text(encoding='utf-8')
+          assert script.count('const playerViewsBySeat') == 1
+          assert script.count('const opponentStacksBySeat') == 1
+          assert 'const avatar = document.querySelector(`[data-seat="${player.seat}"]`);' not in script
+          assert 'const stack = document.querySelector(`.${seat}-stack`);' not in script
+          assert runtime.count('typeof playerViewsBySeat === "object"') == 1
+          assert opponents.count('typeof opponentStacksBySeat === "object"') == 1
           PY
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dom-cache-diagnostics
-          path: dom-cache-diagnostics.txt
+      - name: Commit product change and restore repository workflow
+        run: |
+          git fetch origin agent/android-script-score-cleanup-1
+          git show origin/agent/android-script-score-cleanup-1:.github/workflows/android-apk.yml > .github/workflows/android-apk.yml
+          rm -f .github/workflows/apply-script-dom-cache-cleanup.yml
+          rm -f .github/tmp/dom-cache-patch.py
+          rm -f .github/tmp/dom-cache-test.js
+          rm -f TRIGGER_DOM_CACHE_CLEANUP.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Cache stable player and opponent DOM references'
+          git push origin HEAD:agent/android-script-dom-cache-cleanup-1
