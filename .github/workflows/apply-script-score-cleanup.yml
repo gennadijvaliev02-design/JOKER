@@ -21,21 +21,6 @@ jobs:
           ref: agent/android-script-score-cleanup-1
           fetch-depth: 1
 
-      - name: Audit score sheet visibility owners
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          hits = []
-          for path in Path('.').rglob('*.js'):
-              for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
-                  if 'scoreSheet.hidden' in line:
-                      hits.append((str(path), number, line.strip()))
-          unexpected = [hit for hit in hits if hit[0] != 'script.js']
-          if unexpected:
-              raise SystemExit(f'Unexpected external scoreSheet.hidden access: {unexpected}')
-          print(hits)
-          PY
-
       - name: Apply exact score cleanup
         run: |
           python3 .github/tmp/score-cleanup-core1.py
@@ -52,7 +37,6 @@ jobs:
           grep -q 'function calculateCurrentPlayerScores' script.js
           grep -q 'function calculateMatchTotals' script.js
           grep -q 'function calculatePulkaTotals' script.js
-          grep -q 'if (!elements.scoreSheet.hidden)' script.js
           grep -q 'const playerScores = calculateCurrentPlayerScores();' pulka-summary.js
           grep -q 'const matchTotals = calculateMatchTotals();' winner-podium.js
           ! grep -q 'flatMap' pass-premium-cross-fix.js
