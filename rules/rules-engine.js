@@ -110,6 +110,7 @@
       .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
       .then(() => loadAdapter("rules/rules-scoring-adapter.js?v=1", "scoring"))
       .then(() => loadAdapter("rules/core-logic-fixes.js?v=1", "core-fixes"))
+      .then(() => loadAdapter("rules/bot-action-bridge.js?v=1", "bot-action-bridge"))
       .then(() => {
         if (window.__JOKER_ANDROID_DEAL_2026_STAGE__) return null;
         return loadAdapter("rules/deal-animation-adapter.js?v=2", "deal-animation");
