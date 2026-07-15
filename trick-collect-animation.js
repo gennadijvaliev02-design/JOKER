@@ -3,6 +3,12 @@
 
   const COLLECT_START_DELAY = 560;
   const COLLECT_ANIMATION_TIME = 980;
+  const avatarsBySeat = new Map(
+    ["left", "top", "right", "bottom"].map((seat) => [
+      seat,
+      document.querySelector(`[data-seat="${seat}"]`),
+    ]),
+  );
 
   function getCenterInsideTable(element, tableRect) {
     const rect = element.getBoundingClientRect();
@@ -13,7 +19,7 @@
   }
 
   function getWinnerTarget(seat, tableRect) {
-    const avatar = document.querySelector(`[data-seat="${seat}"]`);
+    const avatar = avatarsBySeat.get(seat);
     if (avatar) return getCenterInsideTable(avatar, tableRect);
 
     const fallback = {
