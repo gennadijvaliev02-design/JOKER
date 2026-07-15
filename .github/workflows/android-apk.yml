@@ -1,6 +1,9 @@
 name: Audit card render owners
 
 on:
+  pull_request:
+    branches:
+      - agent/android-script-dom-cache-cleanup-1
   push:
     branches:
       - agent/android-script-card-render-cache-1
@@ -10,7 +13,6 @@ permissions:
 
 jobs:
   audit:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
