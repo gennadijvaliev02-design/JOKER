@@ -157,10 +157,14 @@
     applyRulesCard();
   }
 
-  function updateSelectedState() {
+  function updateChoiceState() {
     choices.forEach((button) => {
       button.classList.toggle("is-selected", button.dataset.rulesModeChoice === window.JokerRules.activeId);
     });
+  }
+
+  function updateSelectedState() {
+    updateChoiceState();
     applyRulesCard();
   }
 
@@ -170,20 +174,23 @@
     }
 
     applyLanguage();
-    updateSelectedState();
+    updateChoiceState();
     overlay.hidden = false;
     requestAnimationFrame(() => overlay.classList.add("is-visible"));
-    choices.find((button) => button.dataset.rulesModeChoice === window.JokerRules.activeId)?.focus?.();
+    choices.find((button) => button.dataset.rulesModeChoice === window.JokerRules.activeId)?.focus?.({ preventScroll: true });
   }
 
-  function closeRulesDialog() {
+  function closeRulesDialog({ restoreFocus = true } = {}) {
     overlay.classList.remove("is-visible");
     window.setTimeout(() => {
       if (!overlay.classList.contains("is-visible")) {
         overlay.hidden = true;
       }
     }, 190);
-    startButton.focus?.();
+
+    if (restoreFocus) {
+      startButton.focus?.({ preventScroll: true });
+    }
   }
 
   function continueToDifficulty(ruleId) {
@@ -192,8 +199,7 @@
       return;
     }
 
-    updateSelectedState();
-    closeRulesDialog();
+    closeRulesDialog({ restoreFocus: false });
     window.setTimeout(() => {
       if (window.JokerDifficultySelect?.open) {
         window.JokerDifficultySelect.open();
