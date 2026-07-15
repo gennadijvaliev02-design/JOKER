@@ -1,6 +1,9 @@
 name: Apply script DOM cache cleanup
 
 on:
+  pull_request:
+    branches:
+      - agent/android-script-score-cleanup-1
   push:
     branches:
       - agent/android-script-dom-cache-cleanup-1
