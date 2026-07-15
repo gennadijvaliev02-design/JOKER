@@ -1,50 +1,40 @@
-name: Apply script DOM cache cleanup
+name: Diagnose script DOM cache cleanup
 
 on:
   pull_request:
     branches:
       - agent/android-script-score-cleanup-1
-  push:
-    branches:
-      - agent/android-script-dom-cache-cleanup-1
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  cleanup:
-    if: github.actor != 'github-actions[bot]'
+  diagnose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/android-script-dom-cache-cleanup-1
-          fetch-depth: 0
-
-      - name: Apply exact DOM cache cleanup
-        run: python3 .github/tmp/dom-cache-patch.py
-
-      - name: Validate syntax and behavior parity
+          fetch-depth: 1
+      - name: Print render owners and patch markers
         run: |
-          node --check script.js
-          node --check android-opponent-hands.js
-          node .github/tmp/dom-cache-test.js
-          grep -q 'const playerViewsBySeat' script.js
-          grep -q 'const opponentStacksBySeat' script.js
-          grep -q 'stack.children.length === cardCount' script.js
-          grep -q 'typeof opponentStacksBySeat === "object"' android-opponent-hands.js
-
-      - name: Commit product change and restore workflows
-        run: |
-          git fetch origin agent/android-script-score-cleanup-1
-          git show origin/agent/android-script-score-cleanup-1:.github/workflows/android-apk.yml > .github/workflows/android-apk.yml
-          rm -f .github/workflows/apply-script-dom-cache-cleanup.yml
-          rm -f .github/tmp/dom-cache-patch.py
-          rm -f .github/tmp/dom-cache-test.js
-          rm -f TRIGGER_DOM_CACHE_CLEANUP.txt
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --quiet && exit 0
-          git commit -m 'Cache stable player and opponent DOM references'
-          git push origin HEAD:agent/android-script-dom-cache-cleanup-1
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          owners_players = []
+          owners_stacks = []
+          for path in Path('.').rglob('*.js'):
+              source = path.read_text(encoding='utf-8')
+              if path.name != 'script.js' and re.search(r'\brenderPlayers\s*=', source):
+                  owners_players.append(str(path))
+              if path.name != 'script.js' and re.search(r'\brenderOpponentCardStacks\s*=', source):
+                  owners_stacks.append(str(path))
+          script = Path('script.js').read_text(encoding='utf-8')
+          android = Path('android-opponent-hands.js').read_text(encoding='utf-8')
+          print('renderPlayers owners:', owners_players)
+          print('renderOpponentCardStacks owners:', owners_stacks)
+          print('elements marker:', script.count('  gameDialogActions: document.querySelector("#game-dialog-actions"),\n};'))
+          print('renderPlayers marker:', script.count('function renderPlayers() {'))
+          print('base stack marker:', script.count('function renderOpponentCardStacks() {'))
+          print('android stack block:', android.count('  const stacksBySeat = Object.fromEntries('))
+          PY
