@@ -15,7 +15,9 @@
 }
 
 /* Large panels previously rasterized several wide glow layers on every opening. */
-.bid-panel[class*="is-v12-"] {
+.bid-panel[class*="is-v12-"],
+.bid-panel.is-v12-trump-panel,
+.bid-panel.is-v12-joker-suit-panel {
   box-shadow:
     0 18px 38px rgba(0, 0, 0, 0.56),
     inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
@@ -25,7 +27,12 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.76) !important;
 }
 
-.bid-panel[class*="is-v12-"] .bid-option {
+.bid-panel[class*="is-v12-"] .bid-option,
+.bid-panel.is-v12-trump-panel .bid-option[data-trump],
+.bid-panel.is-v12-joker-suit-panel .android-joker-suit-option,
+.bid-panel.is-v12-joker-suit-panel .bid-option[data-joker-lead-suit],
+.bid-panel .android-silver-suit,
+.bid-panel.is-v12-trump-panel .bid-option[data-trump="no-trump"] {
   box-shadow:
     0 8px 16px rgba(0, 0, 0, 0.36),
     inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
@@ -38,6 +45,54 @@
   transition:
     transform 130ms ease,
     border-color 150ms ease !important;
+}
+
+/* V13 HUD selectors are more specific than the generic table overrides. */
+.trump-pill.v13-trump-ready {
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.76) !important;
+}
+
+.trump-pill.v13-trump-ready .trump-card {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.34),
+    0 7px 14px rgba(0, 0, 0, 0.32) !important;
+}
+
+.trump-pill.v13-trump-ready[data-v13-suit="red"] .trump-card {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.34),
+    0 0 0 2px rgba(255, 73, 96, 0.14),
+    0 7px 14px rgba(0, 0, 0, 0.32) !important;
+}
+
+.trump-pill.v13-trump-ready[data-v13-suit="black"] .trump-card {
+  box-shadow:
+    0 0 0 1px rgba(226, 234, 231, 0.44),
+    0 7px 14px rgba(0, 0, 0, 0.32) !important;
+}
+
+/* V14 is loaded before this file so its announcement glows cannot return. */
+.joker-announcement,
+.joker-announcement.is-take {
+  box-shadow:
+    0 13px 28px rgba(0, 0, 0, 0.46),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07) !important;
+}
+
+.joker-announcement-player,
+.joker-announcement-suit.is-red,
+.joker-announcement-suit.is-black,
+.player.is-joker-announcer .name {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.76) !important;
+}
+
+.player.is-joker-announcer .avatar {
+  box-shadow:
+    0 0 0 3px rgba(255, 214, 41, 0.64),
+    0 7px 14px rgba(0, 0, 0, 0.34) !important;
 }
 
 /* Frequently changing table pieces keep depth without oversized blur radii. */
