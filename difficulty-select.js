@@ -94,35 +94,37 @@
     startButton.textContent = t.play;
   }
 
-  function updateSelectedState() {
-    const current = getCurrentDifficulty();
+  function updateSelectedState(current = getCurrentDifficulty()) {
     choices.forEach((button) => {
       button.classList.toggle("is-selected", button.dataset.aiDifficultyChoice === current);
     });
   }
 
   function openDifficultyDialog() {
+    const current = getCurrentDifficulty();
     applyLanguage();
-    updateSelectedState();
+    updateSelectedState(current);
     overlay.hidden = false;
     requestAnimationFrame(() => overlay.classList.add("is-visible"));
-    choices.find((button) => button.dataset.aiDifficultyChoice === getCurrentDifficulty())?.focus?.();
+    choices.find((button) => button.dataset.aiDifficultyChoice === current)?.focus?.({ preventScroll: true });
   }
 
-  function closeDifficultyDialog() {
+  function closeDifficultyDialog({ restoreFocus = true } = {}) {
     overlay.classList.remove("is-visible");
     window.setTimeout(() => {
       if (!overlay.classList.contains("is-visible")) {
         overlay.hidden = true;
       }
     }, 190);
-    startButton.focus?.();
+
+    if (restoreFocus) {
+      startButton.focus?.({ preventScroll: true });
+    }
   }
 
   function startWithDifficulty(value) {
     setDifficulty(value);
-    updateSelectedState();
-    closeDifficultyDialog();
+    closeDifficultyDialog({ restoreFocus: false });
     window.setTimeout(() => {
       if (typeof window.startGame === "function") {
         window.startGame();
