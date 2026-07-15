@@ -14,6 +14,12 @@
 
   const emotionTimersBySeat = new Map();
   const emotionBubblesBySeat = new Map();
+  const avatarsBySeat = new Map(
+    ["left", "top", "right", "bottom"].map((seat) => [
+      seat,
+      document.querySelector(`[data-seat="${seat}"]`),
+    ]),
+  );
 
   function createGameEmotionIcon(id) {
     const icon = document.createElement("span");
@@ -69,7 +75,7 @@
   }
 
   showPlayerEmotion = function showCustomPlayerEmotion(seat, emotionId) {
-    const avatar = document.querySelector(`[data-seat="${seat}"]`);
+    const avatar = avatarsBySeat.get(seat);
     if (!avatar) return;
 
     clearSeatEmotion(seat);
