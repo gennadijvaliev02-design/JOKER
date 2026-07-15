@@ -16,25 +16,59 @@ jobs:
         with:
           ref: agent/android-script-dom-cache-cleanup-1
           fetch-depth: 1
-      - name: Print render owners and patch markers
+
+      - name: Confirm renderPlayers has no external owner
         run: |
           python3 - <<'PY'
           import re
           from pathlib import Path
-          owners_players = []
-          owners_stacks = []
+          owners = []
           for path in Path('.').rglob('*.js'):
-              source = path.read_text(encoding='utf-8')
-              if path.name != 'script.js' and re.search(r'\brenderPlayers\s*=', source):
-                  owners_players.append(str(path))
-              if path.name != 'script.js' and re.search(r'\brenderOpponentCardStacks\s*=', source):
-                  owners_stacks.append(str(path))
-          script = Path('script.js').read_text(encoding='utf-8')
-          android = Path('android-opponent-hands.js').read_text(encoding='utf-8')
-          print('renderPlayers owners:', owners_players)
-          print('renderOpponentCardStacks owners:', owners_stacks)
-          print('elements marker:', script.count('  gameDialogActions: document.querySelector("#game-dialog-actions"),\n};'))
-          print('renderPlayers marker:', script.count('function renderPlayers() {'))
-          print('base stack marker:', script.count('function renderOpponentCardStacks() {'))
-          print('android stack block:', android.count('  const stacksBySeat = Object.fromEntries('))
+              if path.name == 'script.js':
+                  continue
+              if re.search(r'\brenderPlayers\s*=', path.read_text(encoding='utf-8')):
+                  owners.append(str(path))
+          assert owners == [], owners
+          PY
+
+      - name: Confirm opponent stack owner
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          owners = []
+          for path in Path('.').rglob('*.js'):
+              if path.name == 'script.js':
+                  continue
+              if re.search(r'\brenderOpponentCardStacks\s*=', path.read_text(encoding='utf-8')):
+                  owners.append(str(path))
+          assert owners == ['android-opponent-hands.js'], owners
+          PY
+
+      - name: Confirm elements insertion marker
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path('script.js').read_text(encoding='utf-8')
+          marker = '  gameDialogActions: document.querySelector("#game-dialog-actions"),\n};'
+          assert source.count(marker) == 1, source.count(marker)
+          PY
+
+      - name: Confirm base render function markers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path('script.js').read_text(encoding='utf-8')
+          assert source.count('function renderPlayers() {') == 1
+          assert source.count('function renderOpponentCardStacks() {') == 1
+          assert source.count('const avatar = document.querySelector(`[data-seat="${player.seat}"]`);') == 1
+          assert source.count('const stack = document.querySelector(`.${seat}-stack`);') == 1
+          PY
+
+      - name: Confirm Android stack marker
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path('android-opponent-hands.js').read_text(encoding='utf-8')
+          assert source.count('  const stacksBySeat = Object.fromEntries(') == 1
           PY
