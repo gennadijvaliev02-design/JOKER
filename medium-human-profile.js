@@ -3,6 +3,8 @@
   const originalChooseBotCard = chooseBotCard;
   const originalChooseJokerMode = chooseJokerMode;
   const originalWriteCurrentGameScore = writeCurrentGameScore;
+  let cachedProfile = null;
+  let cachedThreatLevel = null;
 
   function isMediumAi() {
     return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
@@ -25,7 +27,7 @@
     };
   }
 
-  function loadProfile() {
+  function readProfileFromStorage() {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
 
@@ -39,9 +41,25 @@
     return defaultProfile();
   }
 
+  function getProfile() {
+    if (!cachedProfile) {
+      cachedProfile = readProfileFromStorage();
+    }
+
+    return cachedProfile;
+  }
+
+  function loadProfile() {
+    return { ...getProfile() };
+  }
+
   function saveProfile(profile) {
+    const snapshot = { ...defaultProfile(), ...profile };
+
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+      cachedProfile = snapshot;
+      cachedThreatLevel = null;
     } catch {
       // localStorage can be unavailable; keep game safe.
     }
@@ -60,10 +78,15 @@
   }
 
   function getHumanThreatLevel() {
-    const profile = loadProfile();
+    if (cachedThreatLevel !== null) {
+      return cachedThreatLevel;
+    }
+
+    const profile = getProfile();
 
     if (profile.games < 4) {
-      return 0;
+      cachedThreatLevel = 0;
+      return cachedThreatLevel;
     }
 
     const highBidRate = profile.highBidGames ? profile.highBidFulfilled / profile.highBidGames : 0;
@@ -77,7 +100,8 @@
     if (premiumRate >= 0.5 && profile.premiumThreats >= 2) level += 1;
     if (passBreakRate <= 0.28 && profile.passGames >= 3) level += 1;
 
-    return Math.min(3, level);
+    cachedThreatLevel = Math.min(3, level);
+    return cachedThreatLevel;
   }
 
   function getLegalCards(playerId) {
@@ -244,7 +268,7 @@
 
   writeCurrentGameScore = function mediumHumanProfileWriteScore() {
     if (isMediumAi()) {
-      const profile = loadProfile();
+      const profile = { ...getProfile() };
       const human = getPlayerById("human");
 
       if (human) {
@@ -288,7 +312,7 @@
     reset() {
       const fresh = defaultProfile();
       saveProfile(fresh);
-      return fresh;
+      return { ...fresh };
     },
     threatLevel: getHumanThreatLevel,
   };
