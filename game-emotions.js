@@ -12,12 +12,17 @@
     { id: "barrel", label: "Штанга" },
   ];
 
+  const GAME_EMOTION_IDS = new Set(GAME_EMOTIONS.map((emotion) => emotion.id));
   const emotionTimersBySeat = new Map();
   const emotionBubblesBySeat = new Map();
+  const emotionIconTemplatesById = new Map();
+  let emotionPanelButtons = null;
   const avatarsBySeat = new Map(
     ["left", "top", "right", "bottom"].map((seat) => [
       seat,
-      document.querySelector(`[data-seat="${seat}"]`),
+      typeof playerViewsBySeat === "object"
+        ? (playerViewsBySeat[seat]?.avatar || null)
+        : document.querySelector(`[data-seat="${seat}"]`),
     ]),
   );
 
@@ -45,21 +50,40 @@
     return icon;
   }
 
-  function renderCustomEmotionPanel() {
-    if (!elements.emotionPanel || elements.emotionPanel.childElementCount === GAME_EMOTIONS.length) return;
+  function cloneGameEmotionIcon(id) {
+    const normalizedId = GAME_EMOTION_IDS.has(id) ? id : "laugh";
+    let template = emotionIconTemplatesById.get(normalizedId);
+    if (!template) {
+      template = createGameEmotionIcon(normalizedId);
+      emotionIconTemplatesById.set(normalizedId, template);
+    }
+    return template.cloneNode(true);
+  }
 
-    const buttons = GAME_EMOTIONS.map((emotion) => {
+  function getEmotionPanelButtons() {
+    if (emotionPanelButtons) return emotionPanelButtons;
+    emotionPanelButtons = GAME_EMOTIONS.map((emotion) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "emotion-option";
       button.dataset.emotion = emotion.id;
       button.title = emotion.label;
       button.setAttribute("aria-label", emotion.label);
-      button.append(createGameEmotionIcon(emotion.id));
+      button.append(cloneGameEmotionIcon(emotion.id));
       return button;
     });
+    return emotionPanelButtons;
+  }
 
-    elements.emotionPanel.replaceChildren(...buttons);
+  function renderCustomEmotionPanel() {
+    if (!elements.emotionPanel) return;
+    const buttons = getEmotionPanelButtons();
+    const current = elements.emotionPanel.children;
+    let matches = current.length === buttons.length;
+    for (let index = 0; matches && index < buttons.length; index += 1) {
+      matches = current[index] === buttons[index];
+    }
+    if (!matches) elements.emotionPanel.replaceChildren(...buttons);
   }
 
   function clearSeatEmotion(seat, expectedBubble = null) {
@@ -78,26 +102,30 @@
     const avatar = avatarsBySeat.get(seat);
     if (!avatar) return;
 
+    const hadManagedBubble = emotionBubblesBySeat.has(seat);
     clearSeatEmotion(seat);
-    avatar.querySelector(".avatar-emotion")?.remove();
+    if (!hadManagedBubble) avatar.querySelector(":scope > .avatar-emotion")?.remove();
 
     const bubble = document.createElement("span");
     bubble.className = "avatar-emotion";
-    bubble.append(createGameEmotionIcon(emotionId || "laugh"));
+    bubble.append(cloneGameEmotionIcon(emotionId));
     avatar.append(bubble);
     emotionBubblesBySeat.set(seat, bubble);
 
-    const timer = window.setTimeout(() => {
-      clearSeatEmotion(seat, bubble);
-    }, 3000);
+    const timer = window.setTimeout(() => clearSeatEmotion(seat, bubble), 3000);
     emotionTimersBySeat.set(seat, timer);
   };
 
   renderEmotionPanel = renderCustomEmotionPanel;
 
   if (elements.emotionButton) {
-    elements.emotionButton.replaceChildren(createGameEmotionIcon("laugh"));
-    elements.emotionButton.setAttribute("aria-label", "Эмоции");
+    const icon = elements.emotionButton.firstElementChild;
+    if (elements.emotionButton.childElementCount !== 1 || !icon?.matches?.(".game-emote.is-laugh")) {
+      elements.emotionButton.replaceChildren(cloneGameEmotionIcon("laugh"));
+    }
+    if (elements.emotionButton.getAttribute("aria-label") !== "Эмоции") {
+      elements.emotionButton.setAttribute("aria-label", "Эмоции");
+    }
   }
 
   renderCustomEmotionPanel();

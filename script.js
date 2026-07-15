@@ -167,6 +167,10 @@ function getPlayerRenderSignature(player) {
 let lastHandRenderSignature = null;
 let lastTrickRenderSignature = null;
 let trickRenderLanguageVersion = 0;
+let lastHudRoundSignature = null;
+let lastHudTrumpRenderKey = null;
+let baseEmotionButtons = null;
+let emotionCooldownTimerId = 0;
 
 function getHandRenderState(hand, shouldAnimateDeal) {
   const playability = new Array(hand.length);
@@ -631,26 +635,66 @@ function isBidFulfilledNow(player) {
   return player.tricks === player.bid;
 }
 
-function renderHud() {
+function getHudRenderState() {
   const chooser = getPlayerById(state.trumpChooserId);
   const bidBalance = getBidBalance();
-  elements.roundLabel.hidden = !bidBalance;
-  elements.roundLabel.textContent = bidBalance?.text || "";
-  elements.roundLabel.classList.toggle("is-push", bidBalance?.type === "push");
-  elements.roundLabel.classList.toggle("is-take", bidBalance?.type === "take");
+  const roundSignature = bidBalance ? `${bidBalance.type}:${bidBalance.text}` : "hidden";
 
   if (!state.trump) {
-    const chooserText = state.phase === "trump-select" && chooser ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}` : "";
-    elements.trumpLabel.textContent = state.phase === "trump-select" ? `Козырь${chooserText}` : "Козырь";
-    elements.trumpLabel.dataset.trumpKey = "";
-    return;
+    const chooserText = state.phase === "trump-select" && chooser
+      ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}`
+      : "";
+    const label = state.phase === "trump-select" ? `Козырь${chooserText}` : "Козырь";
+    return {
+      bidBalance,
+      roundSignature,
+      trumpKey: "",
+      renderKey: `empty:${label}`,
+      label,
+    };
   }
 
   const trumpKey = getTrumpRenderKey(state.trump);
-  const shouldReveal = elements.trumpLabel.dataset.trumpKey !== trumpKey;
-  elements.trumpLabel.dataset.trumpKey = trumpKey;
+  return {
+    bidBalance,
+    roundSignature,
+    trumpKey,
+    renderKey: `trump:${trumpKey}`,
+    label: "Козырь",
+  };
+}
 
-  elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
+function renderHud() {
+  const hud = getHudRenderState();
+
+  if (hud.roundSignature !== lastHudRoundSignature) {
+    elements.roundLabel.hidden = !hud.bidBalance;
+    setElementText(elements.roundLabel, hud.bidBalance?.text || "");
+    elements.roundLabel.classList.toggle("is-push", hud.bidBalance?.type === "push");
+    elements.roundLabel.classList.toggle("is-take", hud.bidBalance?.type === "take");
+    lastHudRoundSignature = hud.roundSignature;
+  }
+
+  if (!state.trump) {
+    if (hud.renderKey !== lastHudTrumpRenderKey || elements.trumpLabel.dataset.trumpKey !== "") {
+      setElementText(elements.trumpLabel, hud.label);
+      elements.trumpLabel.dataset.trumpKey = "";
+      lastHudTrumpRenderKey = hud.renderKey;
+    }
+    return;
+  }
+
+  const hasRenderedCard = Boolean(elements.trumpLabel.querySelector(".trump-card"));
+  if (
+    hud.renderKey !== lastHudTrumpRenderKey
+    || elements.trumpLabel.dataset.trumpKey !== hud.trumpKey
+    || !hasRenderedCard
+  ) {
+    const shouldReveal = elements.trumpLabel.dataset.trumpKey !== hud.trumpKey;
+    elements.trumpLabel.dataset.trumpKey = hud.trumpKey;
+    elements.trumpLabel.replaceChildren("Козырь", createTrumpCardElement(state.trump, shouldReveal));
+    lastHudTrumpRenderKey = hud.renderKey;
+  }
 }
 
 function getBidBalance() {
@@ -1136,16 +1180,23 @@ function renderBidding() {
 }
 
 function renderEmotionPanel() {
-  const buttons = EMOTIONS.map((emotion) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "emotion-option";
-    button.dataset.emotion = emotion;
-    button.textContent = emotion;
-    return button;
-  });
+  if (!baseEmotionButtons) {
+    baseEmotionButtons = EMOTIONS.map((emotion) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "emotion-option";
+      button.dataset.emotion = emotion;
+      button.textContent = emotion;
+      return button;
+    });
+  }
 
-  elements.emotionPanel.replaceChildren(...buttons);
+  const current = elements.emotionPanel.children;
+  let matches = current.length === baseEmotionButtons.length;
+  for (let index = 0; matches && index < baseEmotionButtons.length; index += 1) {
+    matches = current[index] === baseEmotionButtons[index];
+  }
+  if (!matches) elements.emotionPanel.replaceChildren(...baseEmotionButtons);
 }
 
 function toggleEmotionPanel() {
@@ -1169,23 +1220,17 @@ function handleEmotionClick(event) {
 }
 
 function showPlayerEmotion(seat, emotion) {
-  const avatar = document.querySelector(`[data-seat="${seat}"]`);
+  const avatar = playerViewsBySeat[seat]?.avatar || null;
+  if (!avatar) return;
 
-  if (!avatar) {
-    return;
-  }
-
-  avatar.querySelector(".avatar-emotion")?.remove();
+  avatar.querySelector(":scope > .avatar-emotion")?.remove();
 
   const bubble = document.createElement("span");
   bubble.className = "avatar-emotion";
-  bubble.textContent = emotion;
+  setElementText(bubble, emotion);
   avatar.append(bubble);
 
-  if (state.emotionTimeoutId) {
-    window.clearTimeout(state.emotionTimeoutId);
-  }
-
+  if (state.emotionTimeoutId) window.clearTimeout(state.emotionTimeoutId);
   state.emotionTimeoutId = window.setTimeout(() => {
     bubble.remove();
     state.emotionTimeoutId = null;
@@ -1194,9 +1239,11 @@ function showPlayerEmotion(seat, emotion) {
 
 function startEmotionCooldown() {
   state.emotionCooldownUntil = Date.now() + 3000;
-  elements.emotionButton.disabled = true;
-  window.setTimeout(() => {
-    elements.emotionButton.disabled = false;
+  if (!elements.emotionButton.disabled) elements.emotionButton.disabled = true;
+  if (emotionCooldownTimerId) window.clearTimeout(emotionCooldownTimerId);
+  emotionCooldownTimerId = window.setTimeout(() => {
+    emotionCooldownTimerId = 0;
+    if (Date.now() >= state.emotionCooldownUntil) elements.emotionButton.disabled = false;
   }, 3000);
 }
 
@@ -2429,12 +2476,12 @@ function createDialogButton(text, variant, onClick) {
 }
 
 function showNotice(text) {
-  elements.tableNotice.textContent = text;
-  elements.tableNotice.hidden = false;
+  setElementText(elements.tableNotice, text);
+  if (elements.tableNotice.hidden) elements.tableNotice.hidden = false;
 }
 
 function hideNotice() {
-  elements.tableNotice.hidden = true;
+  if (!elements.tableNotice.hidden) elements.tableNotice.hidden = true;
 }
 
 function getTrickWinner() {
