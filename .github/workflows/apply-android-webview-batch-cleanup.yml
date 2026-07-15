@@ -1,0 +1,209 @@
+name: Apply Android WebView batch cleanup
+
+on:
+  push:
+    branches:
+      - agent/android-webview-batch-cleanup-1
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/android-webview-batch-cleanup-1
+
+      - name: Apply guarded CSS cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+
+          app = Path('android-app.css')
+          replace_once(
+              app,
+              '''.trump-pill:has(.trump-card.is-revealed)::before {
+            width: 48px !important;
+            height: 48px !important;
+          }''',
+              '''.trump-pill.v13-trump-ready::before {
+            width: 48px !important;
+            height: 48px !important;
+          }''',
+              'android-app legacy :has selector',
+          )
+          replacements = {
+              'animation: android-card-left 3.8s ease-in-out infinite !important;':
+                  'animation: android-card-left 3.8s ease-in-out 2 !important;',
+              'animation: android-card-center 3.8s ease-in-out 120ms infinite !important;':
+                  'animation: android-card-center 3.8s ease-in-out 120ms 2 !important;',
+              'animation: android-card-right 3.8s ease-in-out 240ms infinite !important;':
+                  'animation: android-card-right 3.8s ease-in-out 240ms 2 !important;',
+          }
+          app_text = app.read_text(encoding='utf-8')
+          for old, new in replacements.items():
+              if app_text.count(old) != 1:
+                  raise SystemExit(f'android-app menu animation mismatch: {old}')
+              app_text = app_text.replace(old, new)
+          app.write_text(app_text, encoding='utf-8')
+
+          table = Path('android-table-v2.css')
+          replace_once(
+              table,
+              '  filter: blur(18px) !important;\n',
+              '  filter: none !important;\n',
+              'felt glow blur',
+          )
+
+          ui4 = Path('android-ui-v4.css')
+          ui4_text = ui4.read_text(encoding='utf-8')
+          for old, new in (
+              ('  backdrop-filter: blur(14px) saturate(1.08) !important;\n',
+               '  backdrop-filter: none !important;\n'),
+              ('  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;\n',
+               '  -webkit-backdrop-filter: none !important;\n'),
+          ):
+              if ui4_text.count(old) != 1:
+                  raise SystemExit(f'android-ui-v4 blur mismatch: {old.strip()}')
+              ui4_text = ui4_text.replace(old, new)
+          ui4.write_text(ui4_text, encoding='utf-8')
+
+          difficulty = Path('difficulty-select.css')
+          replace_once(
+              difficulty,
+              '  transform: translateZ(0);\n',
+              '',
+              'difficulty persistent GPU promotion',
+          )
+
+          paint = Path('android-webview-paint.css')
+          paint_text = paint.read_text(encoding='utf-8')
+          marker = '/* Persistent Android surfaces avoid live backdrop sampling. */'
+          if marker in paint_text:
+              raise SystemExit('paint batch marker already exists')
+          batch = r'''
+
+/* Persistent Android surfaces avoid live backdrop sampling. */
+.start-panel,
+.rules-card,
+.rules-card.rules-book-card,
+.bid-panel,
+.game-summary:not(.is-pulka-summary),
+.game-dialog,
+.last-trick-button,
+.last-trick-panel,
+.difficulty-modal,
+.player-stats {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Large stationary surfaces keep depth with compact shadows. */
+.start-panel {
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.50),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.game-summary:not([hidden]),
+.game-dialog:not([hidden]),
+.last-trick-panel,
+.difficulty-modal,
+.rules-card.rules-book-card {
+  box-shadow:
+    0 17px 36px rgba(0, 0, 0, 0.50),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+}
+
+/* Difficulty choices no longer keep permanent GPU layers or wide glows. */
+.difficulty-option {
+  box-shadow:
+    0 7px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+}
+
+.difficulty-option.is-easy {
+  box-shadow:
+    0 0 0 1px rgba(75, 255, 155, 0.18),
+    0 7px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+.difficulty-option.is-medium {
+  box-shadow:
+    0 0 0 1px rgba(255, 220, 58, 0.18),
+    0 7px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Menu decoration still animates on entry, then stops consuming frames. */
+.start-screen::before,
+.menu-card-fan {
+  animation-iteration-count: 1 !important;
+}
+'''
+          paint.write_text(paint_text.rstrip() + batch + '\n', encoding='utf-8')
+          PY
+
+      - name: Validate cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          names = (
+              'android-app.css',
+              'android-table-v2.css',
+              'android-ui-v4.css',
+              'difficulty-select.css',
+              'android-webview-paint.css',
+          )
+          for name in names:
+              text = Path(name).read_text(encoding='utf-8')
+              if text.count('{') != text.count('}'):
+                  raise SystemExit(f'Unbalanced braces in {name}')
+              if text.count('/*') != text.count('*/'):
+                  raise SystemExit(f'Unbalanced comments in {name}')
+
+          app = Path('android-app.css').read_text(encoding='utf-8')
+          if ':has(' in app:
+              raise SystemExit('Legacy :has() remains in android-app.css')
+          if app.count('ease-in-out 2 !important') != 3:
+              raise SystemExit('Android card fan iteration limits are incomplete')
+
+          table = Path('android-table-v2.css').read_text(encoding='utf-8')
+          if 'filter: blur(18px)' in table:
+              raise SystemExit('Felt blur remains')
+
+          ui4 = Path('android-ui-v4.css').read_text(encoding='utf-8')
+          if 'backdrop-filter: blur(14px) saturate(1.08)' in ui4:
+              raise SystemExit('Android UI V4 backdrop blur remains')
+
+          difficulty = Path('difficulty-select.css').read_text(encoding='utf-8')
+          if 'transform: translateZ(0)' in difficulty:
+              raise SystemExit('Difficulty GPU promotion remains')
+
+          paint = Path('android-webview-paint.css').read_text(encoding='utf-8')
+          if paint.count('/* Persistent Android surfaces avoid live backdrop sampling. */') != 1:
+              raise SystemExit('Paint batch marker mismatch')
+          PY
+
+      - name: Commit product cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add android-app.css android-table-v2.css android-ui-v4.css difficulty-select.css android-webview-paint.css
+          git diff --cached --quiet && exit 0
+          git commit -m 'Reduce persistent Android WebView rendering cost'
+          git push origin HEAD:agent/android-webview-batch-cleanup-1
