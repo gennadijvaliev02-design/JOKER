@@ -49,11 +49,24 @@
     document.head.append(link);
   }
 
-  const cleanAfterLoad = () => window.setTimeout(cleanLegacyRelationalSelectors, 0);
+  function loadAndroidSystemIntegration() {
+    if (document.getElementById("android-system-integration-script")) return;
+
+    const script = document.createElement("script");
+    script.id = "android-system-integration-script";
+    script.src = "android-system-integration.js?v=1";
+    script.async = false;
+    document.body.append(script);
+  }
+
+  const finishAfterLoad = () => window.setTimeout(() => {
+    cleanLegacyRelationalSelectors();
+    loadAndroidSystemIntegration();
+  }, 0);
 
   if (document.readyState === "complete") {
-    cleanAfterLoad();
+    finishAfterLoad();
   } else {
-    window.addEventListener("load", cleanAfterLoad, { once: true });
+    window.addEventListener("load", finishAfterLoad, { once: true });
   }
 })();
