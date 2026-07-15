@@ -1,0 +1,78 @@
+/*
+ * Android safe-area and viewport guard.
+ * The approved table geometry stays unchanged when every inset is zero.
+ * Only real display cutouts or transient system-bar safe areas add margins.
+ */
+
+:root {
+  --android-safe-left: 0px;
+  --android-safe-right: 0px;
+  --android-safe-top: 0px;
+  --android-safe-bottom: 0px;
+  --android-viewport-width: 100vw;
+  --android-viewport-height: 100vh;
+}
+
+@supports (padding-left: env(safe-area-inset-left)) {
+  :root {
+    --android-safe-left: env(safe-area-inset-left, 0px);
+    --android-safe-right: env(safe-area-inset-right, 0px);
+    --android-safe-top: env(safe-area-inset-top, 0px);
+    --android-safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+@supports (width: 100dvw) {
+  :root {
+    --android-viewport-width: 100dvw;
+    --android-viewport-height: 100dvh;
+  }
+}
+
+/* Keep the native stage stable when transient Android bars appear and hide. */
+.phone-screen {
+  width: var(--android-viewport-width) !important;
+  height: var(--android-viewport-height) !important;
+}
+
+/*
+ * Additive margins preserve every approved left/right/top/bottom declaration.
+ * On ordinary screens these values are exactly zero, so no element moves.
+ */
+.player-left,
+.player-you,
+.left-stack {
+  margin-left: var(--android-safe-left) !important;
+}
+
+.player-right,
+.right-stack,
+.table-menu,
+.smile,
+.emotion-panel,
+.score,
+.last-trick-button {
+  margin-right: var(--android-safe-right) !important;
+}
+
+.player-top,
+.game-hud,
+.table-menu,
+.smile {
+  margin-top: var(--android-safe-top) !important;
+}
+
+.score,
+.last-trick-button {
+  margin-bottom: var(--android-safe-bottom) !important;
+}
+
+/* Existing Android decision panels already consume these variables in max-width. */
+.bid-panel,
+.game-dialog,
+.game-summary,
+.last-trick-panel,
+.difficulty-modal,
+.sheet-paper {
+  box-sizing: border-box;
+}
