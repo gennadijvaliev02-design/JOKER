@@ -1,0 +1,1 @@
+renderPlayers DOM lookup: expected 1 occurrence, found 0
