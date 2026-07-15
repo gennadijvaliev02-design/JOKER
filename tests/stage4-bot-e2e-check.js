@@ -26,7 +26,7 @@ const cardEvents=events.filter(e=>e.kind==='card');
 assert.equal(cardEvents.length,2);assert.equal(cardEvents[0].stage,'before');assert.equal(cardEvents[1].stage,'committed');assert.equal(cardEvents[1].payload.jokerSuit,'hearts');
 assert.equal(context.window.JokerBotAnimationSync.isWaiting(),true);
 context.window.continueBotTurns();context.window.continueBotTurns();assert.equal(continuationCount,0);
-const gateTimer=timers.find(t=>t.ms>=70&&t.ms<=1600);assert.ok(gateTimer);gateTimer.fn();assert.equal(continuationCount,1);
+const gateTimer=timers.filter(t=>t.ms>=70&&t.ms<=1600).sort((a,b)=>a.ms-b.ms)[0];assert.ok(gateTimer);gateTimer.fn();assert.equal(continuationCount,1);
 state.activePlayerId='bot-2';assert.equal(context.playCard('bot-1','A-spades',{}),false);assert.equal(events.at(-1).reason,'active-player-changed');assert.equal(events.at(-1).stale,true);
 const engine=fs.readFileSync('rules/rules-engine.js','utf8');const order=['core-logic-fixes.js','bot-action-bridge.js','bot-action-ui-adapter.js','bot-animation-sync-adapter.js','deal-animation-adapter.js','bot-survival-priority.js'];for(let i=1;i<order.length;i++)assert.ok(engine.indexOf(order[i-1])<engine.indexOf(order[i]),`${order[i-1]} before ${order[i]}`);
 console.log('Stage 4 bot end-to-end audit passed');
