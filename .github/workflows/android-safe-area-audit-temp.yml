@@ -88,15 +88,15 @@ jobs:
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME"
 
-          cat > /tmp/joker-safe-area-harness.html <<EOF
+          cat > safe-area-harness.html <<'EOF'
           <!doctype html>
           <html>
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-              <link rel="stylesheet" href="file://${GITHUB_WORKSPACE}/android-ui-v10.css">
-              <link rel="stylesheet" href="file://${GITHUB_WORKSPACE}/android-ui-v12.css">
-              <link rel="stylesheet" href="file://${GITHUB_WORKSPACE}/android-safe-area.css">
+              <link rel="stylesheet" href="android-ui-v10.css">
+              <link rel="stylesheet" href="android-ui-v12.css">
+              <link rel="stylesheet" href="android-safe-area.css">
               <style>
                 html, body { margin: 0; overflow: hidden; }
                 .phone-screen { position: fixed; inset: 0; }
@@ -150,7 +150,7 @@ jobs:
               '/usr/bin/chromium',
               '/usr/bin/chromium-browser',
           ] if Path(path).exists())
-          harness = 'file:///tmp/joker-safe-area-harness.html'
+          harness = Path('safe-area-harness.html').resolve().as_uri()
           cases = [
               (640, 360, 0, 0, 0, 0),
               (800, 360, 44, 0, 0, 0),
