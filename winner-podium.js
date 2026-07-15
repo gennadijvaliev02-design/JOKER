@@ -38,10 +38,12 @@
   }
 
   function getRanking() {
-    return [...state.players]
-      .map((player) => ({
+    const matchTotals = calculateMatchTotals();
+
+    return state.players
+      .map((player, playerIndex) => ({
         player,
-        total: calculateMatchTotal(player.id),
+        total: matchTotals[playerIndex],
       }))
       .sort((first, second) => second.total - first.total);
   }
@@ -73,7 +75,7 @@
   function createWinnerScene(winner) {
     const copy = t();
     const ranking = getRanking();
-    const winnerTotal = calculateMatchTotal(winner.id);
+    const winnerTotal = ranking.find((item) => item.player.id === winner.id)?.total || 0;
 
     const scene = document.createElement("div");
     scene.className = "winner-scene";

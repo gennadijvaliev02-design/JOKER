@@ -1804,8 +1804,9 @@ function finishGameSoon() {
 
   scheduleGameTask(() => {
     const finishedGame = state.currentGame;
-    const gameSummary = createGameSummary();
-    writeCurrentGameScore();
+    const playerScores = calculateCurrentPlayerScores();
+    const gameSummary = createGameSummary(playerScores);
+    writeCurrentGameScore(playerScores);
     showGameSummary(gameSummary);
 
     if (isFinalGame()) {
@@ -1829,13 +1830,16 @@ function finishGameSoon() {
   }, getDelay(1300));
 }
 
-function writeCurrentGameScore() {
-  const pulkaOffset = (state.currentPulka - 1) * 5;
-  const gameRow = state.scoreRows[pulkaOffset + state.currentGame - 1];
-  const playerScores = state.players.map((player) => ({
+function calculateCurrentPlayerScores() {
+  return state.players.map((player) => ({
     ...calculatePlayerScore(player),
     jokerCount: player.jokersPlayed,
   }));
+}
+
+function writeCurrentGameScore(playerScores = calculateCurrentPlayerScores()) {
+  const pulkaOffset = (state.currentPulka - 1) * 5;
+  const gameRow = state.scoreRows[pulkaOffset + state.currentGame - 1];
 
   gameRow.entries = playerScores.map(createScoreEntry);
   syncScoreRow(gameRow);
@@ -1843,22 +1847,21 @@ function writeCurrentGameScore() {
   if (state.currentGame === 4) {
     applyPulkaBonuses(pulkaOffset);
     const totalRow = state.scoreRows[pulkaOffset + 4];
-    totalRow.deltas = state.players.map((player) => calculatePulkaTotal(player.id, pulkaOffset));
-    totalRow.cells = state.players.map((player) => formatTotalScore(calculateMatchTotal(player.id)));
+    const pulkaTotals = calculatePulkaTotals(pulkaOffset);
+    const matchTotals = calculateMatchTotals();
+
+    totalRow.deltas = pulkaTotals;
+    totalRow.cells = matchTotals.map(formatTotalScore);
   }
 }
 
-function createGameSummary() {
-  const scores = state.players.map((player) => {
-    const score = calculatePlayerScore(player);
-
-    return {
-      player,
-      score,
-      bidText: formatBid(player.bid),
-      tricks: player.tricks,
-    };
-  });
+function createGameSummary(playerScores = calculateCurrentPlayerScores()) {
+  const scores = state.players.map((player, playerIndex) => ({
+    player,
+    score: playerScores[playerIndex],
+    bidText: formatBid(player.bid),
+    tricks: player.tricks,
+  }));
   const orderedScores = [...scores].sort((first, second) => second.score.value - first.score.value);
   const bestValue = orderedScores[0]?.score.value;
 
@@ -2011,13 +2014,22 @@ function formatScoreEntryLabel(entry) {
 }
 
 function syncScoreRow(row) {
-  row.cells = row.entries.map(formatScoreEntryLabel);
-  row.values = row.entries.map((entry) => (entry.crossed ? 0 : entry.value));
+  const cells = new Array(row.entries.length);
+  const values = new Array(row.entries.length);
+
+  for (let entryIndex = 0; entryIndex < row.entries.length; entryIndex += 1) {
+    const entry = row.entries[entryIndex];
+    cells[entryIndex] = formatScoreEntryLabel(entry);
+    values[entryIndex] = entry.crossed ? 0 : entry.value;
+  }
+
+  row.cells = cells;
+  row.values = values;
 }
 
 function applyPulkaBonuses(pulkaOffset) {
   const gameRows = state.scoreRows.slice(pulkaOffset, pulkaOffset + 4);
-  const premiumPlayerIndexes = [];
+  const premiumPlayerIndexes = new Set();
 
   for (const playerIndex of state.players.keys()) {
     const entries = gameRows.map((row) => row.entries[playerIndex]);
@@ -2026,17 +2038,22 @@ function applyPulkaBonuses(pulkaOffset) {
       continue;
     }
 
-    const bonus = Math.max(...entries.slice(0, 3).map((entry) => entry.value));
+    let bonus = entries[0].value;
+
+    for (let entryIndex = 1; entryIndex < 3; entryIndex += 1) {
+      bonus = Math.max(bonus, entries[entryIndex].value);
+    }
+
     const lastEntry = entries[3];
     lastEntry.value += bonus;
     lastEntry.scoreLabel = String(lastEntry.value);
     lastEntry.premium = true;
-    premiumPlayerIndexes.push(playerIndex);
+    premiumPlayerIndexes.add(playerIndex);
   }
 
-  if (premiumPlayerIndexes.length) {
+  if (premiumPlayerIndexes.size) {
     for (const playerIndex of state.players.keys()) {
-      if (premiumPlayerIndexes.includes(playerIndex)) {
+      if (premiumPlayerIndexes.has(playerIndex)) {
         continue;
       }
 
@@ -2048,52 +2065,77 @@ function applyPulkaBonuses(pulkaOffset) {
 }
 
 function crossBestSuccessfulEntry(gameRows, playerIndex) {
-  const candidates = gameRows.slice(0, 3).flatMap((row, rowIndex) => {
-    const entry = row.entries[playerIndex];
+  let bestEntry = null;
+  const rowCount = Math.min(3, gameRows.length);
 
-    return entry.fulfilled && !entry.crossed ? [{ entry, rowIndex }] : [];
-  });
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+    const entry = gameRows[rowIndex].entries[playerIndex];
 
-  if (!candidates.length) {
-    return;
-  }
-
-  candidates.sort((first, second) => {
-    if (second.entry.value !== first.entry.value) {
-      return second.entry.value - first.entry.value;
+    if (!entry.fulfilled || entry.crossed) {
+      continue;
     }
 
-    return first.rowIndex - second.rowIndex;
-  });
+    if (!bestEntry || entry.value > bestEntry.value) {
+      bestEntry = entry;
+    }
+  }
 
-  candidates[0].entry.crossed = true;
+  if (bestEntry) {
+    bestEntry.crossed = true;
+  }
+}
+
+function calculateMatchTotals() {
+  const totals = Array(state.players.length).fill(0);
+
+  for (const row of state.scoreRows) {
+    if (row.type !== "game") {
+      continue;
+    }
+
+    for (let playerIndex = 0; playerIndex < totals.length; playerIndex += 1) {
+      if (row.entries) {
+        const entry = row.entries[playerIndex];
+
+        if (entry && !entry.crossed) {
+          totals[playerIndex] += entry.value;
+        }
+
+        continue;
+      }
+
+      totals[playerIndex] += row.values?.[playerIndex] || 0;
+    }
+  }
+
+  return totals;
 }
 
 function calculateMatchTotal(playerId) {
   const playerIndex = state.players.findIndex((player) => player.id === playerId);
+  return playerIndex === -1 ? 0 : calculateMatchTotals()[playerIndex];
+}
 
-  return state.scoreRows.reduce((sum, row) => {
-    if (row.type !== "game") {
-      return sum;
+function calculatePulkaTotals(pulkaOffset) {
+  const totals = Array(state.players.length).fill(0);
+  const gameRows = state.scoreRows.slice(pulkaOffset, pulkaOffset + 4);
+
+  for (const row of gameRows) {
+    for (let playerIndex = 0; playerIndex < totals.length; playerIndex += 1) {
+      const entry = row.entries?.[playerIndex];
+
+      if (entry && !entry.crossed) {
+        totals[playerIndex] += entry.value;
+      }
     }
+  }
 
-    if (row.entries) {
-      const entry = row.entries[playerIndex];
-      return sum + (entry && !entry.crossed ? entry.value : 0);
-    }
-
-    return sum + (row.values?.[playerIndex] || 0);
-  }, 0);
+  return totals;
 }
 
 function calculatePulkaTotal(playerId, pulkaOffset) {
   const playerIndex = state.players.findIndex((player) => player.id === playerId);
-  const gameRows = state.scoreRows.slice(pulkaOffset, pulkaOffset + 4);
-
-  return gameRows.reduce((sum, row) => {
-    const entry = row.entries?.[playerIndex];
-    return sum + (entry && !entry.crossed ? entry.value : 0);
-  }, 0);
+  return playerIndex === -1 ? 0 : calculatePulkaTotals(pulkaOffset)[playerIndex];
 }
 
 function formatTotalScore(value) {
@@ -2120,9 +2162,16 @@ function isFinalGame() {
 }
 
 function finishMatch() {
-  const winner = [...state.players].sort((firstPlayer, secondPlayer) => {
-    return calculateMatchTotal(secondPlayer.id) - calculateMatchTotal(firstPlayer.id);
-  })[0];
+  const matchTotals = calculateMatchTotals();
+  let winnerIndex = 0;
+
+  for (let playerIndex = 1; playerIndex < state.players.length; playerIndex += 1) {
+    if (matchTotals[playerIndex] > matchTotals[winnerIndex]) {
+      winnerIndex = playerIndex;
+    }
+  }
+
+  const winner = state.players[winnerIndex];
 
   state.phase = "finished";
   state.busy = false;

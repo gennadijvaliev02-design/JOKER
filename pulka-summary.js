@@ -40,11 +40,13 @@
     }
 
     const copy = getCopy();
+    const pulkaTotals = calculatePulkaTotals(pulkaOffset);
+    const matchTotals = calculateMatchTotals();
     const rows = state.players
-      .map((player) => ({
+      .map((player, playerIndex) => ({
         player,
-        delta: calculatePulkaTotal(player.id, pulkaOffset),
-        total: calculateMatchTotal(player.id),
+        delta: pulkaTotals[playerIndex],
+        total: matchTotals[playerIndex],
       }))
       .sort((first, second) => second.total - first.total);
 
@@ -114,10 +116,11 @@
       const finishedGame = state.currentGame;
       const finishedPulka = state.currentPulka;
       const pulkaOffset = (state.currentPulka - 1) * 5;
-      const gameSummary = createGameSummary();
+      const playerScores = calculateCurrentPlayerScores();
+      const gameSummary = createGameSummary(playerScores);
       const shouldShowPulkaSummary = finishedGame === 4 && !isFinalGame();
 
-      writeCurrentGameScore();
+      writeCurrentGameScore(playerScores);
       refreshScoreSheetNow();
 
       if (isFinalGame()) {

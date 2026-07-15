@@ -1,24 +1,23 @@
 (() => {
   crossBestSuccessfulEntry = function noPassPremiumCross(gameRows, playerIndex) {
-    const candidates = gameRows.slice(0, 3).flatMap((row, rowIndex) => {
-      const entry = row.entries[playerIndex];
+    let bestEntry = null;
+    const rowCount = Math.min(3, gameRows.length);
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+      const entry = gameRows[rowIndex].entries[playerIndex];
       const isPass = entry?.bidLabel === "-";
 
-      return entry.fulfilled && !entry.crossed && !isPass ? [{ entry, rowIndex }] : [];
-    });
-
-    if (!candidates.length) {
-      return;
-    }
-
-    candidates.sort((first, second) => {
-      if (second.entry.value !== first.entry.value) {
-        return second.entry.value - first.entry.value;
+      if (!entry.fulfilled || entry.crossed || isPass) {
+        continue;
       }
 
-      return first.rowIndex - second.rowIndex;
-    });
+      if (!bestEntry || entry.value > bestEntry.value) {
+        bestEntry = entry;
+      }
+    }
 
-    candidates[0].entry.crossed = true;
+    if (bestEntry) {
+      bestEntry.crossed = true;
+    }
   };
 })();
