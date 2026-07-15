@@ -1,469 +1,60 @@
-name: Build Android APK
+name: Audit bidding render owners
 
 on:
-  workflow_dispatch:
-  push:
+  pull_request:
     branches:
-      - android-app
-      - android-deep-cleanup-no-apk
+      - agent/android-script-card-render-cache-1
 
 permissions:
   contents: read
 
 jobs:
-  audit-sources:
+  audit:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
         with:
-          node-version: 22
+          ref: agent/android-script-bidding-cache-1
+          fetch-depth: 1
 
-      - name: Validate all JavaScript sources
-        run: |
-          find . \
-            -path './.git' -prune -o \
-            -path './node_modules' -prune -o \
-            -path './android' -prune -o \
-            -path './www' -prune -o \
-            -name '*.js' -type f -print0 \
-            | sort -z \
-            | xargs -0 -n1 node --check
-
-      - name: Validate base web assets and cleanup guards
+      - name: Collect bidding render ownership
         run: |
           python3 - <<'PY'
-          from html.parser import HTMLParser
+          import re
           from pathlib import Path
 
-          class AssetParser(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.assets = []
+          symbols = (
+              'renderBidding',
+              'renderTrumpSelection',
+              'renderJokerModeSelection',
+              'renderLeadJokerCommandSelection',
+              'renderLeadJokerSuitSelection',
+          )
+          lines = []
+          for symbol in symbols:
+              lines.append(f'[{symbol}]')
+              pattern = re.compile(rf'\b(?:function\s+{symbol}\s*\(|{symbol}\s*=)')
+              for path in sorted(Path('.').rglob('*.js')):
+                  if any(part in {'.git', 'node_modules', 'www', 'android'} for part in path.parts):
+                      continue
+                  source = path.read_text(encoding='utf-8')
+                  for number, line in enumerate(source.splitlines(), 1):
+                      if pattern.search(line):
+                          lines.append(f'{path}:{number}: {line.strip()}')
 
-              def handle_starttag(self, tag, attrs):
-                  attrs = dict(attrs)
-                  if tag == 'script' and attrs.get('src'):
-                      self.assets.append(attrs['src'])
-                  if tag == 'link' and attrs.get('rel') == 'stylesheet' and attrs.get('href'):
-                      self.assets.append(attrs['href'])
-
-          parser = AssetParser()
-          parser.feed(Path('index.html').read_text(encoding='utf-8'))
-          missing = []
-          for reference in parser.assets:
-              if reference.startswith(('http://', 'https://', 'data:', '//')):
+          lines.append('[bidOptions.replaceChildren]')
+          for path in sorted(Path('.').rglob('*.js')):
+              if any(part in {'.git', 'node_modules', 'www', 'android'} for part in path.parts):
                   continue
-              path = reference.split('?', 1)[0].split('#', 1)[0]
-              if path and not Path(path).is_file():
-                  missing.append(reference)
+              source = path.read_text(encoding='utf-8')
+              for number, line in enumerate(source.splitlines(), 1):
+                  if 'bidOptions.replaceChildren' in line:
+                      lines.append(f'{path}:{number}: {line.strip()}')
 
-          if missing:
-              raise SystemExit('Missing local assets: ' + ', '.join(missing))
+          Path('bidding-render-audit.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
           PY
 
-          test ! -e android-calm-joker-v11.css
-          test ! -e joker-image-cards.js
-          test ! -e joker-panel-cancel.js
-          test ! -e played-card-motion.css
-          ! grep -q 'android-calm-joker-v11.css' index.html
-          ! grep -q 'joker-image-cards.js' index.html
-          ! grep -q 'joker-panel-cancel.js' index.html
-          ! grep -q 'played-card-motion.css' index.html
-
-          ! grep -q 'MutationObserver' android-runtime-v11.js
-          ! grep -q 'MutationObserver' android-v12.js
-          ! grep -q 'MutationObserver' android-v15.js
-          ! grep -q 'installHudHook' android-runtime-v11.js
-          grep -q 'function syncHudClasses' android-runtime-v2.js
-          ! grep -q 'setInterval' joker-announcement.js
-          ! grep -q 'document.createElement("script")' preload.js
-          grep -q 'PRELOAD_CONCURRENCY = 6' preload.js
-          ! grep -q 'playCardDealAnimation =' ace-deal-animation.js
-
-          ! grep -q ':has(' joker-buttons-polish.css
-          ! grep -q ':has(' android-ui-v9.css
-          ! grep -q ':has(' android-ui-v11.css
-          ! grep -q 'is-premium-deal' android-ui-v8.css
-          ! grep -q 'is-premium-deal' android-ui-v9.css
-          ! grep -q 'infinite' android-motion-v2.css
-          ! grep -q 'infinite' android-ui-v8.css
-          ! grep -q 'filter: blur' android-motion-v2.css
-          ! grep -q 'filter: blur' android-ui-v8.css
-          ! grep -q 'filter: blur' android-ui-v10.css
-          ! grep -q 'backdrop-filter: blur' android-ui-v7.css
-          ! grep -q 'backdrop-filter: blur' android-ui-v10.css
-          ! grep -q 'backdrop-filter: blur' android-ui-v12.css
-          ! grep -q 'joker-bubble-trail' trick-collect-animation.css
-          ! grep -q 'joker-star-burst' trick-collect-animation.css
-          ! grep -q 'paintSilverSuits' android-v12.js
-          grep -q 'markSilverSuits' android-v12.js
-          grep -q '__JOKER_ANDROID_DEAL_2026_STAGE__' rules/rules-engine.js
-          ! grep -q 'setTimeout(install' android-deal-2026.js
-          ! grep -q 'originalRender = render' high-joker-legal-fix.js
-          grep -q 'timeoutIds: new Set()' script.js
-          ! grep -q 'state.timeoutIds = state.timeoutIds.filter' script.js
-          grep -q 'cachedAndroidIsLegalCard' android-runtime-polish.js
-          grep -q 'const activeAnimations = new Set' android-deal-2026.js
-          grep -q 'const transferJobs = \[\]' android-deal-2026.js
-          ! grep -q 'window.setTimeout' android-deal-2026.js
-          ! grep -q 'window.setTimeout' ace-deal-animation.js
-          ! grep -q 'android-deal-container-mask-style' android-v15.js
-          ! grep -q 'deal-2026-deck-breathe' android-deal-2026.js
-          ! grep -q 'backdrop-filter: blur' android-ui-v11.css
-
-  build-apk:
-    needs: audit-sources
-    if: github.ref == 'refs/heads/android-app'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/upload-artifact@v4
         with:
-          node-version: 22
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Install Capacitor dependencies
-        run: npm install
-
-      - name: Prepare web files
-        run: |
-          rm -rf www
-          mkdir -p www
-          rsync -a --prune-empty-dirs ./ www/ \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude 'node_modules/' \
-            --exclude 'android/' \
-            --exclude 'www/' \
-            --exclude 'package.json' \
-            --exclude 'package-lock.json' \
-            --exclude 'capacitor.config.json' \
-            --exclude '*.md' \
-            --exclude '*.txt' \
-            --exclude '*.log' \
-            --exclude 'rules/deal-animation-adapter.js'
-
-          # Android-only cache busting and edge-to-edge viewport.
-          sed -i 's/web-table-polish.css?v=4/web-table-polish.css?v=19/' www/index.html
-          sed -i 's/game-emotions.js?v=2/game-emotions.js?v=3/' www/index.html
-          sed -i 's/table-language.js?v=4/table-language.js?v=5/' www/index.html
-          sed -i 's/width=device-width, initial-scale=1.0/width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0/' www/index.html
-
-          # Android-only visual layers. Deal engines and dead compatibility files stay absent.
-          sed -i 's#</head>#    <link rel="stylesheet" href="android-table-v2.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v4.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v5.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v6.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v7.css?v=2" />\n    <link rel="stylesheet" href="android-motion-v2.css?v=2" />\n    <link rel="stylesheet" href="android-fullscreen.css?v=1" />\n    <link rel="stylesheet" href="android-ui-v8.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v9.css?v=2" />\n    <link rel="stylesheet" href="android-ui-v10.css?v=3" />\n    <link rel="stylesheet" href="android-ui-v11.css?v=4" />\n    <link rel="stylesheet" href="android-ui-v12.css?v=3" />\n  </head>#' www/index.html
-
-          # Deal 2026 loads last and is the only ordinary-deal owner.
-          sed -i 's#</body>#    <script src="android-opponent-hands.js?v=3"></script>\n    <script src="android-menu-motion.js?v=2"></script>\n    <script src="android-runtime-polish.js?v=5"></script>\n    <script src="android-runtime-v2.js?v=4"></script>\n    <script src="android-joker-v10.js?v=2"></script>\n    <script src="android-runtime-v11.js?v=5"></script>\n    <script src="android-v12.js?v=4"></script>\n    <script src="android-v14.js?v=3"></script>\n    <script src="android-v15.js?v=5"></script>\n    <script src="android-deal-2026.js?v=20260715-2"></script>\n  </body>#' www/index.html
-
-          grep -q 'table-language.js?v=5' www/index.html
-          grep -q 'android-ui-v7.css?v=2' www/index.html
-          grep -q 'android-motion-v2.css?v=2' www/index.html
-          grep -q 'android-ui-v8.css?v=2' www/index.html
-          grep -q 'android-ui-v9.css?v=2' www/index.html
-          grep -q 'android-ui-v10.css?v=3' www/index.html
-          grep -q 'android-ui-v11.css?v=4' www/index.html
-          grep -q 'android-ui-v12.css?v=3' www/index.html
-          grep -q 'android-opponent-hands.js?v=3' www/index.html
-          grep -q 'android-menu-motion.js?v=2' www/index.html
-          grep -q 'android-runtime-polish.js?v=5' www/index.html
-          grep -q 'android-runtime-v2.js?v=4' www/index.html
-          grep -q 'android-joker-v10.js?v=2' www/index.html
-          grep -q 'android-runtime-v11.js?v=5' www/index.html
-          grep -q 'android-v12.js?v=4' www/index.html
-          grep -q 'android-v15.js?v=5' www/index.html
-          grep -q 'android-deal-2026.js?v=20260715-2' www/index.html
-
-          # Validate every local script and stylesheet reference in the final HTML.
-          python3 - <<'PY'
-          from html.parser import HTMLParser
-          from pathlib import Path
-
-          class AssetParser(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.assets = []
-
-              def handle_starttag(self, tag, attrs):
-                  attrs = dict(attrs)
-                  if tag == 'script' and attrs.get('src'):
-                      self.assets.append(attrs['src'])
-                  if tag == 'link' and attrs.get('rel') == 'stylesheet' and attrs.get('href'):
-                      self.assets.append(attrs['href'])
-
-          parser = AssetParser()
-          parser.feed(Path('www/index.html').read_text(encoding='utf-8'))
-          missing = []
-          for reference in parser.assets:
-              if reference.startswith(('http://', 'https://', 'data:', '//')):
-                  continue
-              path = reference.split('?', 1)[0].split('#', 1)[0]
-              if path and not (Path('www') / path).is_file():
-                  missing.append(reference)
-
-          if missing:
-              raise SystemExit('Missing local assets: ' + ', '.join(missing))
-          PY
-
-          # Removed owners, observers, intervals and effects must never return silently.
-          ! grep -q 'android-deal-v3.js' www/index.html
-          ! grep -q 'android-deal-v4.js' www/index.html
-          ! grep -q 'android-deal-v5.js' www/index.html
-          ! grep -q 'android-v17.js' www/index.html
-          ! grep -q 'android-calm-joker-v11.css' www/index.html
-          ! grep -q 'joker-image-cards.js' www/index.html
-          ! grep -q 'joker-panel-cancel.js' www/index.html
-          ! grep -q 'played-card-motion.css' www/index.html
-          test ! -e www/android-calm-joker-v11.css
-          test ! -e www/joker-image-cards.js
-          test ! -e www/joker-panel-cancel.js
-          test ! -e www/played-card-motion.css
-
-          ! grep -q 'MutationObserver' www/android-runtime-v11.js
-          ! grep -q 'MutationObserver' www/android-v12.js
-          ! grep -q 'MutationObserver' www/android-v15.js
-          ! grep -q 'installHudHook' www/android-runtime-v11.js
-          grep -q 'function syncHudClasses' www/android-runtime-v2.js
-          ! grep -q 'setInterval' www/joker-announcement.js
-          ! grep -q 'window.setInterval =' www/android-v15.js
-          ! grep -q '__JOKER_ANDROID_INTERVAL_GUARD__' www/android-v15.js
-          ! grep -q 'document.createElement("script")' www/preload.js
-          grep -q 'PRELOAD_CONCURRENCY = 6' www/preload.js
-
-          ! grep -q 'playCardDealAnimation =' www/ace-deal-animation.js
-          ! grep -q 'playCardDealAnimation' www/android-v12.js
-          ! grep -q 'runAfterDealAnimation' www/android-v12.js
-          ! grep -q 'playCardDealAnimation' www/android-v14.js
-          ! grep -q 'runAfterDealAnimation' www/android-v14.js
-          ! grep -q 'joker-bubble-trail' www/trick-collect-animation.css
-          ! grep -q 'joker-star-burst' www/trick-collect-animation.css
-          ! grep -q ':has(' www/joker-buttons-polish.css
-          ! grep -q ':has(' www/android-ui-v9.css
-          ! grep -q ':has(' www/android-ui-v11.css
-          ! grep -q 'is-premium-deal' www/android-ui-v8.css
-          ! grep -q 'is-premium-deal' www/android-ui-v9.css
-          ! grep -q 'infinite' www/android-motion-v2.css
-          ! grep -q 'infinite' www/android-ui-v8.css
-          ! grep -q 'filter: blur' www/android-motion-v2.css
-          ! grep -q 'filter: blur' www/android-ui-v8.css
-          ! grep -q 'filter: blur' www/android-ui-v10.css
-          ! grep -q 'backdrop-filter: blur' www/android-ui-v7.css
-          ! grep -q 'backdrop-filter: blur' www/android-ui-v10.css
-          ! grep -q 'backdrop-filter: blur' www/android-ui-v12.css
-          ! grep -q 'paintSilverSuits' www/android-v12.js
-          grep -q 'markSilverSuits' www/android-v12.js
-          ! grep -q 'rules/deal-animation-adapter.js' www/index.html
-          test ! -e www/rules/deal-animation-adapter.js
-          grep -q '__JOKER_ANDROID_DEAL_2026_STAGE__' www/rules/rules-engine.js
-          ! grep -q 'setTimeout(install' www/android-deal-2026.js
-          ! grep -q 'originalRender = render' www/high-joker-legal-fix.js
-          grep -q 'timeoutIds: new Set()' www/script.js
-          ! grep -q 'state.timeoutIds = state.timeoutIds.filter' www/script.js
-          grep -q 'cachedAndroidIsLegalCard' www/android-runtime-polish.js
-          grep -q 'const activeAnimations = new Set' www/android-deal-2026.js
-          grep -q 'const activeSoundSources = new Set' www/android-deal-2026.js
-          grep -q 'const transferJobs = \[\]' www/android-deal-2026.js
-          grep -q 'cards.length = 0' www/android-deal-2026.js
-          ! grep -q 'window.setTimeout' www/android-deal-2026.js
-          ! grep -q 'window.setTimeout' www/ace-deal-animation.js
-          ! grep -q 'android-deal-container-mask-style' www/android-v15.js
-          ! grep -q 'deal-2026-deck-breathe' www/android-deal-2026.js
-          ! grep -q 'backdrop-filter: blur' www/android-ui-v11.css
-          grep -q 'oscillator.disconnect()' www/sound-polish.js
-          grep -q 'biquad.disconnect()' www/sound-polish.js
-
-          ! grep -q 'is-deal-pending' www/android-ui-v10.css
-          ! grep -q 'is-deal-arrived' www/android-ui-v10.css
-          ! grep -q 'v11-deal-' www/android-ui-v11.css
-          ! grep -q 'is-v11-deal-' www/android-ui-v11.css
-          ! grep -q 'v12-deal-' www/android-ui-v12.css
-          ! grep -q 'is-v12-deal-' www/android-ui-v12.css
-          ! grep -q 'is-v12-facedown' www/android-ui-v12.css
-          ! grep -q 'is-v12-hand-lift' www/android-ui-v12.css
-          ! grep -q 'renderWithAndroidV2' www/android-runtime-v2.js
-          ! grep -q 'querySelectorAll(".hand .card.is-touch-selected")' www/android-runtime-v2.js
-          grep -q 'const renderedCounts = new WeakMap' www/android-opponent-hands.js
-
-      - name: Create Android project
-        run: npx cap add android
-
-      - name: Sync web app to Android
-        run: npx cap sync android
-
-      - name: Configure true immersive landscape app
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-
-          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
-          manifest = manifest_path.read_text(encoding='utf-8')
-          activity_marker = 'android:name=".MainActivity"'
-          if 'android:screenOrientation=' not in manifest:
-              manifest = manifest.replace(
-                  activity_marker,
-                  activity_marker + '\n            android:screenOrientation="sensorLandscape"',
-                  1,
-              )
-          manifest_path.write_text(manifest, encoding='utf-8')
-
-          styles_path = Path('android/app/src/main/res/values/styles.xml')
-          tree = ET.parse(styles_path)
-          root = tree.getroot()
-          fullscreen_items = {
-              'android:windowFullscreen': 'true',
-              'android:windowNoTitle': 'true',
-              'android:windowActionModeOverlay': 'true',
-              'android:windowDrawsSystemBarBackgrounds': 'true',
-              'android:statusBarColor': '@android:color/transparent',
-              'android:navigationBarColor': '@android:color/transparent',
-              'android:windowLightStatusBar': 'false',
-              'android:windowLightNavigationBar': 'false',
-              'android:windowLayoutInDisplayCutoutMode': 'shortEdges',
-              'android:windowDisablePreview': 'true',
-          }
-
-          for style in root.findall('style'):
-              if style.attrib.get('name') not in {'AppTheme.NoActionBar', 'AppTheme.NoActionBarLaunch'}:
-                  continue
-              existing = {item.attrib.get('name'): item for item in style.findall('item')}
-              for item_name, item_value in fullscreen_items.items():
-                  item = existing.get(item_name)
-                  if item is None:
-                      item = ET.SubElement(style, 'item', {'name': item_name})
-                  item.text = item_value
-
-          tree.write(styles_path, encoding='utf-8', xml_declaration=True)
-
-          java_path = Path('android/app/src/main/java/com/valievcompany/joker/MainActivity.java')
-          java_path.parent.mkdir(parents=True, exist_ok=True)
-          java_path.write_text('''package com.valievcompany.joker;
-
-          import android.content.res.Configuration;
-          import android.graphics.Color;
-          import android.os.Build;
-          import android.os.Bundle;
-          import android.view.View;
-          import android.view.WindowInsets;
-          import android.view.WindowInsetsController;
-          import android.view.WindowManager;
-
-          import com.getcapacitor.BridgeActivity;
-
-          public class MainActivity extends BridgeActivity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  configureWindow();
-                  hideSystemUI();
-                  getWindow().getDecorView().postDelayed(this::hideSystemUI, 250);
-              }
-
-              @Override
-              public void onResume() {
-                  super.onResume();
-                  hideSystemUI();
-              }
-
-              @Override
-              protected void onPostResume() {
-                  super.onPostResume();
-                  hideSystemUI();
-              }
-
-              @Override
-              public void onWindowFocusChanged(boolean hasFocus) {
-                  super.onWindowFocusChanged(hasFocus);
-                  if (hasFocus) {
-                      hideSystemUI();
-                      getWindow().getDecorView().postDelayed(this::hideSystemUI, 180);
-                  }
-              }
-
-              @Override
-              public void onConfigurationChanged(Configuration newConfig) {
-                  super.onConfigurationChanged(newConfig);
-                  hideSystemUI();
-              }
-
-              private void configureWindow() {
-                  getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                  getWindow().setStatusBarColor(Color.TRANSPARENT);
-                  getWindow().setNavigationBarColor(Color.TRANSPARENT);
-
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                      getWindow().setStatusBarContrastEnforced(false);
-                      getWindow().setNavigationBarContrastEnforced(false);
-                  }
-
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                      WindowManager.LayoutParams attributes = getWindow().getAttributes();
-                      attributes.layoutInDisplayCutoutMode =
-                          WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-                      getWindow().setAttributes(attributes);
-                  }
-
-                  if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                      getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(
-                          visibility -> {
-                              if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                                  getWindow().getDecorView().postDelayed(this::hideSystemUI, 120);
-                              }
-                          }
-                      );
-                  }
-              }
-
-              private void hideSystemUI() {
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                      getWindow().setDecorFitsSystemWindows(false);
-                      WindowInsetsController controller = getWindow().getInsetsController();
-                      if (controller != null) {
-                          controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-                          controller.setSystemBarsBehavior(
-                              WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                          );
-                      }
-                      return;
-                  }
-
-                  getWindow().getDecorView().setSystemUiVisibility(
-                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                          | View.SYSTEM_UI_FLAG_FULLSCREEN
-                          | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                          | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                          | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                          | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                  );
-              }
-          }
-          ''', encoding='utf-8')
-          PY
-
-      - name: Build debug APK
-        run: |
-          chmod +x android/gradlew
-          cd android
-          ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: JOKER-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
+          name: bidding-render-audit
+          path: bidding-render-audit.txt
