@@ -1,5 +1,9 @@
 (() => {
-  const originalChooseBotCard = chooseBotCard;
+  "use strict";
+
+  const legalCardsByPlayer = new Map();
+  const goalByPlayer = new Map();
+  const splitCardsCache = new WeakMap();
 
   function isMediumAi() {
     return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
@@ -27,13 +31,21 @@
 
   function getGoal(playerId) {
     const player = getPlayerById(playerId);
+    const hand = state.hands[playerId] || [];
     const target = getPlayerTarget(player);
     const tricks = player?.tricks || 0;
-    const cardsLeft = state.hands[playerId]?.length || 0;
+    const rulesId = window.JokerRules?.activeId || "rules";
+    const signature = `${rulesId}|${state.currentPulka}|${state.currentGame}|${player?.bid ?? "null"}|${tricks}|${hand.length}`;
+    const cached = goalByPlayer.get(playerId);
+
+    if (cached?.player === player && cached.hand === hand && cached.signature === signature) {
+      return cached.goal;
+    }
+
+    const cardsLeft = hand.length;
     const needed = Math.max(0, target - tricks);
     const shouldAvoid = player?.bid === "pass" || tricks >= target;
-
-    return {
+    const goal = {
       player,
       target,
       tricks,
@@ -43,13 +55,44 @@
       shouldAvoid,
       desperate: !shouldAvoid && needed >= Math.max(1, cardsLeft),
       urgent: !shouldAvoid && (needed >= Math.max(1, cardsLeft - 1) || cardsLeft <= 3),
+      recovery: !shouldAvoid && needed > 0 && (needed >= Math.max(1, cardsLeft - 1) || cardsLeft <= 3),
+      highOrder: target >= 4,
+      strongOrder: target >= 5,
+      fulfilled: player?.bid === "pass" || tricks >= target,
+      over: tricks > target,
     };
+
+    goalByPlayer.set(playerId, { player, hand, signature, goal });
+    return goal;
   }
 
   function getLegalCards(playerId) {
     const hand = state.hands[playerId] || [];
+    const firstPlay = state.currentTrick?.[0] || null;
+    const leadSuit = typeof getLeadSuit === "function" ? (getLeadSuit() || "") : "";
+    const trumpSuit = state.trump?.type === "standard" ? (state.trump.suit || "") : "";
+    const rulesId = window.JokerRules?.activeId || "rules";
+    const signature = [
+      hand.length,
+      state.currentTrick?.length || 0,
+      leadSuit,
+      trumpSuit,
+      rulesId,
+      firstPlay?.card?.id || "",
+      firstPlay?.jokerMode || "",
+      firstPlay?.jokerCommand || "",
+      firstPlay?.jokerSuit || "",
+    ].join("|");
+    const cached = legalCardsByPlayer.get(playerId);
+
+    if (cached?.hand === hand && cached.signature === signature) {
+      return cached.cards;
+    }
+
     const legalCards = hand.filter((card) => isLegalCard(playerId, card));
-    return legalCards.length ? legalCards : hand;
+    const cards = legalCards.length ? legalCards : hand;
+    legalCardsByPlayer.set(playerId, { hand, signature, cards });
+    return cards;
   }
 
   function isTrump(card) {
@@ -57,29 +100,87 @@
     return Boolean(trumpSuit && card?.type === "standard" && card.suit === trumpSuit);
   }
 
-  function getCardPower(card) {
-    if (card?.type === "joker") {
-      return 100;
+  function splitCards(cards) {
+    if (!Array.isArray(cards)) {
+      return { standardCards: [], jokerCards: [] };
     }
 
-    return (isTrump(card) ? 34 : 0) + (RANK_POWER[card.rank] || 0);
-  }
+    const cached = splitCardsCache.get(cards);
 
-  function sortLow(cards) {
-    return [...cards].sort((first, second) => getCardPower(first) - getCardPower(second));
-  }
+    if (cached?.length === cards.length) {
+      return cached;
+    }
 
-  function sortHigh(cards) {
-    return [...cards].sort((first, second) => getCardPower(second) - getCardPower(first));
+    const standardCards = [];
+    const jokerCards = [];
+
+    for (const card of cards) {
+      if (card.type === "standard") {
+        standardCards.push(card);
+      } else if (card.type === "joker") {
+        jokerCards.push(card);
+      }
+    }
+
+    const split = { length: cards.length, standardCards, jokerCards };
+    splitCardsCache.set(cards, split);
+    return split;
   }
 
   function getStandardCards(cards) {
-    return cards.filter((card) => card.type === "standard");
+    return splitCards(cards).standardCards;
   }
 
   function getJokerCards(cards) {
-    return cards.filter((card) => card.type === "joker");
+    return splitCards(cards).jokerCards;
   }
+
+  function createCardOrder({ trumpBonus = 34, jokerPower = 100 } = {}) {
+    function cardPower(card) {
+      if (card?.type === "joker") {
+        return jokerPower;
+      }
+
+      return (isTrump(card) ? trumpBonus : 0) + (RANK_POWER[card.rank] || 0);
+    }
+
+    function sortLow(cards) {
+      return [...cards].sort((first, second) => cardPower(first) - cardPower(second));
+    }
+
+    function sortHigh(cards) {
+      return [...cards].sort((first, second) => cardPower(second) - cardPower(first));
+    }
+
+    return { cardPower, sortLow, sortHigh };
+  }
+
+  window.JokerMediumContext = Object.freeze({
+    isMediumAi,
+    isBotId,
+    getPlayerTarget,
+    getGoal,
+    getLegalCards,
+    isTrump,
+    getStandardCards,
+    getJokerCards,
+    createCardOrder,
+  });
+})();
+
+(() => {
+  const originalChooseBotCard = chooseBotCard;
+  const {
+    isMediumAi,
+    isBotId,
+    getGoal,
+    getLegalCards,
+    isTrump,
+    getStandardCards,
+    getJokerCards,
+    createCardOrder,
+  } = window.JokerMediumContext;
+  const { cardPower: getCardPower, sortLow } = createCardOrder({ trumpBonus: 34, jokerPower: 100 });
 
   function getSureLeadScore(card) {
     if (card.type !== "standard") {
