@@ -2,81 +2,30 @@
   const originalChooseBotCard = chooseBotCard;
   const originalChooseJokerMode = chooseJokerMode;
   const originalChooseLeadJokerAction = chooseLeadJokerAction;
-
-  function isMediumAi() {
-    return typeof window.isAiDifficultyAtLeast === "function" && window.isAiDifficultyAtLeast("medium");
-  }
-
-  function isBotId(playerId) {
-    return typeof playerId === "string" && playerId.startsWith("bot-");
-  }
-
-  function getPlayerTarget(player) {
-    if (!player) {
-      return 0;
-    }
-
-    if (isFourHundredPulka()) {
-      return 3;
-    }
-
-    if (player.bid === "pass") {
-      return 0;
-    }
-
-    return Number(player.bid || 0);
-  }
+  const {
+    isMediumAi,
+    isBotId,
+    getGoal,
+    getLegalCards,
+    isTrump,
+    getStandardCards,
+    getJokerCards,
+    createCardOrder,
+  } = window.JokerMediumContext;
+  const { sortHigh, sortLow } = createCardOrder({ trumpBonus: 46, jokerPower: 120 });
 
   function isBrokenByOvereating(playerId) {
-    const player = getPlayerById(playerId);
+    const goal = getGoal(playerId);
 
-    if (!player) {
+    if (!goal.player || goal.player.bid === null) {
       return false;
     }
 
-    const target = getPlayerTarget(player);
-    const tricks = player.tricks || 0;
-
-    if (player.bid === "pass") {
-      return tricks > 0;
+    if (goal.player.bid === "pass") {
+      return goal.tricks > 0;
     }
 
-    return target > 0 && tricks > target;
-  }
-
-  function getLegalCards(playerId) {
-    const hand = state.hands[playerId] || [];
-    const legalCards = hand.filter((card) => isLegalCard(playerId, card));
-    return legalCards.length ? legalCards : hand;
-  }
-
-  function isTrump(card) {
-    const trumpSuit = getTrumpSuit();
-    return Boolean(trumpSuit && card?.type === "standard" && card.suit === trumpSuit);
-  }
-
-  function cardPower(card) {
-    if (card?.type === "joker") {
-      return 120;
-    }
-
-    return (isTrump(card) ? 46 : 0) + (RANK_POWER[card.rank] || 0);
-  }
-
-  function sortHigh(cards) {
-    return [...cards].sort((first, second) => cardPower(second) - cardPower(first));
-  }
-
-  function sortLow(cards) {
-    return [...cards].sort((first, second) => cardPower(first) - cardPower(second));
-  }
-
-  function getStandardCards(cards) {
-    return cards.filter((card) => card.type === "standard");
-  }
-
-  function getJokerCards(cards) {
-    return cards.filter((card) => card.type === "joker");
+    return goal.target > 0 && goal.over;
   }
 
   function chooseLongSuit(playerId) {
