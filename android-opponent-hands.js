@@ -2,9 +2,9 @@
   "use strict";
 
   const SEATS = ["left", "top", "right"];
-  const stacksBySeat = Object.fromEntries(
-    SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]),
-  );
+  const stacksBySeat = typeof opponentStacksBySeat === "object"
+    ? opponentStacksBySeat
+    : Object.fromEntries(SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]));
   const renderedCounts = new WeakMap();
   let playerSeatSignature = "";
   let playerIdBySeat = Object.create(null);

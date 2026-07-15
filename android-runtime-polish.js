@@ -3,43 +3,46 @@
 
   const table = document.querySelector(".table");
   const PLAYER_SEATS = ["left", "top", "right", "bottom"];
+  const playerViews = typeof playerViewsBySeat === "object"
+    ? playerViewsBySeat
+    : Object.fromEntries(
+        PLAYER_SEATS.map((seat) => {
+          const avatar = document.querySelector(`[data-seat="${seat}"]`);
+          const currentEmotion = avatar?.querySelector(":scope > .avatar-emotion") || null;
+          let avatarInitial = avatar?.querySelector(":scope > .avatar-initial") || null;
 
-  const playerViews = Object.fromEntries(
-    PLAYER_SEATS.map((seat) => {
-      const avatar = document.querySelector(`[data-seat="${seat}"]`);
-      const currentEmotion = avatar?.querySelector(":scope > .avatar-emotion") || null;
-      let avatarInitial = avatar?.querySelector(":scope > .avatar-initial") || null;
+          if (avatar && !avatarInitial) {
+            avatarInitial = document.createElement("span");
+            avatarInitial.className = "avatar-initial";
+            avatar.replaceChildren(avatarInitial);
+            if (currentEmotion) avatar.append(currentEmotion);
+          }
 
-      if (avatar && !avatarInitial) {
-        avatarInitial = document.createElement("span");
-        avatarInitial.className = "avatar-initial";
-        avatar.replaceChildren(avatarInitial);
-        if (currentEmotion) avatar.append(currentEmotion);
-      }
-
-      const taken = document.querySelector(`[data-taken="${seat}"]`);
-      return [seat, {
-        playerElement: avatar?.closest(".player") || null,
-        name: document.querySelector(`[data-name="${seat}"]`),
-        avatar,
-        avatarInitial,
-        orderBadge: document.querySelector(`[data-order-badge="${seat}"]`),
-        order: document.querySelector(`[data-order="${seat}"]`),
-        bid: document.querySelector(`[data-bid="${seat}"]`),
-        taken,
-        stats: taken?.closest(".player-stats") || null,
-      }];
-    }),
-  );
+          const taken = document.querySelector(`[data-taken="${seat}"]`);
+          return [seat, {
+            playerElement: avatar?.closest(".player") || null,
+            name: document.querySelector(`[data-name="${seat}"]`),
+            avatar,
+            avatarInitial,
+            orderBadge: document.querySelector(`[data-order-badge="${seat}"]`),
+            order: document.querySelector(`[data-order="${seat}"]`),
+            bid: document.querySelector(`[data-bid="${seat}"]`),
+            taken,
+            stats: taken?.closest(".player-stats") || null,
+          }];
+        }),
+      );
 
   const lastPlayerSignatures = Object.create(null);
   let lastPhase = null;
   let lastActiveSeat = null;
   let lastBusy = null;
 
-  function setText(node, value) {
-    if (node && node.textContent !== value) node.textContent = value;
-  }
+  const setText = typeof setElementText === "function"
+    ? setElementText
+    : (node, value) => {
+        if (node && node.textContent !== value) node.textContent = value;
+      };
 
   function syncRuntimeState(force = false) {
     if (!table || typeof state === "undefined") return;
