@@ -1,36 +1,9 @@
 (() => {
   const originalChooseBotCard = chooseBotCard;
-  const originalIsLegalCard = isLegalCard;
-  let activeLegalityCache = null;
 
   function shouldGuardPlayer(playerId) {
     return typeof playerId === "string" && (playerId.startsWith("bot-") || playerId === "human");
   }
-
-  function getLegalityCacheKey(playerId, card) {
-    const trumpKey = `${state.trump?.type || ""}:${state.trump?.suit || ""}`;
-    const trickKey = state.currentTrick
-      .map((play) => `${play.player?.id || ""}:${play.card?.id || ""}:${play.jokerMode || ""}:${play.jokerCommand || ""}:${play.jokerSuit || ""}`)
-      .join("|");
-
-    return `${playerId}:${card?.id || ""}:${trumpKey}:${trickKey}`;
-  }
-
-  isLegalCard = function cachedBotIsLegalCard(playerId, card) {
-    if (!activeLegalityCache) {
-      return originalIsLegalCard(playerId, card);
-    }
-
-    const key = getLegalityCacheKey(playerId, card);
-
-    if (activeLegalityCache.has(key)) {
-      return activeLegalityCache.get(key);
-    }
-
-    const result = originalIsLegalCard(playerId, card);
-    activeLegalityCache.set(key, result);
-    return result;
-  };
 
   function getLegalCards(playerId) {
     const hand = state.hands[playerId] || [];
@@ -51,7 +24,7 @@
     return [...legalCards].sort(compareBotCards)[0];
   }
 
-  function chooseGuardedCard(playerId) {
+  chooseBotCard = function guardedChooseBotCard(playerId) {
     let chosenCard = null;
 
     try {
@@ -100,16 +73,5 @@
     });
 
     return chooseSafeLegalCard(playerId, legalCards, chosenCard);
-  }
-
-  chooseBotCard = function guardedChooseBotCard(playerId) {
-    const previousCache = activeLegalityCache;
-    activeLegalityCache = new Map();
-
-    try {
-      return chooseGuardedCard(playerId);
-    } finally {
-      activeLegalityCache = previousCache;
-    }
   };
 })();
