@@ -100,7 +100,12 @@
   function syncTrumpPresentation() {
     if (typeof state === "undefined" || !trumpPill) return;
 
-    const trumpCard = trumpPill.querySelector(".trump-card") || trumpPill.querySelector(".card");
+    const cachedTrumpCard = lastTrumpCard?.isConnected && trumpPill.contains(lastTrumpCard)
+      ? lastTrumpCard
+      : null;
+    const trumpCard = cachedTrumpCard
+      || trumpPill.querySelector(".trump-card")
+      || trumpPill.querySelector(".card");
     if (!trumpCard) {
       lastTrumpCard = null;
       lastTrumpSignature = "";
@@ -111,14 +116,11 @@
     const titleText = language === "en" ? "Trump" : "Козырь";
     const suit = getCurrentSuit(trumpCard);
     const signature = `${language}:${suit || "none"}`;
+
+    if (trumpCard === lastTrumpCard && signature === lastTrumpSignature) return;
+
     const currentTitle = trumpPill.querySelector(".android-trump-title");
     const currentArt = trumpCard.querySelector(".android-trump-suit-art");
-    const presentationIsCurrent = trumpCard === lastTrumpCard
-      && signature === lastTrumpSignature
-      && currentTitle?.textContent === titleText
-      && (suit ? currentArt?.dataset.suit === suit : !currentArt);
-
-    if (presentationIsCurrent) return;
 
     for (const node of Array.from(trumpPill.childNodes)) {
       if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) node.remove();

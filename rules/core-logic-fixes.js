@@ -18,6 +18,89 @@
     return null;
   }
 
+  function isHigherStandardPlay(candidate, currentHighest) {
+    return !currentHighest || RANK_POWER[candidate.card.rank] > RANK_POWER[currentHighest.card.rank];
+  }
+
+  getHighestStandardPlay = function getHighestStandardPlayInOnePass(plays) {
+    let highestPlay = null;
+
+    for (const play of plays) {
+      if (isHigherStandardPlay(play, highestPlay)) {
+        highestPlay = play;
+      }
+    }
+
+    return highestPlay || undefined;
+  };
+
+  getTrickWinner = function getTrickWinnerInOnePass() {
+    const trumpSuit = state.trump?.type === "standard" ? state.trump.suit : null;
+    let firstActivePlay = null;
+    let leadSuit = null;
+    let lastBeatJokerPlay = null;
+    let highestTrumpPlay = null;
+    let highestLeadSuitPlay = null;
+    let highestJokerSuitPlay = null;
+
+    for (const play of state.currentTrick) {
+      if (play.jokerMode === "duck") {
+        continue;
+      }
+
+      if (!firstActivePlay) {
+        firstActivePlay = play;
+        if (play.card.type !== "joker") leadSuit = play.card.suit;
+      }
+
+      if (play.card.type === "joker") {
+        if (play.jokerMode === "beat") lastBeatJokerPlay = play;
+        continue;
+      }
+
+      if (!leadSuit) leadSuit = play.card.suit;
+
+      if (trumpSuit && play.card.suit === trumpSuit && isHigherStandardPlay(play, highestTrumpPlay)) {
+        highestTrumpPlay = play;
+      }
+
+      if (
+        firstActivePlay?.card.type === "joker"
+        && firstActivePlay.jokerMode === "lead"
+        && play.card.suit === firstActivePlay.jokerSuit
+        && isHigherStandardPlay(play, highestJokerSuitPlay)
+      ) {
+        highestJokerSuitPlay = play;
+      }
+
+      if (play.card.suit === leadSuit && isHigherStandardPlay(play, highestLeadSuitPlay)) {
+        highestLeadSuitPlay = play;
+      }
+    }
+
+    if (lastBeatJokerPlay) {
+      return lastBeatJokerPlay;
+    }
+
+    const leadJokerPlay = firstActivePlay?.card.type === "joker" && firstActivePlay.jokerMode === "lead"
+      ? firstActivePlay
+      : null;
+
+    if (leadJokerPlay) {
+      if (leadJokerPlay.jokerCommand === "take") {
+        return highestTrumpPlay || highestJokerSuitPlay || leadJokerPlay;
+      }
+
+      if (leadJokerPlay.jokerSuit === trumpSuit) {
+        return leadJokerPlay;
+      }
+
+      return highestTrumpPlay || leadJokerPlay;
+    }
+
+    return highestTrumpPlay || highestLeadSuitPlay || undefined;
+  };
+
   getUnseenHigherCardCount = function getUnseenHigherCardCountWithOwnHand(card, viewerId = null) {
     if (card?.type !== "standard") {
       return 0;
