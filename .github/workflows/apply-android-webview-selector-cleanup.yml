@@ -1,0 +1,81 @@
+name: Apply Android WebView selector cleanup
+
+on:
+  push:
+    branches:
+      - agent/android-webview-selector-cleanup-1
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/android-webview-selector-cleanup-1
+
+      - name: Replace expensive selector and full-screen promotion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          table_path = Path('android-table-v2.css')
+          table = table_path.read_text(encoding='utf-8')
+          old_selector = '''.trump-pill:has(.trump-card.is-revealed)::before {
+            right: -8px !important;
+            width: 48px !important;
+            height: 48px !important;
+          }'''
+          new_selector = '''.trump-pill.v13-trump-ready::before {
+            right: -8px !important;
+            width: 48px !important;
+            height: 48px !important;
+          }'''
+          if table.count(old_selector) != 1:
+              raise SystemExit('Expected exactly one legacy :has() selector')
+          table = table.replace(old_selector, new_selector)
+          if ':has(' in table:
+              raise SystemExit('A :has() selector still remains in android-table-v2.css')
+          table_path.write_text(table, encoding='utf-8')
+
+          deal_path = Path('android-deal-2026.css')
+          deal = deal_path.read_text(encoding='utf-8')
+          forced_layer = '        transform: translateZ(0) !important;\n'
+          if deal.count(forced_layer) != 1:
+              raise SystemExit('Expected exactly one full-screen translateZ promotion')
+          deal = deal.replace(forced_layer, '')
+          if 'transform: translateZ(0)' in deal:
+              raise SystemExit('Full-screen translateZ promotion still remains')
+          deal_path.write_text(deal, encoding='utf-8')
+          PY
+
+      - name: Validate CSS structure
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          for name in ('android-table-v2.css', 'android-deal-2026.css'):
+              text = Path(name).read_text(encoding='utf-8')
+              if text.count('{') != text.count('}'):
+                  raise SystemExit(f'Unbalanced braces in {name}')
+              if text.count('/*') != text.count('*/'):
+                  raise SystemExit(f'Unbalanced comments in {name}')
+          PY
+          ! grep -q ':has(' android-table-v2.css
+          ! grep -q 'transform: translateZ(0)' android-deal-2026.css
+          grep -q '.trump-pill.v13-trump-ready::before' android-table-v2.css
+          grep -q 'contain: layout paint style !important' android-deal-2026.css
+
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add android-table-v2.css android-deal-2026.css
+          git diff --cached --quiet && exit 0
+          git commit -m 'Remove costly Android WebView selector and layer promotion'
+          git push origin HEAD:agent/android-webview-selector-cleanup-1
