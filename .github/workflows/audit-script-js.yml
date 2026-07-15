@@ -1,0 +1,320 @@
+name: Audit script.js safely
+
+on:
+  push:
+    branches:
+      - agent/android-script-audit-1
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-audit-1
+          fetch-depth: 1
+
+      - name: Check JavaScript syntax
+        run: node --check script.js
+
+      - name: Build static call and duplication report
+        run: |
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import re
+          from collections import Counter, defaultdict
+          from pathlib import Path
+
+          target = Path('script.js')
+          source = target.read_text(encoding='utf-8')
+          all_files = sorted(
+              path for path in Path('.').rglob('*')
+              if path.is_file()
+              and path.suffix.lower() in {'.js', '.html'}
+              and '.git' not in path.parts
+              and 'node_modules' not in path.parts
+          )
+          corpus = {str(path): path.read_text(encoding='utf-8', errors='replace') for path in all_files}
+
+          def mask_comments_and_strings(text: str) -> str:
+              chars = list(text)
+              index = 0
+              length = len(chars)
+              state = 'code'
+              quote = ''
+
+              while index < length:
+                  char = chars[index]
+                  next_char = chars[index + 1] if index + 1 < length else ''
+
+                  if state == 'code':
+                      if char == '/' and next_char == '/':
+                          chars[index] = chars[index + 1] = ' '
+                          index += 2
+                          state = 'line_comment'
+                          continue
+                      if char == '/' and next_char == '*':
+                          chars[index] = chars[index + 1] = ' '
+                          index += 2
+                          state = 'block_comment'
+                          continue
+                      if char in {'"', "'", '`'}:
+                          quote = char
+                          chars[index] = ' '
+                          index += 1
+                          state = 'string'
+                          continue
+                      index += 1
+                      continue
+
+                  if state == 'line_comment':
+                      if char == '\n':
+                          state = 'code'
+                      else:
+                          chars[index] = ' '
+                      index += 1
+                      continue
+
+                  if state == 'block_comment':
+                      if char == '*' and next_char == '/':
+                          chars[index] = chars[index + 1] = ' '
+                          index += 2
+                          state = 'code'
+                      else:
+                          if char != '\n':
+                              chars[index] = ' '
+                          index += 1
+                      continue
+
+                  if state == 'string':
+                      if char == '\\':
+                          chars[index] = ' '
+                          if index + 1 < length:
+                              if chars[index + 1] != '\n':
+                                  chars[index + 1] = ' '
+                              index += 2
+                          else:
+                              index += 1
+                          continue
+                      if char == quote:
+                          chars[index] = ' '
+                          index += 1
+                          state = 'code'
+                          continue
+                      if char != '\n':
+                          chars[index] = ' '
+                      index += 1
+
+              return ''.join(chars)
+
+          masked = mask_comments_and_strings(source)
+          line_starts = [0]
+          for match in re.finditer(r'\n', source):
+              line_starts.append(match.end())
+
+          def line_number(offset: int) -> int:
+              import bisect
+              return bisect.bisect_right(line_starts, offset)
+
+          def matching_brace(open_offset: int) -> int | None:
+              depth = 0
+              for offset in range(open_offset, len(masked)):
+                  char = masked[offset]
+                  if char == '{':
+                      depth += 1
+                  elif char == '}':
+                      depth -= 1
+                      if depth == 0:
+                          return offset
+              return None
+
+          declaration_pattern = re.compile(
+              r'(?m)^[ \t]*(?:async[ \t]+)?function[ \t]+([A-Za-z_$][\w$]*)[ \t]*\('
+          )
+          functions = []
+          for match in declaration_pattern.finditer(masked):
+              name = match.group(1)
+              open_brace = masked.find('{', match.end())
+              if open_brace < 0:
+                  continue
+              close_brace = matching_brace(open_brace)
+              if close_brace is None:
+                  continue
+              body = source[open_brace + 1:close_brace]
+              normalized_body = re.sub(r'\s+', ' ', body).strip()
+              functions.append({
+                  'name': name,
+                  'start': match.start(),
+                  'end': close_brace + 1,
+                  'start_line': line_number(match.start()),
+                  'end_line': line_number(close_brace),
+                  'body': body,
+                  'normalized_body': normalized_body,
+                  'body_lines': max(0, line_number(close_brace) - line_number(open_brace) - 1),
+              })
+
+          names = [item['name'] for item in functions]
+          name_set = set(names)
+          references = {}
+          calls = {}
+          assignments = defaultdict(list)
+          reference_locations = defaultdict(list)
+
+          for name in names:
+              identifier_re = re.compile(rf'(?<![\w$]){re.escape(name)}(?![\w$])')
+              call_re = re.compile(rf'(?<![\w$]){re.escape(name)}\s*\(')
+              references[name] = 0
+              calls[name] = 0
+              for filename, text in corpus.items():
+                  masked_text = mask_comments_and_strings(text)
+                  for ref in identifier_re.finditer(masked_text):
+                      references[name] += 1
+                      if len(reference_locations[name]) < 12:
+                          line = masked_text.count('\n', 0, ref.start()) + 1
+                          snippet = text.splitlines()[line - 1].strip() if text.splitlines() else ''
+                          reference_locations[name].append((filename, line, snippet[:180]))
+                  calls[name] += len(call_re.findall(masked_text))
+                  assignment_re = re.compile(rf'(?<![\w$]){re.escape(name)}\s*=')
+                  for assigned in assignment_re.finditer(masked_text):
+                      line = masked_text.count('\n', 0, assigned.start()) + 1
+                      snippet = text.splitlines()[line - 1].strip()
+                      assignments[name].append((filename, line, snippet[:180]))
+
+              # The declaration itself matches the call-shaped regex once.
+              calls[name] = max(0, calls[name] - 1)
+
+          duplicate_bodies = defaultdict(list)
+          for item in functions:
+              if item['normalized_body']:
+                  digest = hashlib.sha256(item['normalized_body'].encode()).hexdigest()
+                  duplicate_bodies[digest].append(item)
+          duplicate_groups = [group for group in duplicate_bodies.values() if len(group) > 1]
+
+          simple_conditions = Counter()
+          for match in re.finditer(r'\bif\s*\(([^()\n]{8,180})\)', masked):
+              condition = re.sub(r'\s+', ' ', match.group(1)).strip()
+              simple_conditions[condition] += 1
+
+          high_confidence_unused = [
+              item for item in functions
+              if references[item['name']] == 1 and calls[item['name']] == 0
+          ]
+          callback_or_external_only = [
+              item for item in functions
+              if references[item['name']] <= 3 and calls[item['name']] == 0
+              and item not in high_confidence_unused
+          ]
+          overwritten = [item for item in functions if assignments[item['name']]]
+          tiny_functions = [item for item in functions if item['body_lines'] <= 4]
+
+          lines = []
+          lines.append('# `script.js` static audit')
+          lines.append('')
+          lines.append('Generated from `agent/android-script-audit-1`. This is an audit artifact, not a product change.')
+          lines.append('')
+          lines.append('## Summary')
+          lines.append('')
+          lines.append(f'- Lines: **{source.count(chr(10)) + 1}**')
+          lines.append(f'- Named function declarations: **{len(functions)}**')
+          lines.append(f'- High-confidence unused declarations: **{len(high_confidence_unused)}**')
+          lines.append(f'- Callback/external-only candidates: **{len(callback_or_external_only)}**')
+          lines.append(f'- Functions reassigned somewhere in the project: **{len(overwritten)}**')
+          lines.append(f'- Exact duplicate function bodies: **{len(duplicate_groups)} groups**')
+          lines.append('')
+
+          lines.append('## High-confidence unused declarations')
+          lines.append('')
+          if not high_confidence_unused:
+              lines.append('_None._')
+          else:
+              for item in high_confidence_unused:
+                  lines.append(f"- `{item['name']}` — lines {item['start_line']}-{item['end_line']} ({item['body_lines']} body lines)")
+          lines.append('')
+
+          lines.append('## Callback or external-only candidates')
+          lines.append('')
+          lines.append('These are not automatically dead: a bare function reference can be passed as a callback.')
+          lines.append('')
+          if not callback_or_external_only:
+              lines.append('_None._')
+          else:
+              for item in callback_or_external_only:
+                  name = item['name']
+                  lines.append(f"### `{name}` — lines {item['start_line']}-{item['end_line']}")
+                  lines.append(f"References: {references[name]}; direct calls: {calls[name]}")
+                  for filename, line, snippet in reference_locations[name]:
+                      lines.append(f"- `{filename}:{line}` — `{snippet}`")
+                  lines.append('')
+
+          lines.append('## Functions reassigned or wrapped elsewhere')
+          lines.append('')
+          if not overwritten:
+              lines.append('_None._')
+          else:
+              for item in overwritten:
+                  name = item['name']
+                  lines.append(f"### `{name}` — declared at lines {item['start_line']}-{item['end_line']}")
+                  for filename, line, snippet in assignments[name]:
+                      lines.append(f"- `{filename}:{line}` — `{snippet}`")
+                  lines.append('')
+
+          lines.append('## Exact duplicate function bodies')
+          lines.append('')
+          if not duplicate_groups:
+              lines.append('_None._')
+          else:
+              for group in duplicate_groups:
+                  joined = ', '.join(f"`{item['name']}` ({item['start_line']}-{item['end_line']})" for item in group)
+                  lines.append(f'- {joined}')
+          lines.append('')
+
+          lines.append('## Most repeated simple `if` conditions')
+          lines.append('')
+          for condition, count in simple_conditions.most_common(30):
+              if count < 2:
+                  break
+              lines.append(f'- **{count}×** `{condition}`')
+          if not any(count >= 2 for count in simple_conditions.values()):
+              lines.append('_None._')
+          lines.append('')
+
+          lines.append('## Tiny helper functions')
+          lines.append('')
+          for item in tiny_functions:
+              name = item['name']
+              lines.append(
+                  f"- `{name}` — lines {item['start_line']}-{item['end_line']}; "
+                  f"references {references[name]}, direct calls {calls[name]}"
+              )
+          lines.append('')
+
+          lines.append('## Full function inventory')
+          lines.append('')
+          lines.append('| Function | Lines | Body lines | References | Direct calls | Reassigned |')
+          lines.append('|---|---:|---:|---:|---:|:---:|')
+          for item in functions:
+              name = item['name']
+              lines.append(
+                  f"| `{name}` | {item['start_line']}-{item['end_line']} | {item['body_lines']} | "
+                  f"{references[name]} | {calls[name]} | {'yes' if assignments[name] else ''} |"
+              )
+
+          Path('SCRIPT_AUDIT.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit audit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SCRIPT_AUDIT.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Generate script.js static audit report'
+          git push origin HEAD:agent/android-script-audit-1
