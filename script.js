@@ -244,7 +244,7 @@ function applyVisualSeatsFromPlayerOrder() {
   const botSeatsByScoreOrder = ["left", "top", "right"];
   let botSeatIndex = 0;
 
-  state.players = state.players.map((player, index) => {
+  state.players = state.players.map((player) => {
     return {
       ...player,
       seat: player.id === "human" ? "bottom" : botSeatsByScoreOrder[botSeatIndex++],
@@ -1400,7 +1400,7 @@ function chooseBotCard(playerId) {
       return [...jokerCards].sort(compareBotCards)[0];
     }
 
-    if (shouldSpendJokerNow(playerId) && jokerCards.length && !hasStrongLeadCard(playerId, standardCards)) {
+    if (shouldSpendJokerNow(playerId) && jokerCards.length && !hasStrongLeadCard(standardCards)) {
       return [...jokerCards].sort(compareBotCards)[0];
     }
 
@@ -1589,7 +1589,7 @@ function getBotAttackPower(card) {
   return trumpBonus + memoryBonus + RANK_POWER[card.rank];
 }
 
-function hasStrongLeadCard(playerId, cards) {
+function hasStrongLeadCard(cards) {
   return cards.some((card) => {
     if (card.type === "joker") {
       return false;
@@ -1996,11 +1996,11 @@ function applyPulkaBonuses(pulkaOffset) {
   const gameRows = state.scoreRows.slice(pulkaOffset, pulkaOffset + 4);
   const premiumPlayerIndexes = [];
 
-  state.players.forEach((_, playerIndex) => {
+  for (const playerIndex of state.players.keys()) {
     const entries = gameRows.map((row) => row.entries[playerIndex]);
 
     if (!entries.every((entry) => entry.fulfilled)) {
-      return;
+      continue;
     }
 
     const bonus = Math.max(...entries.slice(0, 3).map((entry) => entry.value));
@@ -2009,16 +2009,16 @@ function applyPulkaBonuses(pulkaOffset) {
     lastEntry.scoreLabel = String(lastEntry.value);
     lastEntry.premium = true;
     premiumPlayerIndexes.push(playerIndex);
-  });
+  }
 
   if (premiumPlayerIndexes.length) {
-    state.players.forEach((_, playerIndex) => {
+    for (const playerIndex of state.players.keys()) {
       if (premiumPlayerIndexes.includes(playerIndex)) {
-        return;
+        continue;
       }
 
       crossBestSuccessfulEntry(gameRows, playerIndex);
-    });
+    }
   }
 
   gameRows.forEach(syncScoreRow);
@@ -2362,7 +2362,7 @@ function isFixedTrumpPulka() {
 function getPlayerOrderFrom(playerId) {
   const startIndex = state.players.findIndex((player) => player.id === playerId);
 
-  return state.players.map((_, offset) => {
+  return Array.from(state.players.keys(), (offset) => {
     return state.players[(startIndex + offset) % state.players.length].id;
   });
 }

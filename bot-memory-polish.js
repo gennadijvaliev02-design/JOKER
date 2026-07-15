@@ -234,7 +234,7 @@
         return [...jokerCards].sort(compareBotCards)[0];
       }
 
-      if (!preserveLastJoker && shouldSpendJokerNow(playerId) && jokerCards.length && !hasStrongLeadCard(playerId, standardCards)) {
+      if (!preserveLastJoker && shouldSpendJokerNow(playerId) && jokerCards.length && !hasStrongLeadCard(standardCards)) {
         return [...jokerCards].sort(compareBotCards)[0];
       }
 
