@@ -1,0 +1,62 @@
+name: Audit script player model fields
+
+on:
+  push:
+    branches:
+      - agent/android-script-audit-1
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-audit-1
+          fetch-depth: 1
+
+      - name: Audit player model fields
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          fields = ['id', 'seat', 'name', 'bid', 'tricks', 'jokersPlayed', 'total', 'order']
+          files = [
+              p for p in Path('.').rglob('*')
+              if p.is_file() and p.suffix.lower() in {'.js', '.html'}
+              and '.git' not in p.parts and 'node_modules' not in p.parts
+          ]
+          out = ['# Player model field audit', '']
+          for field in fields:
+              patterns = [
+                  re.compile(rf'\.{re.escape(field)}\b'),
+                  re.compile(rf"\[['\"]{re.escape(field)}['\"]\]"),
+                  re.compile(rf'\{{[^}}\n]*\b{re.escape(field)}\b[^}}\n]*\}}'),
+              ]
+              matches = []
+              for path in files:
+                  text = path.read_text(encoding='utf-8', errors='replace')
+                  split = text.splitlines()
+                  for line_no, line in enumerate(split, 1):
+                      if any(pattern.search(line) for pattern in patterns):
+                          matches.append((str(path), line_no, line.strip()[:200]))
+              out.append(f'## `{field}` — {len(matches)} usage-like lines')
+              out.append('')
+              for filename, line_no, snippet in matches[:80]:
+                  out.append(f'- `{filename}:{line_no}` — `{snippet}`')
+              out.append('')
+          Path('SCRIPT_MODEL_AUDIT.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SCRIPT_MODEL_AUDIT.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Generate player model field audit'
+          git push origin HEAD:agent/android-script-audit-1
