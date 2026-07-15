@@ -1,0 +1,213 @@
+name: Apply script repeated-work cleanup
+
+on:
+  push:
+    branches:
+      - agent/android-script-repeated-work-cleanup-1
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-repeated-work-cleanup-1
+          fetch-depth: 1
+
+      - name: Apply exact repeated-work cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('script.js')
+          text = path.read_text(encoding='utf-8')
+
+          for helper in ('getPlayedStandardCards', 'isHigherCardAlreadyPlayed'):
+              outside = []
+              for candidate in Path('.').rglob('*.js'):
+                  if candidate == path:
+                      continue
+                  if helper in candidate.read_text(encoding='utf-8'):
+                      outside.append(str(candidate))
+              if outside:
+                  raise SystemExit(f'{helper} has external references: {outside}')
+
+          replacements = []
+
+          replacements.append((
+              '    const playerElement = document.querySelector(`[data-seat="${player.seat}"]`)?.closest(".player");\n'
+              '    const name = document.querySelector(`[data-name="${player.seat}"]`);\n'
+              '    const avatar = document.querySelector(`[data-seat="${player.seat}"]`);',
+              '    const avatar = document.querySelector(`[data-seat="${player.seat}"]`);\n'
+              '    const playerElement = avatar?.closest(".player");\n'
+              '    const name = document.querySelector(`[data-name="${player.seat}"]`);'
+          ))
+
+          replacements.append((
+              'function getBidBalance() {\n'
+              '  if (!state.players.length || state.players.some((player) => player.bid === null)) {\n'
+              '    return null;\n'
+              '  }\n\n'
+              '  const totalBid = state.players.reduce((sum, player) => {\n'
+              '    return sum + (player.bid === "pass" ? 0 : player.bid);\n'
+              '  }, 0);\n'
+              '  const balance = totalBid - 9;',
+              'function getBidBalance() {\n'
+              '  if (!state.players.length) {\n'
+              '    return null;\n'
+              '  }\n\n'
+              '  let totalBid = 0;\n\n'
+              '  for (const player of state.players) {\n'
+              '    if (player.bid === null) {\n'
+              '      return null;\n'
+              '    }\n\n'
+              '    totalBid += player.bid === "pass" ? 0 : player.bid;\n'
+              '  }\n\n'
+              '  const balance = totalBid - 9;'
+          ))
+
+          replacements.append((
+              '  hand.splice(cardIndex, 1);\n\n'
+              '  if (card.type === "joker") {\n'
+              '    getPlayerById(playerId).jokersPlayed += 1;',
+              '  const player = getPlayerById(playerId);\n'
+              '  hand.splice(cardIndex, 1);\n\n'
+              '  if (card.type === "joker") {\n'
+              '    player.jokersPlayed += 1;'
+          ))
+
+          replacements.append((
+              '  const playedCard = {\n'
+              '    player: getPlayerById(playerId),',
+              '  const playedCard = {\n'
+              '    player,'
+          ))
+
+          old_helpers = (
+              'function getPlayedStandardCards(suit = null) {\n'
+              '  return state.playedCards\n'
+              '    .map((play) => play.card)\n'
+              '    .filter((card) => card.type === "standard" && (!suit || card.suit === suit));\n'
+              '}\n\n'
+              'function isHigherCardAlreadyPlayed(card, rank) {\n'
+              '  return getPlayedStandardCards(card.suit).some((playedCard) => RANK_POWER[playedCard.rank] === rank);\n'
+              '}\n\n'
+              'function getUnseenHigherCardCount(card) {\n'
+              '  if (card.type !== "standard") {\n'
+              '    return 0;\n'
+              '  }\n\n'
+              '  return RANKS.filter((rank) => RANK_POWER[rank] > RANK_POWER[card.rank] && !isHigherCardAlreadyPlayed(card, RANK_POWER[rank])).length;\n'
+              '}'
+          )
+          new_helpers = (
+              'function getUnseenHigherCardCount(card) {\n'
+              '  if (card.type !== "standard") {\n'
+              '    return 0;\n'
+              '  }\n\n'
+              '  const playedRankPowers = new Set();\n\n'
+              '  for (const play of state.playedCards) {\n'
+              '    const playedCard = play.card;\n\n'
+              '    if (playedCard.type === "standard" && playedCard.suit === card.suit) {\n'
+              '      playedRankPowers.add(RANK_POWER[playedCard.rank]);\n'
+              '    }\n'
+              '  }\n\n'
+              '  const cardPower = RANK_POWER[card.rank];\n'
+              '  return RANKS.filter((rank) => RANK_POWER[rank] > cardPower && !playedRankPowers.has(RANK_POWER[rank])).length;\n'
+              '}'
+          )
+          replacements.append((old_helpers, new_helpers))
+
+          replacements.append((
+              '  const trumpBonus = getTrumpSuit() && card.suit === getTrumpSuit() ? 30 : 0;',
+              '  const trumpSuit = getTrumpSuit();\n'
+              '  const trumpBonus = trumpSuit && card.suit === trumpSuit ? 30 : 0;'
+          ))
+
+          replacements.append((
+              'function hasStrongLeadCard(cards) {\n'
+              '  return cards.some((card) => {',
+              'function hasStrongLeadCard(cards) {\n'
+              '  const trumpSuit = getTrumpSuit();\n\n'
+              '  return cards.some((card) => {'
+          ))
+
+          replacements.append((
+              '    return getTrumpSuit() && card.suit === getTrumpSuit() && RANK_POWER[card.rank] >= RANK_POWER.Q;',
+              '    return trumpSuit && card.suit === trumpSuit && RANK_POWER[card.rank] >= RANK_POWER.Q;'
+          ))
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected one occurrence, found {count}: {old.splitlines()[0]}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate syntax and behavior parity
+        run: |
+          node --check script.js
+          python3 - <<'PY'
+          import random
+
+          ranks = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+          power = {rank: index for index, rank in enumerate(ranks)}
+          suits = ['spades', 'clubs', 'hearts', 'diamonds']
+
+          def old_unseen(card, played):
+              def already(rank_power):
+                  return any(p['type'] == 'standard' and p['suit'] == card['suit'] and power[p['rank']] == rank_power for p in played)
+              return sum(1 for rank in ranks if power[rank] > power[card['rank']] and not already(power[rank]))
+
+          def new_unseen(card, played):
+              seen = {power[p['rank']] for p in played if p['type'] == 'standard' and p['suit'] == card['suit']}
+              card_power = power[card['rank']]
+              return sum(1 for rank in ranks if power[rank] > card_power and power[rank] not in seen)
+
+          def old_balance(players):
+              if not players or any(p is None for p in players):
+                  return None
+              total = sum(0 if p == 'pass' else p for p in players)
+              return total - 9
+
+          def new_balance(players):
+              if not players:
+                  return None
+              total = 0
+              for bid in players:
+                  if bid is None:
+                      return None
+                  total += 0 if bid == 'pass' else bid
+              return total - 9
+
+          for _ in range(20000):
+              card = {'type': 'standard', 'suit': random.choice(suits), 'rank': random.choice(ranks)}
+              played = []
+              for _ in range(random.randint(0, 38)):
+                  played.append({
+                      'type': random.choice(['standard', 'joker']),
+                      'suit': random.choice(suits),
+                      'rank': random.choice(ranks),
+                  })
+              assert old_unseen(card, played) == new_unseen(card, played)
+
+              bids = [random.choice([None, 'pass', 1, 2, 3, 4, 5, 6, 7, 8, 9]) for _ in range(random.randint(0, 6))]
+              assert old_balance(bids) == new_balance(bids)
+          PY
+          ! grep -q 'function getPlayedStandardCards' script.js
+          ! grep -q 'function isHigherCardAlreadyPlayed' script.js
+          test "$(grep -c 'const trumpBonus = getTrumpSuit()' script.js || true)" -eq 0
+
+      - name: Commit product change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add script.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'Reuse repeated lookups and card-history scans in script.js'
+          git push origin HEAD:agent/android-script-repeated-work-cleanup-1
