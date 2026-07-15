@@ -1,0 +1,446 @@
+# Player model field audit
+
+## `id` — 328 usage-like lines
+
+- `android-joker-v10.js:68` — `button.dataset.jokerLeadSuit = suit.id;`
+- `android-joker-v10.js:96` — `.map((suitId) => SUITS.find((suit) => suit.id === suitId))`
+- `medium-human-profile.js:168` — `return getCurrentWinningPlay()?.player?.id || null;`
+- `joker-announcement.js:30` — `const suit = SUITS.find((item) => item.id === play.jokerSuit);`
+- `android-runtime-polish.js:48` — `const activePlayer = state.players?.find?.((player) => player.id === state.activePlayerId);`
+- `android-runtime-polish.js:72` — `const handCount = state.hands?.[player.id]?.length || 0;`
+- `android-runtime-polish.js:73` — `const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";`
+- `android-runtime-polish.js:74` — `const isThinking = isActivePlayer && state.busy && player.id !== "human";`
+- `android-runtime-polish.js:116` — `const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";`
+- `android-runtime-polish.js:120` — `isActivePlayer && state.busy && player.id !== "human",`
+- `android-runtime-polish.js:151` — `&& context.firstCardId === (firstPlay?.card?.id || "")`
+- `android-runtime-polish.js:165` — `firstCardId: firstPlay?.card?.id || "",`
+- `android-runtime-polish.js:176` — `if (!card?.id) return fullIsLegalCard(playerId, card);`
+- `android-runtime-polish.js:179` — `if (context.results.has(card.id)) return context.results.get(card.id);`
+- `android-runtime-polish.js:182` — `context.results.set(card.id, result);`
+- `medium-game-plan.js:81` — `firstPlay?.card?.id || "",`
+- `medium-joker-command-plan.js:76` — `suit: suit.id,`
+- `medium-joker-command-plan.js:77` — `score: getSuitCommandScore(playerId, suit.id),`
+- `void-suit-memory-bots.js:39` — `const map = new Map(state.players.map((player) => [player.id, new Set()]));`
+- `void-suit-memory-bots.js:50` — `const playerId = play.player?.id;`
+- `void-suit-memory-bots.js:74` — `return state.players.filter((player) => player.id !== playerId);`
+- `void-suit-memory-bots.js:79` — `return getOpponents(playerId).filter((player) => voidMap.get(player.id)?.has(suit)).length;`
+- `android-v15.js:11` — `player.id,`
+- `android-v15.js:57` — `const handIds = hand.map((card) => card?.id || "").join(",");`
+- `android-v15.js:73` — `&& nodes.every((node, index) => node.classList.contains("card") && node.dataset.card === hand[index]?.id);`
+- `android-opponent-hands.js:13` — `const signature = state.players.map((player) => `${player.id}:${player.seat}`).join("|");`
+- `android-opponent-hands.js:18` — `playerIdBySeat[player.seat] = player.id;`
+- `personality-modes-bots.js:98` — `return Boolean(winner && winner.player?.id !== playerId && isTrumpAcePlay(winner));`
+- `personality-modes-bots.js:116` — `return state.currentTrick.map((play) => `${play.player?.id}:${play.card?.id}:${play.jokerMode || ""}`).join("|");`
+- `personality-modes-bots.js:122` — `cardId: card?.id,`
+- `personality-modes-bots.js:132` — `if (!intent || intent.playerId !== playerId || intent.cardId !== card?.id || intent.trickKey !== getTrickKey()) {`
+- `medium-bid-balance-war.js:114` — `if (!player || player.id === botId || (state.hands[player.id] || []).length === 0) {`
+- `medium-bid-balance-war.js:118` — `const goal = getGoal(player.id);`
+- `medium-bid-balance-war.js:119` — `return goal.shouldAvoid || player.id === "human";`
+- `medium-bid-balance-war.js:127` — `const firstGoal = getGoal(first.id);`
+- `medium-bid-balance-war.js:128` — `const secondGoal = getGoal(second.id);`
+- `medium-bid-balance-war.js:129` — `const firstHuman = first.id === "human" ? 1000 : 0;`
+- `medium-bid-balance-war.js:130` — `const secondHuman = second.id === "human" ? 1000 : 0;`
+- `medium-bid-balance-war.js:142` — `if (!player || player.id === botId || (state.hands[player.id] || []).length === 0) {`
+- `medium-bid-balance-war.js:146` — `return getGoal(player.id).needsTake;`
+- `medium-bid-balance-war.js:154` — `const firstGoal = getGoal(first.id);`
+- `medium-bid-balance-war.js:155` — `const secondGoal = getGoal(second.id);`
+- `medium-bid-balance-war.js:156` — `const firstHuman = first.id === "human" ? 1000 : 0;`
+- `medium-bid-balance-war.js:157` — `const secondHuman = second.id === "human" ? 1000 : 0;`
+- `medium-bid-balance-war.js:174` — `if (!currentWinner || currentWinner.id !== target.id || getGoal(botId).desperate) {`
+- `medium-bid-balance-war.js:189` — `if (!currentWinner || currentWinner.id !== target.id) {`
+- `medium-bid-balance-war.js:254` — `if (target && getCurrentWinner()?.id === target.id && !getGoal(playerId).desperate) {`
+- `medium-four-hundred-anti-premium.js:16` — `return state.players.findIndex((player) => player.id === playerId);`
+- `medium-four-hundred-anti-premium.js:87` — `if (!player || player.id === botId || (state.hands[player.id] || []).length === 0) {`
+- `medium-four-hundred-anti-premium.js:91` — `return getAntiPremiumPriority(player.id) > 0;`
+- `medium-four-hundred-anti-premium.js:98` — `return candidates.sort((first, second) => getAntiPremiumPriority(second.id) - getAntiPremiumPriority(first.id))[0];`
+- `medium-four-hundred-anti-premium.js:168` — `if (!currentWinner || currentWinner.id !== target.id) {`
+- `medium-four-hundred-anti-premium.js:196` — `if (!currentWinner || currentWinner.id !== target.id) {`
+- `medium-four-hundred-anti-premium.js:216` — `const targetGoal = getGoal400(target.id);`
+- `medium-four-hundred-anti-premium.js:228` — `if (jokers.length && getAntiPremiumPriority(target.id) >= 1200) {`
+- `medium-four-hundred-anti-premium.js:268` — `suit: suit.id,`
+- `medium-four-hundred-anti-premium.js:269` — `count: (state.hands[botId] || []).filter((card) => card.type === "standard" && card.suit === suit.id).length,`
+- `medium-four-hundred-anti-premium.js:298` — `if (target && getCurrentWinner()?.id === target.id && getGoal400(target.id).needsTake && !getGoal400(playerId).selfDeathRisk) {`
+- `medium-four-hundred-anti-premium.js:330` — `if (getGoal400(target.id).needsTake) {`
+- `pulka-summary.js:46` — `delta: calculatePulkaTotal(player.id, pulkaOffset),`
+- `pulka-summary.js:47` — `total: calculateMatchTotal(player.id),`
+- `medium-table-cooperation.js:117` — `if (player.id === "human") score += 1000;`
+- `medium-table-cooperation.js:129` — `const candidates = state.players.filter((player) => player && player.id !== botId && (state.hands[player.id] || []).length > 0);`
+- `medium-table-cooperation.js:135` — `const sorted = candidates.sort((first, second) => getAttackPriority(second.id) - getAttackPriority(first.id));`
+- `medium-table-cooperation.js:136` — `return getAttackPriority(sorted[0].id) > 0 ? sorted[0] : null;`
+- `medium-table-cooperation.js:142` — `const targetGoal = getGoal(target.id);`
+- `medium-table-cooperation.js:150` — `if (currentWinner.id === target.id && targetGoal.needsTake) {`
+- `medium-table-cooperation.js:159` — `if (jokers.length && (target.id === "human" || targetGoal.forcedOneZero)) {`
+- `medium-table-cooperation.js:164` — `if (currentWinner.id === target.id && targetGoal.shouldAvoid) {`
+- `medium-table-cooperation.js:172` — `if (isBotId(currentWinner.id) && currentWinner.id !== botId && !ownGoal.needsTake) {`
+- `medium-table-cooperation.js:185` — `const targetGoal = getGoal(target.id);`
+- `medium-table-cooperation.js:207` — `if (targetGoal.shouldAvoid && target.id === "human") {`
+- `medium-table-cooperation.js:226` — `if (target && getCurrentWinner()?.id === target.id && getGoal(target.id).needsTake && !getGoal(playerId).desperate) {`
+- `smart-joker-bots.js:88` — `if (!winner || winner.player?.id === playerId) {`
+- `smart-joker-bots.js:107` — `if (!goal.needsTake || !winner || winner.player?.id === playerId) {`
+- `smart-joker-bots.js:127` — `const winnerGoal = getGoal(winner.player.id);`
+- `medium-bid-planner.js:67` — `const count = countSuit(hand, suit.id);`
+- `android-runtime-v11.js:8` — `link.id = "android-runtime-v13-stylesheet";`
+- `winner-podium.js:44` — `total: calculateMatchTotal(player.id),`
+- `winner-podium.js:76` — `const winnerTotal = calculateMatchTotal(winner.id);`
+
+## `seat` — 70 usage-like lines
+
+- `joker-announcement.js:31` — `const playerName = play.player.seat === "bottom" ? copy.you : play.player.name;`
+- `joker-announcement.js:50` — `highlightedPlayer = document.querySelector(`[data-seat="${seat}"]`)?.closest(".player") || null;`
+- `joker-announcement.js:76` — `setJokerAnnouncerHighlight(play.player.seat);`
+- `android-runtime-polish.js:9` — `const avatar = document.querySelector(`[data-seat="${seat}"]`);`
+- `android-runtime-polish.js:20` — `const taken = document.querySelector(`[data-taken="${seat}"]`);`
+- `android-runtime-polish.js:23` — `name: document.querySelector(`[data-name="${seat}"]`),`
+- `android-runtime-polish.js:26` — `orderBadge: document.querySelector(`[data-order-badge="${seat}"]`),`
+- `android-runtime-polish.js:27` — `order: document.querySelector(`[data-order="${seat}"]`),`
+- `android-runtime-polish.js:28` — `bid: document.querySelector(`[data-bid="${seat}"]`),`
+- `android-runtime-polish.js:49` — `const activeSeat = activePlayer?.seat || "";`
+- `android-runtime-polish.js:78` — `player.seat,`
+- `android-runtime-polish.js:92` — `const view = playerViews[player.seat];`
+- `android-runtime-polish.js:96` — `if (lastPlayerSignatures[player.seat] === signature) continue;`
+- `android-runtime-polish.js:97` — `lastPlayerSignatures[player.seat] = signature;`
+- `android-runtime-polish.js:99` — `setText(view.name, player.seat === "bottom" ? "Ты" : player.name);`
+- `android-v15.js:13` — `player.seat,`
+- `android-opponent-hands.js:6` — `SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]),`
+- `android-opponent-hands.js:13` — `const signature = state.players.map((player) => `${player.id}:${player.seat}`).join("|");`
+- `android-opponent-hands.js:18` — `playerIdBySeat[player.seat] = player.id;`
+- `pulka-summary.js:76` — `name.textContent = item.player.seat === "bottom" ? copy.you : item.player.name;`
+- `script.js:164` — `{ id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },`
+- `script.js:165` — `{ id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },`
+- `script.js:166` — `{ id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },`
+- `script.js:167` — `{ id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },`
+- `script.js:459` — `const playerElement = document.querySelector(`[data-seat="${player.seat}"]`)?.closest(".player");`
+- `script.js:460` — `const name = document.querySelector(`[data-name="${player.seat}"]`);`
+- `script.js:461` — `const avatar = document.querySelector(`[data-seat="${player.seat}"]`);`
+- `script.js:462` — `const orderBadge = document.querySelector(`[data-order-badge="${player.seat}"]`);`
+- `script.js:463` — `const order = document.querySelector(`[data-order="${player.seat}"]`);`
+- `script.js:464` — `const bid = document.querySelector(`[data-bid="${player.seat}"]`);`
+- `script.js:465` — `const taken = document.querySelector(`[data-taken="${player.seat}"]`);`
+- `script.js:468` — `name.textContent = player.seat === "bottom" ? "Ты" : player.name;`
+- `script.js:492` — `const player = state.players.find((candidate) => candidate.seat === seat);`
+- `script.js:493` — `const stack = document.querySelector(`.${seat}-stack`);`
+- `script.js:551` — `const chooserText = state.phase === "trump-select" && chooser ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}` : "";`
+- `script.js:660` — `const target = getSeatDealTarget(player.seat);`
+- `script.js:663` — `x: target.x + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "top" || player.seat === "bottom" ? 9 : 2),`
+- `script.js:664` — `y: target.y + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),`
+- `script.js:685` — `const target = getSeatDealTarget(player?.seat);`
+- `script.js:762` — `playedCard.className = `played-card ${play.player.seat} ${play.jokerMode === "duck" ? "is-ducked" : ""}`;`
+- `script.js:777` — `label.textContent = `${play.player.seat === "bottom" ? "Ты" : play.player.name}${formatJokerPlaySuffix(play)}`;`
+- `script.js:1020` — `const avatar = document.querySelector(`[data-seat="${seat}"]`);`
+- `script.js:1343` — `showNotice(`${lastBidder.seat === "bottom" ? "Твой" : lastBidder.name} перезаказ`);`
+- `script.js:1768` — `state.collectingTrickWinnerSeat = winner.seat;`
+- `script.js:1898` — `name.textContent = item.player.seat === "bottom" ? "Ты" : item.player.name;`
+- `android-runtime-v2.js:180` — `? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}``
+- `android-runtime-v2.js:218` — `play.player?.seat || "",`
+- `ace-deal-animation.js:56` — `return player?.seat === "bottom" ? copy.you : player?.name || copy.player;`
+- `ace-deal-animation.js:65` — `const seat = player?.seat || "bottom";`
+- `ace-deal-animation.js:70` — `wrapper.className = `ace-open-played-card ${seat}`;`
+- `trick-collect-animation.js:9` — `document.querySelector(`[data-seat="${seat}"]`),`
+- `trick-collect-animation.js:106` — `state.collectingTrickWinnerSeat = winner.seat;`
+- `trick-collect-animation.js:108` — `playTrickCollectAnimation(winner.seat, collectedTrick, winnerPlay);`
+- `visual-seat-order-polish.js:12` — `seat: fallbackSeats[index] || player.seat,`
+- `android-deal-2026.js:75` — `return [...(document.querySelector(`.${seat}-stack`)?.children || [])];`
+- `android-deal-2026.js:393` — `card.dataset.seat = seat;`
+- `android-deal-2026.js:476` — `const target = record.seat === "bottom"`
+- `android-deal-2026.js:587` — `const seat = player.seat;`
+- `game-emotions.js:20` — `document.querySelector(`[data-seat="${seat}"]`),`
+- `last-trick-viewer.js:15` — `return player?.seat === "bottom" ? getCopy().you : player?.name || "?";`
+- `last-trick-viewer.js:145` — `winnerSeat: winnerPlay?.player?.seat || null,`
+- `random-bot-seats.js:21` — `bot.seat = botSeats[index];`
+- `rules/rules-progression-adapter.js:175` — `name.textContent = item.player.seat === "bottom" ? copy.you : item.player.name;`
+- `rules/rules-hand-size-adapter.js:242` — `const target = getSeatDealTarget(player.seat);`
+- `rules/rules-hand-size-adapter.js:245` — `x: target.x + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "top" || player.seat === "bottom" ? 9 : 2),`
+- `rules/rules-hand-size-adapter.js:246` — `y: target.y + (cardIndex - (cardsPerPlayer - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),`
+- `rules/deal-animation-adapter.js:167` — `const dealerTarget = getDealerFlightStart(dealer?.seat || "bottom");`
+- `rules/deal-animation-adapter.js:183` — `const target = getSeatDealTarget(player.seat);`
+- `rules/deal-animation-adapter.js:186` — `x: target.x + (absoluteCardIndex - (handSize - 1) / 2) * (player.seat === "top" || player.seat === "bottom" ? 9 : 2),`
+- `rules/deal-animation-adapter.js:187` — `y: target.y + (absoluteCardIndex - (handSize - 1) / 2) * (player.seat === "left" || player.seat === "right" ? 5 : 1),`
+
+## `name` — 62 usage-like lines
+
+- `android-joker-v10.js:69` — `button.setAttribute("aria-label", suit.name);`
+- `android-joker-v10.js:77` — `label.textContent = suit.name;`
+- `joker-announcement.js:31` — `const playerName = play.player.seat === "bottom" ? copy.you : play.player.name;`
+- `android-runtime-polish.js:77` — `player.name,`
+- `android-runtime-polish.js:99` — `setText(view.name, player.seat === "bottom" ? "Ты" : player.name);`
+- `android-runtime-polish.js:100` — `setText(view.avatarInitial, player.name.slice(0, 1).toUpperCase());`
+- `android-v15.js:12` — `player.name,`
+- `personality-modes-bots.js:157` — `setJokerIntent(playerId, joker, "beat", `${personality.name} personality beats trump ace`);`
+- `pulka-summary.js:28` — `return (player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";`
+- `pulka-summary.js:76` — `name.textContent = item.player.seat === "bottom" ? copy.you : item.player.name;`
+- `medium-bid-planner.js:14` — `return { name: "Клод", risk: -0.32 };`
+- `medium-bid-planner.js:18` — `return { name: "GPT", risk: 0.02 };`
+- `medium-bid-planner.js:22` — `return { name: "Qwen", risk: 0.28 };`
+- `medium-bid-planner.js:25` — `return { name: "Bot", risk: 0 };`
+- `winner-podium.js:29` — `return (player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";`
+- `winner-podium.js:63` — `name.textContent = item.player.name;`
+- `winner-podium.js:98` — `name.textContent = winner.name;`
+- `script.js:2` — `{ id: "spades", symbol: "♠", color: "black", name: "пика" },`
+- `script.js:3` — `{ id: "clubs", symbol: "♣", color: "black", name: "крест" },`
+- `script.js:4` — `{ id: "hearts", symbol: "♥", color: "red", name: "сердце" },`
+- `script.js:5` — `{ id: "diamonds", symbol: "♦", color: "red", name: "кирпич" },`
+- `script.js:164` — `{ id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },`
+- `script.js:165` — `{ id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },`
+- `script.js:166` — `{ id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },`
+- `script.js:167` — `{ id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },`
+- `script.js:197` — `const orderText = state.players.map((player) => player.name).join(" → ");`
+- `script.js:205` — `showNotice(`Раздача на туза: первый туз у ${winner.name}. Порядок: ${orderText}.${jumpText}`);`
+- `script.js:374` — `showNotice(`${getPlayerById(state.trumpChooserId).name} думает над козырем...`);`
+- `script.js:468` — `name.textContent = player.seat === "bottom" ? "Ты" : player.name;`
+- `script.js:472` — `avatarInitial.textContent = player.name.slice(0, 1).toUpperCase();`
+- `script.js:551` — `const chooserText = state.phase === "trump-select" && chooser ? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}` : "";`
+- `script.js:777` — `label.textContent = `${play.player.seat === "bottom" ? "Ты" : play.player.name}${formatJokerPlaySuffix(play)}`;`
+- `script.js:1238` — `showNotice(`${getPlayerById(bidderId).name} думает над заказом...`);`
+- `script.js:1343` — `showNotice(`${lastBidder.seat === "bottom" ? "Твой" : lastBidder.name} перезаказ`);`
+- `script.js:1387` — `showNotice(`${getPlayerById(state.activePlayerId).name} думает...`);`
+- `script.js:1898` — `name.textContent = item.player.seat === "bottom" ? "Ты" : item.player.name;`
+- `script.js:2136` — `showNotice(`Партия завершена. Победитель: ${winner.name}`);`
+- `script.js:2228` — `elements.gameDialogTitle.textContent = `Победитель: ${winner.name}`;`
+- `script.js:2429` — `...state.players.map((player) => createScoreCell(player.name, "header")),`
+- `high-joker-legal-fix.js:71` — `name: player.id === "human" ? player.name : names[botNameIndex++],`
+- `android-runtime-v2.js:180` — `? ` · ${chooser.seat === "bottom" ? "ты" : chooser.name}``
+- `ace-deal-animation.js:56` — `return player?.seat === "bottom" ? copy.you : player?.name || copy.player;`
+- `main-menu-2026.js:116` — `setText(".name-field span", t.name);`
+- `main-menu-2026.js:459` — `const nameField = document.querySelector(".name-field");`
+- `last-trick-viewer.js:15` — `return player?.seat === "bottom" ? getCopy().you : player?.name || "?";`
+- `table-language.js:162` — `if (name.dataset.name === "bottom" || name.textContent === "Ты" || name.textContent === "You") {`
+- `table-language.js:169` — `document.querySelectorAll(".player.is-thinking .name").forEach((name) => {`
+- `table-language.js:170` — `const base = name.dataset.name === "bottom" ? copy.you : name.textContent.replace(/\s+(думает|is thinking)$/i, "");`
+- `rules/rules-scoring-adapter.js:102` — `{ name: "Popular pass", input: { bid: "pass", tricks: 0, handSize: 3 }, expected: 50 },`
+- `rules/rules-scoring-adapter.js:103` — `{ name: "Popular shтанга", input: { bid: 1, tricks: 0, handSize: 1 }, expected: -200 },`
+- `rules/rules-scoring-adapter.js:104` — `{ name: "Popular 2/2", input: { bid: 2, tricks: 2, handSize: 2 }, expected: 200 },`
+- `rules/rules-scoring-adapter.js:105` — `{ name: "Popular 2/3", input: { bid: 2, tricks: 2, handSize: 3 }, expected: 150 },`
+- `rules/rules-scoring-adapter.js:106` — `{ name: "Popular 8/8", input: { bid: 8, tricks: 8, handSize: 8 }, expected: 800 },`
+- `rules/rules-scoring-adapter.js:107` — `{ name: "Popular 9/9", input: { bid: 9, tricks: 9, handSize: 9 }, expected: 900 },`
+- `rules/rules-scoring-adapter.js:110` — `{ name: "Aggression pass", input: { bid: "pass", tricks: 0, handSize: 9 }, expected: 50 },`
+- `rules/rules-scoring-adapter.js:111` — `{ name: "Aggression shтанга", input: { bid: 2, tricks: 0, handSize: 9 }, expected: -250 },`
+- `rules/rules-scoring-adapter.js:112` — `{ name: "Aggression 2/9", input: { bid: 2, tricks: 2, handSize: 9 }, expected: 150 },`
+- `rules/rules-scoring-adapter.js:113` — `{ name: "Aggression 9/9", input: { bid: 9, tricks: 9, handSize: 9 }, expected: 900 },`
+- `rules/rules-scoring-adapter.js:119` — `console.assert(passed, `${check.name}: expected ${check.expected}, received ${actual}`);`
+- `rules/strategic-bot-brain.js:331` — `console.groupCollapsed(`Strategic brain: ${context.player?.name || playerId}`);`
+- `rules/rules-progression-adapter.js:171` — `avatar.textContent = (item.player?.name || "?").trim().slice(0, 1).toUpperCase() || "?";`
+- `rules/rules-progression-adapter.js:175` — `name.textContent = item.player.seat === "bottom" ? copy.you : item.player.name;`
+
+## `bid` — 208 usage-like lines
+
+- `medium-personality-v2.js:43` — `if (player.bid === "pass") {`
+- `medium-personality-v2.js:47` — `return Number(player.bid || 0);`
+- `medium-personality-v2.js:63` — `needsTake: player?.bid !== "pass" && tricks < target,`
+- `medium-personality-v2.js:64` — `shouldAvoid: player?.bid === "pass" || tricks >= target,`
+- `medium-personality-v2.js:65` — `danger: player?.bid !== "pass" && tricks < target && needed >= Math.max(1, cardsLeft - 1),`
+- `medium-human-profile.js:73` — `if (player.bid === "pass") {`
+- `medium-human-profile.js:77` — `return Number(player.bid || 0);`
+- `medium-human-profile.js:153` — `needsTake: human?.bid !== "pass" && tricks < target,`
+- `medium-human-profile.js:154` — `shouldAvoid: human?.bid === "pass" || tricks >= target,`
+- `medium-human-profile.js:155` — `dangerousBid: Number(human?.bid || 0) >= 4,`
+- `medium-human-profile.js:277` — `const fulfilled = human.bid === "pass" ? tricks === 0 : tricks === target;`
+- `medium-human-profile.js:282` — `if (Number(human.bid || 0) >= 4) {`
+- `medium-human-profile.js:287` — `if (human.bid === "pass") {`
+- `android-runtime-polish.js:80` — `player.bid ?? "null",`
+- `android-runtime-polish.js:109` — `setText(view.bid, formatBid(player.bid));`
+- `android-runtime-polish.js:112` — `view.bid?.classList.toggle("is-pass", player.bid === "pass");`
+- `medium-game-plan.js:25` — `if (player.bid === "pass") {`
+- `medium-game-plan.js:29` — `return Number(player.bid || 0);`
+- `medium-game-plan.js:38` — `const signature = `${rulesId}|${state.currentPulka}|${state.currentGame}|${player?.bid ?? "null"}|${tricks}|${hand.length}`;`
+- `medium-game-plan.js:47` — `const shouldAvoid = player?.bid === "pass" || tricks >= target;`
+- `medium-game-plan.js:61` — `fulfilled: player?.bid === "pass" || tricks >= target,`
+- `medium-joker-command-plan.js:17` — `if (player.bid === "pass") {`
+- `medium-joker-command-plan.js:21` — `return Number(player.bid || 0);`
+- `medium-joker-command-plan.js:37` — `needsTake: player?.bid !== "pass" && tricks < target,`
+- `medium-joker-command-plan.js:38` — `shouldAvoid: player?.bid === "pass" || tricks >= target,`
+- `medium-joker-command-plan.js:40` — `desperate: player?.bid !== "pass" && tricks < target && needed >= Math.max(1, cardsLeft - 1),`
+- `medium-joker-command-plan.js:41` — `brokenOver: player?.bid === "pass" ? tricks > 0 : target > 0 && tricks > target,`
+- `personality-modes-bots.js:48` — `if (player.bid === "pass") {`
+- `personality-modes-bots.js:52` — `return Number(player.bid || 0);`
+- `personality-modes-bots.js:61` — `const shouldAvoid = player?.bid === "pass" || tricks >= target;`
+- `medium-bid-balance-war.js:19` — `if (player.bid === "pass") {`
+- `medium-bid-balance-war.js:23` — `return Number(player.bid || 0);`
+- `medium-bid-balance-war.js:37` — `needsTake: player?.bid !== "pass" && tricks < target,`
+- `medium-bid-balance-war.js:38` — `shouldAvoid: player?.bid === "pass" || tricks >= target,`
+- `medium-bid-balance-war.js:39` — `desperate: player?.bid !== "pass" && tricks < target && target - tricks >= Math.max(1, cardsLeft - 1),`
+- `medium-bid-balance-war.js:44` — `const total = state.players.reduce((sum, player) => sum + (typeof player.bid === "number" ? player.bid : 0), 0);`
+- `medium-bid-balance-war.js:133` — `const firstPass = first.bid === "pass" ? 300 : 0;`
+- `medium-bid-balance-war.js:134` — `const secondPass = second.bid === "pass" ? 300 : 0;`
+- `medium-table-cooperation.js:19` — `if (player.bid === "pass") {`
+- `medium-table-cooperation.js:23` — `return Number(player.bid || 0);`
+- `medium-table-cooperation.js:37` — `needsTake: player?.bid !== "pass" && tricks < target,`
+- `medium-table-cooperation.js:38` — `shouldAvoid: player?.bid === "pass" || tricks >= target,`
+- `medium-table-cooperation.js:39` — `desperate: player?.bid !== "pass" && tricks < target && target - tricks >= Math.max(1, cardsLeft - 1),`
+- `medium-table-cooperation.js:122` — `if (player.bid === "pass") score += 180;`
+- `smart-joker-bots.js:19` — `if (player.bid === "pass") {`
+- `smart-joker-bots.js:23` — `return Number(player.bid || 0);`
+- `smart-joker-bots.js:32` — `const shouldAvoid = player?.bid === "pass" || tricks >= target;`
+- `medium-human-pressure-v2.js:19` — `if (player.bid === "pass") {`
+- `medium-human-pressure-v2.js:23` — `return Number(player.bid || 0);`
+- `medium-human-pressure-v2.js:39` — `needsTake: player?.bid !== "pass" && tricks < target,`
+- `medium-human-pressure-v2.js:40` — `shouldAvoid: player?.bid === "pass" || tricks >= target,`
+- `medium-human-pressure-v2.js:41` — `desperate: player?.bid !== "pass" && tricks < target && needed >= Math.max(1, cardsLeft - 1),`
+- `endgame-smart-bots.js:24` — `if (player.bid === "pass") {`
+- `endgame-smart-bots.js:28` — `return Number(player.bid || 0);`
+- `endgame-smart-bots.js:37` — `const shouldAvoid = player?.bid === "pass" || tricks >= target;`
+- `medium-no-trump-control.js:24` — `if (player.bid === "pass") {`
+- `medium-no-trump-control.js:28` — `return Number(player.bid || 0);`
+- `medium-no-trump-control.js:44` — `needsTake: player?.bid !== "pass" && tricks < target,`
+- `medium-no-trump-control.js:45` — `shouldAvoid: player?.bid === "pass" || tricks >= target,`
+- `medium-no-trump-control.js:46` — `urgent: player?.bid !== "pass" && tricks < target && (needed >= Math.max(1, cardsLeft - 1) || cardsLeft <= 3),`
+- `medium-no-trump-control.js:47` — `desperate: player?.bid !== "pass" && tricks < target && needed >= Math.max(1, cardsLeft),`
+- `trump-counting-bots.js:57` — `if (player.bid === "pass") {`
+- `trump-counting-bots.js:61` — `return Number(player.bid || 0);`
+- `bot-memory-polish.js:19` — `if (!player || player.bid === "pass") {`
+- `bot-memory-polish.js:23` — `const target = isFourHundredPulka() ? 3 : player.bid;`
+- `script.js:105` — `bidTitle: document.querySelector(".bid-title"),`
+- `script.js:164` — `{ id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },`
+- `script.js:165` — `{ id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },`
+- `script.js:166` — `{ id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },`
+- `script.js:167` — `{ id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },`
+- `script.js:275` — `player.bid = null;`
+- `script.js:334` — `player.bid = 3;`
+- `script.js:479` — `bid.textContent = formatBid(player.bid);`
+- `script.js:480` — `bid.classList.toggle("is-pass", player.bid === "pass");`
+- `script.js:513` — `if (player.bid === "pass") {`
+- `script.js:517` — `if (player.tricks > player.bid) {`
+- `script.js:523` — `if (player.tricks + remainingCards < player.bid) {`
+- `script.js:527` — `return final && player.tricks !== player.bid;`
+- `script.js:531` — `if (player.bid === null) {`
+- `script.js:535` — `if (player.bid === "pass") {`
+
+## `tricks` — 100 usage-like lines
+
+- `medium-personality-v2.js:53` — `const tricks = player?.tricks || 0;`
+- `medium-human-profile.js:145` — `const tricks = human?.tricks || 0;`
+- `medium-human-profile.js:276` — `const tricks = human.tricks || 0;`
+- `android-runtime-polish.js:81` — `player.tricks,`
+- `android-runtime-polish.js:110` — `setText(view.taken, String(player.tricks));`
+- `medium-game-plan.js:36` — `const tricks = player?.tricks || 0;`
+- `medium-game-plan.js:38` — `const signature = `${rulesId}|${state.currentPulka}|${state.currentGame}|${player?.bid ?? "null"}|${tricks}|${hand.length}`;`
+- `medium-joker-command-plan.js:27` — `const tricks = player?.tricks || 0;`
+- `personality-modes-bots.js:58` — `const tricks = player?.tricks || 0;`
+- `medium-bid-balance-war.js:29` — `const tricks = player?.tricks || 0;`
+- `medium-bid-balance-war.js:158` — `const firstForced = first.mediumForcedOneBid && first.tricks === 0 ? 650 : 0;`
+- `medium-bid-balance-war.js:159` — `const secondForced = second.mediumForcedOneBid && second.tricks === 0 ? 650 : 0;`
+- `medium-four-hundred-anti-premium.js:47` — `const tricks = player?.tricks || 0;`
+- `medium-four-hundred-anti-premium.js:74` — `if (goal.tricks === 2) score += 650;`
+- `medium-four-hundred-anti-premium.js:75` — `if (goal.tricks === 3) score += 900;`
+- `medium-table-cooperation.js:29` — `const tricks = player?.tricks || 0;`
+- `smart-joker-bots.js:29` — `const tricks = player?.tricks || 0;`
+- `medium-human-pressure-v2.js:29` — `const tricks = player?.tricks || 0;`
+- `medium-human-pressure-v2.js:56` — `if (human.mediumForcedOneBid && human.tricks === 0) score += 4;`
+- `endgame-smart-bots.js:34` — `const tricks = player?.tricks || 0;`
+- `medium-no-trump-control.js:34` — `const tricks = player?.tricks || 0;`
+- `trump-counting-bots.js:66` — `return Math.max(0, getPlayerTarget(player) - (player?.tricks || 0));`
+- `bot-memory-polish.js:24` — `return Math.max(0, target - player.tricks);`
+- `script.js:164` — `{ id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },`
+- `script.js:165` — `{ id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },`
+- `script.js:166` — `{ id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },`
+- `script.js:167` — `{ id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },`
+- `script.js:276` — `player.tricks = 0;`
+- `script.js:481` — `taken.textContent = String(player.tricks);`
+- `script.js:514` — `return player.tricks > 0;`
+- `script.js:517` — `if (player.tricks > player.bid) {`
+- `script.js:523` — `if (player.tricks + remainingCards < player.bid) {`
+- `script.js:527` — `return final && player.tricks !== player.bid;`
+- `script.js:536` — `return player.tricks === 0 && state.phase === "playing";`
+- `script.js:539` — `return player.tricks === player.bid;`
+- `script.js:1472` — `return player.tricks < 3;`
+- `script.js:1479` — `if (player.tricks >= player.bid) {`
+- `script.js:1496` — `const neededTricks = target - player.tricks;`
+- `script.js:1516` — `const neededTricks = target === "pass" ? 0 : target - player.tricks;`
+- `script.js:1538` — `const neededTricks = target === "pass" ? 0 : target - player.tricks;`
+- `script.js:1772` — `winner.tricks += 1;`
+- `script.js:1853` — `tricks: player.tricks,`
+- `script.js:1902` — `detail.textContent = `${item.tricks}/${item.bidText}`;`
+- `script.js:1932` — `const value = player.tricks === 0 ? FULFILLED_SCORE.pass : player.tricks * 10;`
+- `script.js:1938` — `fulfilled: player.tricks === 0,`
+- `script.js:1942` — `if (player.tricks === 0) {`
+- `script.js:1951` — `if (player.tricks === player.bid) {`
+- `script.js:1962` — `const value = player.tricks * 10;`
+- `script.js:1973` — `if (player.tricks === 0) {`
+- `script.js:1982` — `if (player.tricks === 3) {`
+- `script.js:1991` — `const value = player.tricks * 20;`
+- `medium-four-hundred-control.js:16` — `const tricks = player?.tricks || 0;`
+- `medium-high-order-executor-v2.js:30` — `const tricks = player?.tricks || 0;`
+- `smart-lead-bots.js:33` — `const tricks = player?.tricks || 0;`
+- `bot-personality-polish.js:130` — `return Math.max(0, target - (player?.tricks || 0));`
+- `bot-personality-polish.js:181` — `const alreadyDone = player.tricks >= target;`
+- `bot-logic-polish.js:13` — `return getBotTarget(player) - player.tricks;`
+- `bot-logic-polish.js:21` — `return player.tricks > 0;`
+- `bot-logic-polish.js:24` — `return player.tricks > player.bid;`
+- `bot-logic-polish.js:116` — `if (player && target > 0 && player.tricks >= target) {`
+- `trick-collect-animation.js:111` — `winner.tricks += 1;`
+- `medium-endgame-table-war.js:28` — `const tricks = player?.tricks || 0;`
+- `medium-endgame-table-war.js:61` — `const firstForced = first.mediumForcedOneBid && first.tricks === 0 ? 500 : 0;`
+- `medium-endgame-table-war.js:62` — `const secondForced = second.mediumForcedOneBid && second.tricks === 0 ? 500 : 0;`
+- `leader-pressure-bots.js:63` — `const tricks = player?.tricks || 0;`
+- `medium-light-sabotage.js:25` — `return goal.tricks > 0;`
+- `medium-zero-trap.js:36` — `if (!player || player.id === botId || player.bid !== 1 || player.tricks !== 0) {`
+- `medium-overeat-push.js:21` — `return (player.tricks || 0) >= 3;`
+- `medium-overeat-push.js:54` — `const firstOver = first.tricks - getPlayerTarget(first);`
+- `medium-overeat-push.js:55` — `const secondOver = second.tricks - getPlayerTarget(second);`
+- `medium-trump-economy.js:27` — `const tricks = player?.tricks || 0;`
+- `player-goal-bots.js:34` — `const tricks = player?.tricks || 0;`
+- `medium-desperation-guard.js:30` — `const tricks = player?.tricks || 0;`
+- `anti-premium-bots.js:63` — `const tricks = human.tricks || 0;`
+- `anti-premium-bots.js:230` — `const botTricks = bot.tricks || 0;`
+- `medium-suit-clear-executor.js:27` — `const tricks = player?.tricks || 0;`
+- `medium-bot-self-learning.js:154` — `const tricks = player.tricks || 0;`
+- `rules/rules-scoring-adapter.js:38` — `const value = player.tricks === 0 ? passScore : player.tricks * 10;`
+- `rules/rules-scoring-adapter.js:44` — `fulfilled: player.tricks === 0,`
+- `rules/rules-scoring-adapter.js:48` — `if (player.tricks === 0) {`
+
+## `jokersPlayed` — 9 usage-like lines
+
+- `script.js:164` — `{ id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },`
+- `script.js:165` — `{ id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },`
+- `script.js:166` — `{ id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },`
+- `script.js:167` — `{ id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },`
+- `script.js:277` — `player.jokersPlayed = 0;`
+- `script.js:879` — `getPlayerById(playerId).jokersPlayed += 1;`
+- `script.js:1831` — `jokerCount: player.jokersPlayed,`
+- `rules/rules-progression-adapter.js:260` — `jokerCount: player.jokersPlayed,`
+- `rules/rules-hand-size-adapter.js:28` — `player.jokersPlayed = 0;`
+
+## `total` — 24 usage-like lines
+
+- `preload.js:93` — `button.textContent = `Загрузка карт ${Math.round((loaded / total) * 100)}%`;`
+- `pulka-summary.js:49` — `.sort((first, second) => second.total - first.total);`
+- `pulka-summary.js:84` — `total.textContent = formatTotalScore(item.total);`
+- `smart-joker-bots.js:70` — `return { own: 0, unseen: 0, played: 0, total: 0 };`
+- `smart-joker-bots.js:78` — `return { own, unseen, played, total };`
+- `winner-podium.js:46` — `.sort((first, second) => second.total - first.total);`
+- `winner-podium.js:67` — `score.textContent = formatWinnerScore(item.total);`
+- `trump-counting-bots.js:45` — `return { total, played, own, remaining, unseen };`
+- `script.js:164` — `{ id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },`
+- `script.js:165` — `{ id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },`
+- `script.js:166` — `{ id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },`
+- `script.js:167` — `{ id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },`
+- `smart-lead-bots.js:137` — `return { own: 0, unseen: 0, played: 0, total: 0 };`
+- `smart-lead-bots.js:145` — `return { own, unseen, played, total };`
+- `leader-pressure-bots.js:20` — `.map((player) => ({ player, total: safeMatchTotal(player.id) }))`
+- `leader-pressure-bots.js:21` — `.sort((first, second) => second.total - first.total);`
+- `leader-pressure-bots.js:29` — `const tiedLeaders = totals.filter((item) => item.total === leader.total);`
+- `leader-pressure-bots.js:30` — `const gap = leader.total - second.total;`
+- `leader-pressure-bots.js:38` — `total: leader.total,`
+- `android-deal-2026.js:291` — `return { from, count, total };`
+- `main-menu-2026.js:507` — `.map((player) => ({ player, total: calculateMatchTotal(player.id) }))`
+- `main-menu-2026.js:508` — `.sort((first, second) => second.total - first.total);`
+- `rules/rules-progression-adapter.js:148` — `.sort((first, second) => second.total - first.total);`
+- `rules/rules-progression-adapter.js:183` — `total.textContent = formatTotalScore(item.total);`
+
+## `order` — 15 usage-like lines
+
+- `android-runtime-polish.js:79` — `player.order,`
+- `android-runtime-polish.js:101` — `setText(view.orderBadge, String(player.order));`
+- `android-runtime-polish.js:108` — `setText(view.order, String(player.order));`
+- `android-v15.js:14` — `player.order,`
+- `script.js:164` — `{ id: "human", seat: "bottom", name: playerName || "Игрок", bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 1 },`
+- `script.js:165` — `{ id: "bot-1", seat: "left", name: BOT_NAMES[0], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 2 },`
+- `script.js:166` — `{ id: "bot-2", seat: "top", name: BOT_NAMES[1], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 3 },`
+- `script.js:167` — `{ id: "bot-3", seat: "right", name: BOT_NAMES[2], bid: null, tricks: 0, jokersPlayed: 0, total: 0, order: 4 },`
+- `script.js:477` — `orderBadge.textContent = String(player.order);`
+- `script.js:478` — `order.textContent = String(player.order);`
+- `script.js:768` — `playedCard.classList.toggle("is-entering", play.order === state.currentTrick.length - 1);`
+- `android-runtime-v2.js:223` — `play.order ?? "",`
+- `android-deal-2026.js:355` — `const dealer = state.players.find((player) => player.order === dealerNumber)`
+- `medium-suit-clear-executor.js:56` — `if (play.order === 0 && play.card?.type !== "joker") {`
+- `rules/deal-animation-adapter.js:52` — `return state.players.find((player) => player.order === dealerOrder)`
+
