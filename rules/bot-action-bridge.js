@@ -48,12 +48,39 @@
     }));
   }
 
-  function runAutomatedAction(kind, playerId, payload, callback) {
+  function getCardGuardReason(playerId, cardId) {
+    if (state.phase !== "playing") return "phase-changed";
+    if (state.activePlayerId !== playerId) return "active-player-changed";
+    if ((state.currentTrick?.length || 0) >= (state.players?.length || 4)) return "trick-complete";
+    if (!(state.hands?.[playerId] || []).some((card) => card.id === cardId)) return "card-unavailable";
+    return null;
+  }
+
+  function getBidGuardReason(playerId) {
+    if (state.phase !== "bidding") return "phase-changed";
+    if (typeof getCurrentBidderId === "function" && getCurrentBidderId() !== playerId) {
+      return "bidder-changed";
+    }
+    return null;
+  }
+
+  function runAutomatedAction(kind, playerId, payload, callback, getGuardReason = null) {
     if (!isAutomatedActor(playerId)) {
       return callback();
     }
 
     const action = createAction(kind, playerId, payload);
+    const guardReason = getGuardReason?.();
+
+    if (guardReason) {
+      emit("rejected", action, {
+        success: false,
+        reason: guardReason,
+        stale: true,
+      });
+      return false;
+    }
+
     emit("before", action);
 
     try {
@@ -84,6 +111,7 @@
           jokerSuit: options.jokerSuit || null,
         },
         () => originalPlayCard.call(this, playerId, cardId, options),
+        () => getCardGuardReason(playerId, cardId),
       );
     };
   }
@@ -96,6 +124,7 @@
         playerId,
         { bid },
         () => originalSubmitBid.call(this, playerId, bid),
+        () => getBidGuardReason(playerId),
       );
     };
   }
@@ -116,6 +145,8 @@
   window.JokerBotActionBridge = Object.freeze({
     eventName: EVENT_NAME,
     isAutomatedActor,
+    getCardGuardReason,
+    getBidGuardReason,
     getLastActionId() {
       return actionSequence;
     },
