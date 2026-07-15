@@ -78,9 +78,14 @@
     0 10px 18px rgba(0, 0, 0, 0.38) !important;
 }
 
-.trick-collect-layer.is-black .trick-collect-card .card,
-.trick-collect-layer.is-red .trick-collect-card .card {
+.trick-collect-layer.is-black .trick-collect-card .card {
   box-shadow:
     0 0 0 1px rgba(255, 222, 122, 0.34),
+    0 6px 12px rgba(0, 0, 0, 0.28) !important;
+}
+
+.trick-collect-layer.is-red .trick-collect-card .card {
+  box-shadow:
+    0 0 0 1px rgba(255, 142, 82, 0.36),
     0 6px 12px rgba(0, 0, 0, 0.28) !important;
 }
