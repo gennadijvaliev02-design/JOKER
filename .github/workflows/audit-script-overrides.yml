@@ -1,0 +1,121 @@
+name: Audit script.js override loading
+
+on:
+  push:
+    branches:
+      - agent/android-script-static-audit-2
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-static-audit-2
+          fetch-depth: 1
+
+      - name: Build override/load report
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          targets = [
+              'renderJokerModeSelection',
+              'renderLeadJokerCommandSelection',
+              'renderLeadJokerSuitSelection',
+              'renderEmotionPanel',
+              'showPlayerEmotion',
+              'renderBidding',
+              'renderTrumpSelection',
+              'startAceDeal',
+              'dealUntilFirstAce',
+              'renderPlayers',
+              'renderHud',
+              'renderHand',
+          ]
+
+          files = [p for p in Path('.').rglob('*') if p.is_file() and p.suffix.lower() in {'.js', '.html'} and '.git' not in p.parts]
+          lines = ['# `script.js` override/load audit', '']
+
+          lines += ['## References to Android override files', '']
+          needles = ['android-joker-v10.js', 'android-v14.js', 'android-v15.js', 'android-runtime-v11.js']
+          for needle in needles:
+              hits = []
+              for path in files:
+                  try:
+                      text = path.read_text(encoding='utf-8')
+                  except Exception:
+                      continue
+                  for number, line in enumerate(text.splitlines(), 1):
+                      if needle in line:
+                          hits.append((path.as_posix(), number, line.strip()))
+              lines.append(f'### `{needle}` — {len(hits)}')
+              lines.append('')
+              for path, number, line in hits:
+                  lines.append(f'- `{path}:{number}` — `{line}`')
+              lines.append('')
+
+          lines += ['## Target function assignments, captures, and calls', '']
+          for target in targets:
+              lines.append(f'### `{target}`')
+              lines.append('')
+              hits = []
+              token = re.compile(rf'\b{re.escape(target)}\b')
+              for path in files:
+                  try:
+                      text = path.read_text(encoding='utf-8')
+                  except Exception:
+                      continue
+                  for number, line in enumerate(text.splitlines(), 1):
+                      if not token.search(line):
+                          continue
+                      stripped = line.strip()
+                      kind = 'reference'
+                      if re.search(rf'\b(const|let|var)\s+\w+\s*=\s*{re.escape(target)}\b', stripped):
+                          kind = 'capture'
+                      elif re.search(rf'\b{re.escape(target)}\s*=\s*(function|\()', stripped):
+                          kind = 'assignment'
+                      elif re.search(rf'function\s+{re.escape(target)}\s*\(', stripped):
+                          kind = 'declaration'
+                      elif re.search(rf'\b{re.escape(target)}\s*\(', stripped):
+                          kind = 'call'
+                      hits.append((kind, path.as_posix(), number, stripped))
+              for kind, path, number, line in hits:
+                  lines.append(f'- **{kind}** `{path}:{number}` — `{line}`')
+              lines.append('')
+
+          lines += ['## Script loader construction', '']
+          for path in files:
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except Exception:
+                  continue
+              if 'createElement("script")' not in text and "createElement('script')" not in text and '<script' not in text:
+                  continue
+              useful = []
+              for number, line in enumerate(text.splitlines(), 1):
+                  if any(token in line for token in ['createElement("script")', "createElement('script')", '.src =', '<script', 'append(script', 'appendChild(script']):
+                      useful.append((number, line.strip()))
+              if useful:
+                  lines.append(f'### `{path.as_posix()}`')
+                  lines.append('')
+                  for number, line in useful:
+                      lines.append(f'- line {number}: `{line}`')
+                  lines.append('')
+
+          Path('SCRIPT_OVERRIDE_AUDIT.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit audit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SCRIPT_OVERRIDE_AUDIT.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add script override loading audit'
+          git push origin HEAD:agent/android-script-static-audit-2
