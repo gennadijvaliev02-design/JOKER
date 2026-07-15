@@ -1,0 +1,102 @@
+name: Audit Android WebView batch
+
+on:
+  push:
+    branches:
+      - agent/android-webview-audit-batch-1
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/android-webview-audit-batch-1
+
+      - name: Build WebView cost report
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          patterns = {
+              'will-change': re.compile(r'\bwill-change\s*:', re.I),
+              'translateZ(0)': re.compile(r'translateZ\(\s*0(?:px)?\s*\)', re.I),
+              'backdrop-filter': re.compile(r'(?:-webkit-)?backdrop-filter\s*:', re.I),
+              'filter-blur': re.compile(r'(?<!backdrop-)filter\s*:\s*[^;\n]*blur\s*\(', re.I),
+              'infinite-animation': re.compile(r'animation(?:-[\w-]+)?\s*:\s*[^;\n]*\binfinite\b', re.I),
+              'shadow-transition': re.compile(r'transition(?:-[\w-]+)?\s*:\s*[^;\n]*(?:box-shadow|filter|backdrop-filter)', re.I),
+              'fixed-layer': re.compile(r'position\s*:\s*fixed\b', re.I),
+              'mix-blend-mode': re.compile(r'mix-blend-mode\s*:', re.I),
+              'setInterval': re.compile(r'\bsetInterval\s*\(', re.I),
+              'requestAnimationFrame': re.compile(r'\brequestAnimationFrame\s*\(', re.I),
+              'MutationObserver': re.compile(r'\bMutationObserver\b'),
+          }
+
+          files = sorted(
+              p for p in Path('.').rglob('*')
+              if p.is_file()
+              and p.suffix.lower() in {'.css', '.js'}
+              and '.git' not in p.parts
+              and 'node_modules' not in p.parts
+          )
+
+          rows = []
+          counts = {name: 0 for name in patterns}
+          file_sizes = []
+
+          for path in files:
+              text = path.read_text(encoding='utf-8', errors='replace')
+              lines = text.splitlines()
+              file_sizes.append((len(text.encode('utf-8')), str(path)))
+              current_selector = ''
+
+              for number, line in enumerate(lines, 1):
+                  stripped = line.strip()
+                  if stripped.endswith('{'):
+                      current_selector = stripped[:-1].strip()
+                  for name, pattern in patterns.items():
+                      if pattern.search(line):
+                          counts[name] += 1
+                          rows.append((name, str(path), number, current_selector, stripped))
+
+          report = []
+          report.append('ANDROID WEBVIEW COST AUDIT')
+          report.append('==========================')
+          report.append('')
+          report.append('SUMMARY')
+          for name in patterns:
+              report.append(f'{name}: {counts[name]}')
+
+          report.append('')
+          report.append('MATCHES')
+          for name, path, number, selector, line in rows:
+              report.append(f'[{name}] {path}:{number}')
+              if selector:
+                  report.append(f'  selector: {selector}')
+              report.append(f'  {line}')
+
+          report.append('')
+          report.append('LARGEST CSS/JS FILES')
+          for size, path in sorted(file_sizes, reverse=True)[:40]:
+              report.append(f'{size:8d}  {path}')
+
+          output = Path('.tmp/android-webview-audit.txt')
+          output.parent.mkdir(exist_ok=True)
+          output.write_text('\n'.join(report) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit audit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .tmp/android-webview-audit.txt
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record Android WebView cost audit'
+          git push origin HEAD:agent/android-webview-audit-batch-1
