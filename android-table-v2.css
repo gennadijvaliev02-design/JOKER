@@ -187,7 +187,7 @@
   line-height: 1 !important;
 }
 
-.trump-pill:has(.trump-card.is-revealed)::before {
+.trump-pill.v13-trump-ready::before {
   right: -8px !important;
   width: 48px !important;
   height: 48px !important;

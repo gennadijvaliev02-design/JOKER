@@ -6,7 +6,6 @@
         overflow: hidden !important;
         pointer-events: none !important;
         contain: layout paint style !important;
-        transform: translateZ(0) !important;
       }
       .deal-2026-stage-deck {
         position: absolute !important;
