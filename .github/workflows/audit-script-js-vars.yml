@@ -1,0 +1,95 @@
+name: Audit script.js top-level data
+
+on:
+  push:
+    branches:
+      - agent/android-script-audit-1
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-audit-1
+          fetch-depth: 1
+
+      - name: Audit constants and state fields
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          source = Path('script.js').read_text(encoding='utf-8')
+          files = [
+              p for p in Path('.').rglob('*')
+              if p.is_file() and p.suffix.lower() in {'.js', '.html'}
+              and '.git' not in p.parts and 'node_modules' not in p.parts
+          ]
+          corpus = '\n'.join(p.read_text(encoding='utf-8', errors='replace') for p in files)
+
+          constants = []
+          for match in re.finditer(r'(?m)^(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=', source):
+              name = match.group(1)
+              line = source.count('\n', 0, match.start()) + 1
+              count = len(re.findall(rf'(?<![\w$]){re.escape(name)}(?![\w$])', corpus))
+              constants.append((name, line, count))
+
+          state_match = re.search(r'const\s+state\s*=\s*\{(.*?)\n\};', source, re.S)
+          fields = []
+          if state_match:
+              body = state_match.group(1)
+              body_start = state_match.start(1)
+              for match in re.finditer(r'(?m)^\s{2}([A-Za-z_$][\w$]*):', body):
+                  name = match.group(1)
+                  line = source.count('\n', 0, body_start + match.start()) + 1
+                  dot_count = len(re.findall(rf'\bstate\.{re.escape(name)}\b', corpus))
+                  bracket_count = len(re.findall(rf"state\[['\"]{re.escape(name)}['\"]\]", corpus))
+                  fields.append((name, line, dot_count + bracket_count))
+
+          element_match = re.search(r'const\s+elements\s*=\s*\{(.*?)\n\};', source, re.S)
+          elements = []
+          if element_match:
+              body = element_match.group(1)
+              body_start = element_match.start(1)
+              for match in re.finditer(r'(?m)^\s{2}([A-Za-z_$][\w$]*):', body):
+                  name = match.group(1)
+                  line = source.count('\n', 0, body_start + match.start()) + 1
+                  count = len(re.findall(rf'\belements\.{re.escape(name)}\b', corpus))
+                  elements.append((name, line, count))
+
+          out = ['# `script.js` top-level data audit', '', '## Constants with one raw reference', '']
+          singles = [row for row in constants if row[2] == 1]
+          out.extend(f'- `{name}` — line {line}; refs {count}' for name, line, count in singles)
+          if not singles:
+              out.append('_None._')
+
+          out.extend(['', '## State fields with at most two references', ''])
+          low_state = [row for row in fields if row[2] <= 2]
+          out.extend(f'- `state.{name}` — declaration line {line}; refs {count}' for name, line, count in low_state)
+          if not low_state:
+              out.append('_None._')
+
+          out.extend(['', '## Element fields with at most two references', ''])
+          low_elements = [row for row in elements if row[2] <= 2]
+          out.extend(f'- `elements.{name}` — declaration line {line}; refs {count}' for name, line, count in low_elements)
+          if not low_elements:
+              out.append('_None._')
+
+          out.extend(['', '## Full top-level constants', ''])
+          out.extend(f'- `{name}` — line {line}; refs {count}' for name, line, count in constants)
+          Path('SCRIPT_DATA_AUDIT.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SCRIPT_DATA_AUDIT.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Generate script data audit report'
+          git push origin HEAD:agent/android-script-audit-1
