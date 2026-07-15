@@ -1,0 +1,49 @@
+name: Audit HUD emotion owners
+
+on:
+  pull_request:
+    branches:
+      - agent/android-script-bidding-cache-1
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-hud-emotion-cleanup-1
+          fetch-depth: 1
+      - name: Collect owners and call sites
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          symbols = [
+              'renderHud',
+              'showNotice',
+              'hideNotice',
+              'renderEmotionPanel',
+              'showPlayerEmotion',
+              'startEmotionCooldown',
+          ]
+          lines = []
+          for symbol in symbols:
+              lines.append(f'[{symbol}]')
+              pattern = re.compile(rf'\b{re.escape(symbol)}\b')
+              for path in sorted(Path('.').rglob('*.js')):
+                  if any(part in {'.git', 'node_modules', 'www', 'android'} for part in path.parts):
+                      continue
+                  source = path.read_text(encoding='utf-8')
+                  for number, line in enumerate(source.splitlines(), 1):
+                      if pattern.search(line):
+                          lines.append(f'{path}:{number}: {line.strip()}')
+          Path('hud-emotion-audit.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hud-emotion-audit
+          path: hud-emotion-audit.txt
