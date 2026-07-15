@@ -39,10 +39,13 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -51,6 +54,12 @@ import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     private static final int APP_BACKGROUND = Color.rgb(3, 17, 15);
+    private static final long HAPTIC_GAP_MS = 45L;
+
+    private final JokerAndroidBridge jokerAndroidBridge = new JokerAndroidBridge();
+    private boolean webBridgeInstalled = false;
+    private volatile boolean keepScreenOnRequested = false;
+    private long lastHapticAt = 0L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,13 +75,31 @@ public class MainActivity extends BridgeActivity {
     public void onResume() {
         super.onResume();
         configureWebView();
+        applyKeepScreenOn(keepScreenOnRequested);
+        dispatchNativeLifecycle("foreground");
         hideSystemUI();
+    }
+
+    @Override
+    public void onPause() {
+        dispatchNativeLifecycle("background");
+        applyKeepScreenOn(false);
+        super.onPause();
     }
 
     @Override
     protected void onPostResume() {
         super.onPostResume();
         hideSystemUI();
+    }
+
+    @Override
+    public void onDestroy() {
+        applyKeepScreenOn(false);
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().removeJavascriptInterface("JokerAndroid");
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -128,6 +155,10 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge().getWebView();
         webView.setBackgroundColor(APP_BACKGROUND);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        if (!webBridgeInstalled) {
+            webView.addJavascriptInterface(jokerAndroidBridge, "JokerAndroid");
+            webBridgeInstalled = true;
+        }
     }
 
     private void installBackGuard() {
@@ -164,6 +195,63 @@ public class MainActivity extends BridgeActivity {
         });
     }
 
+    private void dispatchNativeLifecycle(String lifecycle) {
+        if (getBridge() == null || getBridge().getWebView() == null) return;
+
+        WebView webView = getBridge().getWebView();
+        String script = "window.dispatchEvent(new CustomEvent('joker-native-lifecycle',"
+            + "{detail:{state:'" + lifecycle + "'}}));";
+        webView.post(() -> webView.evaluateJavascript(script, null));
+    }
+
+    private void setKeepScreenOnRequested(boolean enabled) {
+        keepScreenOnRequested = enabled;
+        runOnUiThread(() -> applyKeepScreenOn(enabled));
+    }
+
+    private void applyKeepScreenOn(boolean enabled) {
+        if (enabled) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    private void performHaptic(String type) {
+        runOnUiThread(() -> {
+            long now = SystemClock.uptimeMillis();
+            if (now - lastHapticAt < HAPTIC_GAP_MS) return;
+            lastHapticAt = now;
+
+            String safeType = type == null ? "selection" : type;
+            int feedback;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                switch (safeType) {
+                    case "success":
+                    case "trick":
+                        feedback = HapticFeedbackConstants.CONFIRM;
+                        break;
+                    case "warning":
+                    case "error":
+                        feedback = HapticFeedbackConstants.REJECT;
+                        break;
+                    default:
+                        feedback = HapticFeedbackConstants.CLOCK_TICK;
+                        break;
+                }
+            } else if ("warning".equals(safeType) || "error".equals(safeType)) {
+                feedback = HapticFeedbackConstants.LONG_PRESS;
+            } else {
+                feedback = HapticFeedbackConstants.VIRTUAL_KEY;
+            }
+
+            View target = getBridge() != null && getBridge().getWebView() != null
+                ? getBridge().getWebView()
+                : getWindow().getDecorView();
+            target.performHapticFeedback(feedback);
+        });
+    }
+
     private void hideSystemUI() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             getWindow().setDecorFitsSystemWindows(false);
@@ -185,6 +273,18 @@ public class MainActivity extends BridgeActivity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         );
+    }
+
+    private final class JokerAndroidBridge {
+        @JavascriptInterface
+        public void setKeepScreenOn(boolean enabled) {
+            setKeepScreenOnRequested(enabled);
+        }
+
+        @JavascriptInterface
+        public void haptic(String type) {
+            performHaptic(type);
+        }
     }
 }
 '''
