@@ -60,6 +60,10 @@
         return false;
       }
 
+      if (id === selectedId) {
+        return true;
+      }
+
       selectedId = id;
       syncRuleSelection();
       emitRulesEvent("joker-rules-change");
