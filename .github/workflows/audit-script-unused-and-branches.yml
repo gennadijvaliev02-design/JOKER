@@ -1,0 +1,88 @@
+name: Audit script.js unused locals and branches
+
+on:
+  push:
+    branches:
+      - agent/android-script-static-audit-2
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/android-script-static-audit-2
+          fetch-depth: 1
+
+      - name: Run ESLint static checks
+        run: |
+          set +e
+          npx --yes eslint@8.57.0 script.js \
+            --no-eslintrc \
+            --env browser,es2021 \
+            --parser-options '{"ecmaVersion":"latest"}' \
+            --rule 'no-unused-vars:[2,{"vars":"all","args":"all","ignoreRestSiblings":false}]' \
+            --rule 'no-unreachable:2' \
+            --rule 'no-dupe-else-if:2' \
+            --rule 'no-constant-condition:[2,{"checkLoops":false}]' \
+            --rule 'no-unneeded-ternary:2' \
+            --format json > eslint-script-audit.json
+          exit 0
+
+      - name: Build readable report
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path('eslint-script-audit.json').read_text(encoding='utf-8'))
+          lines = ['# `script.js` unused/branch audit', '']
+          total = 0
+          by_rule = {}
+          for result in data:
+              for msg in result.get('messages', []):
+                  total += 1
+                  rule = msg.get('ruleId') or 'parser'
+                  by_rule.setdefault(rule, []).append(msg)
+
+          lines += [f'- Total findings: **{total}**', '']
+          for rule in sorted(by_rule):
+              items = by_rule[rule]
+              lines += [f'## `{rule}` — {len(items)}', '']
+              for msg in items:
+                  text = str(msg.get('message', '')).replace('\n', ' ')
+                  lines.append(f'- line {msg.get("line")}, column {msg.get("column")}: {text}')
+              lines.append('')
+
+          source = Path('script.js').read_text(encoding='utf-8').splitlines()
+          lines += ['## Context', '']
+          seen = set()
+          for items in by_rule.values():
+              for msg in items:
+                  line = int(msg.get('line') or 1)
+                  if line in seen:
+                      continue
+                  seen.add(line)
+                  start = max(1, line - 2)
+                  end = min(len(source), line + 2)
+                  lines += [f'### Lines {start}-{end}', '', '```js']
+                  for number in range(start, end + 1):
+                      prefix = '>' if number == line else ' '
+                      lines.append(f'{prefix}{number:4}: {source[number-1]}')
+                  lines += ['```', '']
+
+          Path('SCRIPT_UNUSED_BRANCH_AUDIT.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit audit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SCRIPT_UNUSED_BRANCH_AUDIT.md eslint-script-audit.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add script unused and branch audit report'
+          git push origin HEAD:agent/android-script-static-audit-2
