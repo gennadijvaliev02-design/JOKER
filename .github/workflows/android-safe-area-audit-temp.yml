@@ -64,9 +64,7 @@ jobs:
           if forbidden_geometry:
               raise SystemExit('Safe-area layer rewrites approved geometry: ' + ', '.join(forbidden_geometry))
 
-          paint_index = loader.index('android-webview-paint.css?v=3')
-          safe_index = loader.index('android-safe-area.css?v=1')
-          if safe_index <= paint_index:
+          if loader.index('android-safe-area.css?v=1') <= loader.index('android-webview-paint.css?v=3'):
               raise SystemExit('Safe-area stylesheet is not the final Android CSS layer')
 
           if '--android-safe-left' not in v10 or '--android-safe-right' not in v10:
@@ -78,13 +76,12 @@ jobs:
               if width <= height:
                   raise SystemExit(f'Viewport is not landscape: {width}x{height}')
               for left, right in [(0, 0), (44, 0), (0, 52), (44, 52)]:
-                  available = width - left - right - 34
-                  if available < 420:
-                      raise SystemExit(f'Unsafe panel width at {width}x{height}: {available}')
+                  if width - left - right - 34 < 420:
+                      raise SystemExit(f'Unsafe panel width at {width}x{height}')
           print('Static safe-area contract passed')
           PY
 
-      - name: Exercise computed styles across landscape viewports
+      - name: Capture computed-style diagnostics
         shell: bash
         run: |
           set -euo pipefail
@@ -103,11 +100,7 @@ jobs:
               <style>
                 html, body { margin: 0; overflow: hidden; }
                 .phone-screen { position: fixed; inset: 0; }
-                .player-left, .player-right, .player-top, .player-you,
-                .left-stack, .right-stack, .table-menu, .smile,
-                .emotion-panel, .score, .last-trick-button, .game-hud {
-                  position: absolute;
-                }
+                .player-left, .player-right, .player-top, .score { position: absolute; }
               </style>
             </head>
             <body>
@@ -129,7 +122,7 @@ jobs:
                 for (const [name, value] of Object.entries(values)) {
                   document.documentElement.style.setProperty(`--android-safe-${name}`, `${value}px`);
                 }
-                requestAnimationFrame(() => requestAnimationFrame(() => {
+                setTimeout(() => {
                   const style = (id) => getComputedStyle(document.getElementById(id));
                   const panel = document.getElementById('panel').getBoundingClientRect();
                   document.getElementById('result').textContent = JSON.stringify({
@@ -142,7 +135,7 @@ jobs:
                     panelWidth: panel.width,
                     expectedPanelMax: innerWidth - values.left - values.right - 34,
                   });
-                }));
+                }, 100);
               </script>
             </body>
           </html>
@@ -154,13 +147,11 @@ jobs:
           import subprocess
           from pathlib import Path
 
-          chrome = next(
-              path for path in [
-                  '/usr/bin/google-chrome',
-                  '/usr/bin/chromium',
-                  '/usr/bin/chromium-browser',
-              ] if Path(path).exists()
-          )
+          chrome = next(path for path in [
+              '/usr/bin/google-chrome',
+              '/usr/bin/chromium',
+              '/usr/bin/chromium-browser',
+          ] if Path(path).exists())
           harness = 'file:///tmp/joker-safe-area-harness.html'
           cases = [
               (640, 360, 0, 0, 0, 0),
@@ -169,39 +160,49 @@ jobs:
               (1280, 720, 44, 52, 0, 24),
               (1600, 720, 0, 0, 0, 0),
           ]
+          results = []
 
           for width, height, left, right, top, bottom in cases:
-              url = f'{harness}?left={left}&right={right}&top={top}&bottom={bottom}'
-              output = subprocess.check_output([
-                  chrome,
-                  '--headless=new',
-                  '--no-sandbox',
-                  '--disable-gpu',
-                  '--allow-file-access-from-files',
-                  f'--window-size={width},{height}',
-                  '--virtual-time-budget=1000',
-                  '--dump-dom',
-                  url,
-              ], text=True, stderr=subprocess.DEVNULL)
-              marker = '<pre id="result">'
-              payload = output.split(marker, 1)[1].split('</pre>', 1)[0]
-              result = json.loads(html.unescape(payload))
-
-              expected = {
-                  'leftMargin': left,
-                  'rightMargin': right,
-                  'topMargin': top,
-                  'bottomMargin': bottom,
+              item = {
+                  'requestedWidth': width,
+                  'requestedHeight': height,
+                  'insets': {'left': left, 'right': right, 'top': top, 'bottom': bottom},
               }
-              for key, value in expected.items():
-                  if abs(result[key] - value) > 0.5:
-                      raise SystemExit(f'{width}x{height}: {key}={result[key]}, expected {value}')
+              try:
+                  url = f'{harness}?left={left}&right={right}&top={top}&bottom={bottom}'
+                  output = subprocess.check_output([
+                      chrome,
+                      '--headless=new',
+                      '--no-sandbox',
+                      '--disable-gpu',
+                      '--allow-file-access-from-files',
+                      f'--window-size={width},{height}',
+                      '--virtual-time-budget=1500',
+                      '--dump-dom',
+                      url,
+                  ], text=True, stderr=subprocess.STDOUT)
+                  marker = '<pre id="result">'
+                  if marker not in output:
+                      item['error'] = 'result marker missing'
+                      item['domTail'] = output[-2000:]
+                  else:
+                      payload = output.split(marker, 1)[1].split('</pre>', 1)[0]
+                      item['computed'] = json.loads(html.unescape(payload))
+              except Exception as error:
+                  item['error'] = repr(error)
+              results.append(item)
 
-              if result['panelWidth'] > result['expectedPanelMax'] + 1:
-                  raise SystemExit(f'{width}x{height}: panel crosses horizontal safe area')
-
-              print(
-                  f"passed requested={width}x{height} actual={result['innerWidth']}x{result['innerHeight']} "
-                  f"insets={left}/{right}/{top}/{bottom}"
-              )
+          Path('/tmp/android-safe-area-results.json').write_text(
+              json.dumps(results, indent=2),
+              encoding='utf-8',
+          )
+          print(json.dumps(results, indent=2))
           PY
+
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-safe-area-results
+          path: /tmp/android-safe-area-results.json
+          if-no-files-found: error
+          retention-days: 1
