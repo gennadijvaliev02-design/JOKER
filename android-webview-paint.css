@@ -74,6 +74,24 @@
     0 7px 14px rgba(0, 0, 0, 0.32) !important;
 }
 
+/* Full replacement for the legacy :has() trump aura rules. */
+.trump-pill.v13-trump-ready::before {
+  content: "";
+  position: absolute;
+  right: -8px !important;
+  top: 50%;
+  z-index: -1;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 214, 41, 0.28), transparent 60%),
+    conic-gradient(from 20deg, transparent, rgba(255, 214, 41, 0.22), transparent 42%, rgba(0, 200, 255, 0.16), transparent 72%);
+  filter: none !important;
+  transform: translateY(-50%) scale(0.6);
+  animation: trump-aura 0.92s ease-out both;
+}
+
 /* V14 is loaded before this file so its announcement glows cannot return. */
 .joker-announcement,
 .joker-announcement.is-take {
@@ -93,6 +111,7 @@
   box-shadow:
     0 0 0 3px rgba(255, 214, 41, 0.64),
     0 7px 14px rgba(0, 0, 0, 0.34) !important;
+  animation-iteration-count: 2 !important;
 }
 
 /* Frequently changing table pieces keep depth without oversized blur radii. */
@@ -100,6 +119,17 @@
   box-shadow:
     0 0 0 2px rgba(255, 214, 41, 0.22),
     0 7px 14px rgba(0, 0, 0, 0.34) !important;
+}
+
+.player.is-active .avatar::before {
+  animation: none !important;
+  opacity: 0.38 !important;
+  transform: scale(1) !important;
+}
+
+.player.is-thinking .avatar::after {
+  animation: none !important;
+  opacity: 0.92 !important;
 }
 
 .played-card .card {
@@ -119,6 +149,79 @@
   box-shadow:
     0 8px 18px rgba(0, 0, 0, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Persistent Android surfaces avoid live backdrop sampling. */
+.start-panel,
+.rules-card,
+.rules-card.rules-book-card,
+.bid-panel,
+.game-summary,
+.game-dialog,
+.last-trick-button,
+.last-trick-panel,
+.difficulty-modal,
+.player-stats {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.felt-glow {
+  filter: none !important;
+}
+
+/* Large stationary surfaces keep depth with compact shadows. */
+.start-panel {
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.50),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+}
+
+.game-summary:not([hidden]),
+.game-dialog:not([hidden]),
+.last-trick-panel,
+.difficulty-modal,
+.rules-card.rules-book-card {
+  box-shadow:
+    0 17px 36px rgba(0, 0, 0, 0.50),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+}
+
+/* Difficulty choices no longer keep permanent GPU layers or wide glows. */
+.difficulty-option:not(:hover):not(:focus-visible) {
+  transform: none !important;
+}
+
+.difficulty-option {
+  box-shadow:
+    0 7px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+}
+
+.difficulty-option.is-easy {
+  box-shadow:
+    0 0 0 1px rgba(75, 255, 155, 0.18),
+    0 7px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+.difficulty-option.is-medium {
+  box-shadow:
+    0 0 0 1px rgba(255, 220, 58, 0.18),
+    0 7px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Menu decoration animates on entry, then stops consuming frames. */
+.start-screen::before,
+.menu-card-fan {
+  animation-iteration-count: 1 !important;
+}
+
+.menu-fan-card:nth-child(1),
+.menu-fan-card:nth-child(2),
+.menu-fan-card:nth-child(3) {
+  animation-iteration-count: 2 !important;
 }
 
 /* Temporary motion layers use small hard shadows instead of wide glows. */
