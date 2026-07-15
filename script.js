@@ -101,6 +101,69 @@ const elements = {
   gameDialogActions: document.querySelector("#game-dialog-actions"),
 };
 
+const PLAYER_SEATS = ["left", "top", "right", "bottom"];
+const OPPONENT_SEATS = ["left", "top", "right"];
+const playerViewsBySeat = Object.fromEntries(
+  PLAYER_SEATS.map((seat) => {
+    const avatar = document.querySelector(`[data-seat="${seat}"]`);
+    const currentEmotion = avatar?.querySelector(":scope > .avatar-emotion") || null;
+    let avatarInitial = avatar?.querySelector(":scope > .avatar-initial") || null;
+
+    if (avatar && !avatarInitial) {
+      const initialText = avatar.textContent.trim().slice(0, 1);
+      avatarInitial = document.createElement("span");
+      avatarInitial.className = "avatar-initial";
+      avatarInitial.textContent = initialText;
+      avatar.replaceChildren(avatarInitial);
+      if (currentEmotion) avatar.append(currentEmotion);
+    }
+
+    const taken = document.querySelector(`[data-taken="${seat}"]`);
+    return [
+      seat,
+      {
+        avatar,
+        avatarInitial,
+        playerElement: avatar?.closest(".player") || null,
+        name: document.querySelector(`[data-name="${seat}"]`),
+        orderBadge: document.querySelector(`[data-order-badge="${seat}"]`),
+        order: document.querySelector(`[data-order="${seat}"]`),
+        bid: document.querySelector(`[data-bid="${seat}"]`),
+        taken,
+        stats: taken?.closest(".player-stats") || null,
+      },
+    ];
+  }),
+);
+const opponentStacksBySeat = Object.fromEntries(
+  OPPONENT_SEATS.map((seat) => [seat, document.querySelector(`.${seat}-stack`)]),
+);
+const lastPlayerRenderSignatures = Object.create(null);
+
+function setElementText(element, text) {
+  if (element && element.textContent !== text) {
+    element.textContent = text;
+  }
+}
+
+function getPlayerRenderSignature(player) {
+  const handCount = state.hands[player.id]?.length || 0;
+  const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";
+  const isThinking = isActivePlayer && state.busy && player.id !== "human";
+
+  return [
+    player.name,
+    player.seat,
+    player.order,
+    player.bid ?? "null",
+    player.tricks,
+    handCount,
+    state.phase,
+    isActivePlayer ? 1 : 0,
+    isThinking ? 1 : 0,
+  ].join("|");
+}
+
 const urlParams = new URLSearchParams(window.location.search);
 
 function createJokerDeck() {
@@ -439,47 +502,50 @@ function render() {
 
 function renderPlayers() {
   for (const player of state.players) {
-    const avatar = document.querySelector(`[data-seat="${player.seat}"]`);
-    const playerElement = avatar?.closest(".player");
-    const name = document.querySelector(`[data-name="${player.seat}"]`);
-    const orderBadge = document.querySelector(`[data-order-badge="${player.seat}"]`);
-    const order = document.querySelector(`[data-order="${player.seat}"]`);
-    const bid = document.querySelector(`[data-bid="${player.seat}"]`);
-    const taken = document.querySelector(`[data-taken="${player.seat}"]`);
-    const stats = taken?.closest(".player-stats");
+    const view = playerViewsBySeat[player.seat];
 
-    name.textContent = player.seat === "bottom" ? "Ты" : player.name;
-    const currentEmotion = avatar.querySelector(".avatar-emotion");
-    const avatarInitial = document.createElement("span");
-    avatarInitial.className = "avatar-initial";
-    avatarInitial.textContent = player.name.slice(0, 1).toUpperCase();
-    avatar.replaceChildren(avatarInitial);
-    if (currentEmotion) {
-      avatar.append(currentEmotion);
+    if (!view?.avatar) {
+      continue;
     }
-    orderBadge.textContent = String(player.order);
-    order.textContent = String(player.order);
-    bid.textContent = formatBid(player.bid);
-    bid.classList.toggle("is-pass", player.bid === "pass");
-    taken.textContent = String(player.tricks);
-    taken.classList.toggle("is-danger", isBidBroken(player));
-    stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
+
+    const signature = getPlayerRenderSignature(player);
+    if (lastPlayerRenderSignatures[player.seat] === signature) {
+      continue;
+    }
+    lastPlayerRenderSignatures[player.seat] = signature;
+
+    setElementText(view.name, player.seat === "bottom" ? "Ты" : player.name);
+    setElementText(view.avatarInitial, player.name.slice(0, 1).toUpperCase());
+    setElementText(view.orderBadge, String(player.order));
+    setElementText(view.order, String(player.order));
+    setElementText(view.bid, formatBid(player.bid));
+    setElementText(view.taken, String(player.tricks));
+
+    view.bid?.classList.toggle("is-pass", player.bid === "pass");
+    view.taken?.classList.toggle("is-danger", isBidBroken(player));
+    view.stats?.classList.toggle("is-fulfilled", isBidFulfilledNow(player));
+
     const isActivePlayer = player.id === state.activePlayerId && state.phase === "playing";
-    playerElement?.classList.toggle("is-active", isActivePlayer);
-    playerElement?.classList.toggle("is-thinking", isActivePlayer && state.busy && player.id !== "human");
+    view.playerElement?.classList.toggle("is-active", isActivePlayer);
+    view.playerElement?.classList.toggle("is-thinking", isActivePlayer && state.busy && player.id !== "human");
   }
 }
 
 function renderOpponentCardStacks() {
-  for (const seat of ["left", "top", "right"]) {
-    const player = state.players.find((candidate) => candidate.seat === seat);
-    const stack = document.querySelector(`.${seat}-stack`);
+  for (const seat of OPPONENT_SEATS) {
+    const stack = opponentStacksBySeat[seat];
 
     if (!stack) {
       continue;
     }
 
+    const player = state.players.find((candidate) => candidate.seat === seat);
     const cardCount = player ? state.hands[player.id]?.length || 0 : 0;
+
+    if (stack.children.length === cardCount) {
+      continue;
+    }
+
     stack.replaceChildren(...Array.from({ length: cardCount }, () => document.createElement("span")));
   }
 }
