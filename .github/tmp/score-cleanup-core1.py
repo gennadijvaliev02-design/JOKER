@@ -19,25 +19,6 @@ def replace_section(text, start_marker, end_marker, new_block, label):
 path = Path("script.js")
 text = path.read_text(encoding="utf-8")
 
-text = replace_section(
-    text,
-    "function render() {",
-    "function renderPlayers() {",
-    '''function render() {
-  renderPlayers();
-  renderHud();
-  renderOpponentCardStacks();
-  renderHand();
-  renderTrick();
-  renderBidding();
-
-  if (!elements.scoreSheet.hidden) {
-    renderScoreSheet();
-  }
-}''',
-    "render",
-)
-
 text = replace_once(
     text,
     '''    const finishedGame = state.currentGame;
