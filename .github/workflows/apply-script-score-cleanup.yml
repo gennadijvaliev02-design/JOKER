@@ -1,4 +1,4 @@
-name: Apply script score cleanup
+name: Validate script score cleanup
 
 on:
   pull_request:
@@ -9,10 +9,10 @@ on:
       - agent/android-script-score-cleanup-1
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  cleanup:
+  validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -21,13 +21,7 @@ jobs:
           ref: agent/android-script-score-cleanup-1
           fetch-depth: 1
 
-      - name: Apply exact score cleanup
-        run: |
-          python3 .github/tmp/score-cleanup-core1.py
-          python3 .github/tmp/score-cleanup-core2.py
-          python3 .github/tmp/score-cleanup-extensions.py
-
-      - name: Validate syntax and score parity
+      - name: Validate committed score cleanup
         run: |
           node --check script.js
           node --check pulka-summary.js
@@ -42,13 +36,3 @@ jobs:
           ! grep -q 'flatMap' pass-premium-cross-fix.js
           ! grep -q 'calculateMatchTotal(player.id)' pulka-summary.js
           ! grep -q 'calculatePulkaTotal(player.id' pulka-summary.js
-
-      - name: Commit product change
-        if: github.event_name == 'push'
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add script.js pulka-summary.js pass-premium-cross-fix.js winner-podium.js
-          git diff --cached --quiet && exit 0
-          git commit -m 'Reuse score snapshots and batch notebook totals'
-          git push origin HEAD:agent/android-script-score-cleanup-1
