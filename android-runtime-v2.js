@@ -213,17 +213,25 @@
   }
 
   function getTrickSignature() {
-    const plays = state.currentTrick.map((play) => [
-      play.player?.id || "",
-      play.player?.seat || "",
-      play.card?.id || "",
-      play.jokerMode || "",
-      play.jokerCommand || "",
-      play.jokerSuit || "",
-      play.order ?? "",
-    ].join(":"));
+    if (typeof getTrickRenderSignature === "function") {
+      return getTrickRenderSignature();
+    }
 
-    return `${state.collectingTrickWinnerSeat || ""}|${plays.join("|")}`;
+    let signature = `${state.collectingTrickWinnerSeat || ""}|`;
+    for (const play of state.currentTrick) {
+      signature += [
+        play.player?.id || "",
+        play.player?.name || "",
+        play.player?.seat || "",
+        play.card?.id || "",
+        play.jokerMode || "",
+        play.jokerCommand || "",
+        play.jokerSuit || "",
+        play.order ?? "",
+      ].join(":");
+      signature += "|";
+    }
+    return signature;
   }
 
   function clearTouchSelection() {

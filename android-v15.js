@@ -67,10 +67,14 @@
 
     renderHand = function androidV16CachedHand(...args) {
       const hand = state.hands?.human || [];
-      const nodes = Array.from(elements.playerHand.children);
+      const nodes = elements.playerHand.children;
       const shouldAnimateDeal = state.dealAnimationKey !== state.renderedDealAnimationKey;
-      const domMatches = nodes.length === hand.length
-        && nodes.every((node, index) => node.classList.contains("card") && node.dataset.card === hand[index]?.id);
+      let domMatches = nodes.length === hand.length;
+
+      for (let index = 0; domMatches && index < hand.length; index += 1) {
+        domMatches = nodes[index]?.classList.contains("card")
+          && nodes[index]?.dataset.card === hand[index]?.id;
+      }
       const stateKey = getHandStateKey(hand);
 
       if (!domMatches || shouldAnimateDeal) {
@@ -82,7 +86,8 @@
       if (stateKey === lastHandStateKey) return;
 
       const middle = (hand.length - 1) / 2;
-      nodes.forEach((node, index) => {
+      for (let index = 0; index < nodes.length; index += 1) {
+        const node = nodes[index];
         const card = hand[index];
         const playable = typeof canHumanPlay === "function" ? canHumanPlay(card) : true;
         const disabled = !playable;
@@ -96,7 +101,7 @@
         if (node.style.getPropertyValue("--deal-delay")) node.style.removeProperty("--deal-delay");
         if (node.style.getPropertyValue("--hand-rotate") !== rotate) node.style.setProperty("--hand-rotate", rotate);
         if (node.style.getPropertyValue("--hand-lift") !== lift) node.style.setProperty("--hand-lift", lift);
-      });
+      }
 
       lastHandStateKey = stateKey;
     };
