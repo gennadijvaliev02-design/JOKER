@@ -49,13 +49,32 @@
     document.head.append(link);
   }
 
+  function loadAndroidMatchPersistence() {
+    if (document.getElementById("android-match-persistence-script")) return;
+
+    const script = document.createElement("script");
+    script.id = "android-match-persistence-script";
+    script.src = "android-match-persistence.js?v=1";
+    script.async = false;
+    document.body.append(script);
+  }
+
   function loadAndroidSystemIntegration() {
-    if (document.getElementById("android-system-integration-script")) return;
+    const existing = document.getElementById("android-system-integration-script");
+    if (existing) {
+      if (window.__JOKER_ANDROID_SYSTEM_INTEGRATION__) {
+        loadAndroidMatchPersistence();
+      } else {
+        existing.addEventListener("load", loadAndroidMatchPersistence, { once: true });
+      }
+      return;
+    }
 
     const script = document.createElement("script");
     script.id = "android-system-integration-script";
     script.src = "android-system-integration.js?v=1";
     script.async = false;
+    script.addEventListener("load", loadAndroidMatchPersistence, { once: true });
     document.body.append(script);
   }
 
