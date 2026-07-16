@@ -1,0 +1,12 @@
+{
+  "applicationId": "com.valievcompany.joker",
+  "appName": "Joker",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "minimumPlayTargetSdk": 35,
+  "artifact": "aab",
+  "allowedPermissions": [
+    "android.permission.INTERNET"
+  ],
+  "dataCollection": "none"
+}
