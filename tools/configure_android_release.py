@@ -232,13 +232,17 @@ def configure_webview_debug_guard(root: Path) -> None:
     text = path.read_text(encoding="utf-8")
     if WEBVIEW_DEBUG_MARKER in text:
         return
-    needle = "        WebView webView = getBridge().getWebView();\n"
+    needle = (
+        "        WebView webView = getBridge().getWebView();\n"
+        "        webView.setBackgroundColor(APP_BACKGROUND);\n"
+    )
     replacement = (
-        needle
+        "        WebView webView = getBridge().getWebView();\n"
         + f"        {WEBVIEW_DEBUG_MARKER}\n"
         + "        if (!BuildConfig.DEBUG) {\n"
         + "            WebView.setWebContentsDebuggingEnabled(false);\n"
         + "        }\n"
+        + "        webView.setBackgroundColor(APP_BACKGROUND);\n"
     )
     if text.count(needle) != 1:
         raise RuntimeError("Could not install release WebView debug guard")
@@ -294,7 +298,7 @@ def write_fixture(root: Path) -> None:
     )
     (root / "android/variables.gradle").write_text("ext { targetSdkVersion = 36 }\n", encoding="utf-8")
     (root / "android/app/src/main/java/com/valievcompany/joker/MainActivity.java").write_text(
-        '''package com.valievcompany.joker;\nimport android.webkit.WebView;\npublic class MainActivity {\n    void configureWebView() {\n        WebView webView = getBridge().getWebView();\n    }\n    Bridge getBridge(){return null;}\n    static class Bridge { WebView getWebView(){return null;} }\n}\n''',
+        '''package com.valievcompany.joker;\nimport android.webkit.WebView;\npublic class MainActivity {\n    void configureWebView() {\n        WebView webView = getBridge().getWebView();\n        webView.setBackgroundColor(APP_BACKGROUND);\n    }\n    Bridge getBridge(){return null;}\n    static class Bridge { WebView getWebView(){return null;} }\n}\n''',
         encoding="utf-8",
     )
 
