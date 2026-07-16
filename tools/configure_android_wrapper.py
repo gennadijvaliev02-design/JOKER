@@ -8,6 +8,7 @@ import json
 import tempfile
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from configure_android_release import configure_project as configure_release_project, self_test as release_self_test
 
 
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
@@ -366,6 +367,8 @@ def configure_project(root: Path) -> None:
     configure_manifest(root)
     configure_styles(root)
     configure_main_activity(root)
+    if (root / "android-release.json").is_file():
+        configure_release_project(root)
 
 
 def write_fixture(root: Path) -> None:
@@ -442,6 +445,7 @@ def self_test() -> None:
             "BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE",
         ):
             assert marker in java
+    release_self_test()
     print("Android wrapper self-test passed")
 
 
