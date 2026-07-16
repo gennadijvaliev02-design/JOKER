@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches:
+      - android-app
       - 'agent/android-*'
   push:
     branches:
@@ -124,7 +125,7 @@ jobs:
 
   build-apk:
     needs: audit-sources
-    if: github.ref == 'refs/heads/android-app'
+    if: github.ref == 'refs/heads/android-app' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
