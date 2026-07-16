@@ -6,6 +6,7 @@
 
   const STORAGE_KEY = "joker-android-match-v1";
   const SCHEMA_VERSION = 1;
+  const EXPECTED_DECK_SIZE = 36;
   const MAX_SNAPSHOT_AGE_MS = 30 * 24 * 60 * 60 * 1000;
   const PLAYER_IDS = ["human", "bot-1", "bot-2", "bot-3"];
   const PLAYER_ID_SET = new Set(PLAYER_IDS);
@@ -364,7 +365,7 @@
       }
 
       const cardsById = getCardCatalog();
-      if (cardsById.size !== 38) throw new Error("Unexpected deck catalog");
+      if (cardsById.size !== EXPECTED_DECK_SIZE) throw new Error("Unexpected deck catalog");
 
       const players = snapshot.state.players.map((player) => ({ ...player }));
       const playersById = new Map(players.map((player) => [player.id, player]));
