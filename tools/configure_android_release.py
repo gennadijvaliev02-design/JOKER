@@ -239,7 +239,7 @@ def configure_webview_debug_guard(root: Path) -> None:
     replacement = (
         "        WebView webView = getBridge().getWebView();\n"
         + f"        {WEBVIEW_DEBUG_MARKER}\n"
-        + "        if (!BuildConfig.DEBUG) {\n"
+        + "        if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) == 0) {\n"
         + "            WebView.setWebContentsDebuggingEnabled(false);\n"
         + "        }\n"
         + "        webView.setBackgroundColor(APP_BACKGROUND);\n"
