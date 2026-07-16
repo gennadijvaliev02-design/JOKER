@@ -78,9 +78,30 @@
     document.body.append(script);
   }
 
+  function loadAndroidPreloadResilience() {
+    const existing = document.getElementById("android-preload-resilience-script");
+    if (existing) {
+      if (window.__JOKER_ANDROID_PRELOAD_RESILIENCE__) {
+        loadAndroidSystemIntegration();
+      } else {
+        existing.addEventListener("load", loadAndroidSystemIntegration, { once: true });
+        existing.addEventListener("error", loadAndroidSystemIntegration, { once: true });
+      }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = "android-preload-resilience-script";
+    script.src = "android-preload-resilience.js?v=1";
+    script.async = false;
+    script.addEventListener("load", loadAndroidSystemIntegration, { once: true });
+    script.addEventListener("error", loadAndroidSystemIntegration, { once: true });
+    document.body.append(script);
+  }
+
   const finishAfterLoad = () => window.setTimeout(() => {
     cleanLegacyRelationalSelectors();
-    loadAndroidSystemIntegration();
+    loadAndroidPreloadResilience();
   }, 0);
 
   if (document.readyState === "complete") {

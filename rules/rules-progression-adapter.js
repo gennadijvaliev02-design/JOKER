@@ -316,6 +316,10 @@
   };
 
   getDevTargetFromUrl = function getProfileDevTargetFromUrl() {
+    if (!urlParams.has("pulka") || !urlParams.has("game")) {
+      return null;
+    }
+
     const requestedPulka = Number(urlParams.get("pulka"));
     const requestedGame = Number(urlParams.get("game"));
     const pulkas = getRulePulkas();
@@ -370,15 +374,9 @@
       showGameSummary(gameSummary);
       advanceGame();
       startDeal();
-      showNotice(copy.newDeal(state.currentGame));
+      showNotice(getSummaryCopy().newDeal(state.currentGame));
       render();
       scheduleGameTask(hideNotice, getDelay(1200));
     }, getDelay(1300));
   };
-
-  window.JokerRulesProgression = Object.freeze({
-    getGamesInPulka,
-    getPulkaStartIndex,
-    isCurrentPulkaFinished,
-  });
 })();

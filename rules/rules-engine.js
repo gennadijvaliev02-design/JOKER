@@ -107,7 +107,7 @@
     }
 
     loadAdapter("rules/rules-hand-size-adapter.js?v=3", "hand-size")
-      .then(() => loadAdapter("rules/rules-progression-adapter.js?v=2", "progression"))
+      .then(() => loadAdapter("rules/rules-progression-adapter.js?v=3", "progression"))
       .then(() => loadAdapter("rules/rules-scoring-adapter.js?v=1", "scoring"))
       .then(() => loadAdapter("rules/core-logic-fixes.js?v=1", "core-fixes"))
       .then(() => loadAdapter("rules/bot-action-bridge.js?v=1", "bot-action-bridge"))
